@@ -1,5 +1,5 @@
 var videoDirectory = "/storage/videos";
-var m3uPath = "/storage/.kodi/userdata/playlists/video/videos.m3u"; // m3u 静态播放列表, 由 bash coreelec.sh 生成
+var m3uPath = "/storage/.kodi/userdata/playlists/video/videos.m3u";
 
 // 全局变量
 var initStep = 0;
@@ -7,11 +7,13 @@ var currentPlayerId = 1;
 var currentplaylistid = 1;
 var kodiPlaylistMap = [];
 var sortedFileList = [];
-var currentAddIndex = 0;
+var playlistAddIndex = 0;
+var playlistStep = 0;
 var lastSyncedVolume = -1;
 var ignoreNextVolumeChange = false;
 var volumeBeforeMute = -1;
-var isMutedFlag = false;  // 静音标志，用于阻止静音期间的音量事件更新 UI
+var isMutedFlag = false;
+var currentLoopMode = "off";
 
 // 获取目录下的文件列表（仅用于 UI 显示）
 function getDirectoryFiles() {
@@ -29,17 +31,55 @@ function getDirectoryFiles() {
     local.send(JSON.stringify(msg));
 }
 
-// 直接播放 m3u 文件
-function playM3U() {
+
+
+// 通过 Playlist API 构建并播放列表
+function buildPlaylistFromM3U() {
+    playlistStep = 1;
+    playlistAddIndex = 0;
+    var msg = {
+        jsonrpc: "2.0",
+        method: "Playlist.Clear",
+        params: { playlistid: 1 },
+        id: "PlaylistClear"
+    };
+    local.send(JSON.stringify(msg));
+    script.log("Building playlist: clearing...");
+}
+
+function addNextPlaylistFile() {
+    if (playlistAddIndex < sortedFileList.length) {
+        var filePath = sortedFileList[playlistAddIndex].file;
+        playlistAddIndex++;
+        var msg = {
+            jsonrpc: "2.0",
+            method: "Playlist.Add",
+            params: {
+                playlistid: 1,
+                item: { file: filePath }
+            },
+            id: "PlaylistAdd"
+        };
+        local.send(JSON.stringify(msg));
+    } else {
+        playlistStep = 0;
+        openManagedPlaylist();
+        script.log("All files added to playlist, starting playback...");
+    }
+}
+
+// 播放已构建好的托管列表（playlistid: 1）
+function openManagedPlaylist() {
     var msg = {
         jsonrpc: "2.0",
         method: "Player.Open",
         params: {
-            item: { file: m3uPath }
+            item: { playlistid: 1 }
         },
         id: "init"
     };
     local.send(JSON.stringify(msg));
+    script.log("Opening managed playlist...");
 }
 
 // 获取播放列表项目
@@ -48,7 +88,7 @@ function playListGetItems() {
         jsonrpc: "2.0",
         method: "Playlist.GetItems",
         params: {
-            playlistid: currentPlayerId,
+            playlistid: currentplaylistid,
             properties: ["title", "file", "playcount"]
         },
         id: "GetCurrentListAllItems"
@@ -86,7 +126,6 @@ function moduleValueChanged(value) {
             var wasMuted = isMutedParam && isMutedParam.get() === true;
             if (wasMuted && newVol > 0) {
                 script.log("Volume adjusted while muted, unmuting first.");
-                // 取消静音
                 var unmuteMsg = {
                     jsonrpc: "2.0",
                     method: "Application.SetMute",
@@ -123,6 +162,7 @@ function moduleValueChanged(value) {
 
 // 指定索引播放
 function playIndex(Index) {
+    if (Index == null || Index < 0) Index = 0;
     var msg = {
         jsonrpc: "2.0",
         method: "Player.GoTo",
@@ -152,6 +192,7 @@ function playFile(FilePath) {
 
 // 播放/暂停
 function playPause(isPaused) {
+    if (isPaused == null) isPaused = false;
     var state = isPaused ? 0 : 1;
     var msg = {
         jsonrpc: "2.0",
@@ -179,6 +220,7 @@ function stopPlay() {
 
 // 步进快进/快退
 function seek(Step) {
+    if (Step == null) Step = 30;
     var msg = {
         jsonrpc: "2.0",
         method: "Player.Seek",
@@ -194,6 +236,7 @@ function seek(Step) {
 
 // 跳转到百分比
 function seekToParameters(Parameters){
+    if (Parameters == null) Parameters = 50;
     var msg = {
         jsonrpc: "2.0",
         method: "Player.Seek",
@@ -209,6 +252,10 @@ function seekToParameters(Parameters){
 
 // 跳转到时间
 function seekToTime(Hours, Minutes, Seconds, Milliseconds){
+    if (Hours == null) Hours = 0;
+    if (Minutes == null) Minutes = 0;
+    if (Seconds == null) Seconds = 0;
+    if (Milliseconds == null) Milliseconds = 0;
     var msg = {
         jsonrpc: "2.0",
         method: "Player.Seek",
@@ -244,8 +291,9 @@ function seekToPredefined(Step) {
     script.log("Seek to Predefined: " + Step);
 }
 
-// 设置循环模式
+// 设置循环模式（同时记录）
 function setLoop(Mode) {
+    if (Mode == null) Mode = "off";
     var msg = {
         jsonrpc: "2.0",
         method: "Player.SetRepeat",
@@ -256,12 +304,15 @@ function setLoop(Mode) {
         id: "Player.SetRepeat.Loop"
     };
     local.send(JSON.stringify(msg));
-    local.values.getChild("isLooped").set(Mode !== "off");
+    currentLoopMode = Mode;
+    var loopParam = local.values.getChild("isLooped");
+    if (loopParam) loopParam.set(Mode !== "off");
     script.log("Setup Loop Mode: " + Mode);
 }
 
 // 设置随机播放
 function setRandom(Mode) {
+    if (Mode == null) Mode = false;
     var msg = {
         jsonrpc: "2.0",
         method: "Player.SetShuffle",
@@ -272,12 +323,14 @@ function setRandom(Mode) {
         id: "Player.SetShuffle.Random"
     };
     local.send(JSON.stringify(msg));
-    local.values.getChild("Random").set(Mode);
+    var randParam = local.values.getChild("Random");
+    if (randParam) randParam.set(Mode);
     script.log("Setup Random Mode: " + Mode);
 }
 
 // 设置音量
 function setVolume(Volume) {
+    if (Volume == null) Volume = 50;
     var msg = {
         jsonrpc: "2.0",
         method: "Application.SetVolume",
@@ -314,6 +367,7 @@ function volumeDown() {
 
 // 静音
 function mute(Mute) {
+    if (Mute == null) Mute = false;
     var msg = {
         jsonrpc: "2.0",
         method: "Application.SetMute",
@@ -395,6 +449,7 @@ function shutdown() {
 
 // 显示调试信息
 function showInfo(Show) {
+    if (Show == null) Show = false;
     var msg = {
         jsonrpc: "2.0",
         method: "Settings.SetSettingValue",
@@ -410,12 +465,21 @@ function showInfo(Show) {
 
 // 显示通知
 function showNotification(Title, Message, Displaytime, Image) {
+    if (Title == null) Title = "";
+    if (Message == null) Message = "";
+    if (Displaytime == null) Displaytime = 5000;
+    if (Image == null) Image = "";
+    var messageText = Message;
+    var content = util.readFile(Message);
+    if (content !== undefined && content !== null && content.length > 0) {
+        messageText = content;
+    }
     var msg = {
         jsonrpc: "2.0",
         method: "GUI.ShowNotification",
         params: {
             title: Title,
-            message: util.readFile(Message),
+            message: messageText,
             displaytime: Displaytime,
             image: Image
         },
@@ -427,6 +491,7 @@ function showNotification(Title, Message, Displaytime, Image) {
 
 // 激活窗口
 function activateWindow(Window) {
+    if (Window == null) return;
     var msg = {
         jsonrpc: "2.0",
         method: "GUI.ActivateWindow",
@@ -437,6 +502,17 @@ function activateWindow(Window) {
     };
     local.send(JSON.stringify(msg));
     script.log("GUI.ActivateWindow: " + Window);
+}
+
+// 发送原始 JSON 命令
+function sendJSON(JSON) {
+    if (JSON == null) JSON = "";
+    if (JSON === "") {
+        script.log("Warning: JSON string is empty.");
+        return;
+    }
+    local.send(JSON);
+    script.log("sendJSON: " + JSON);
 }
 
 // 强制全屏
@@ -455,9 +531,7 @@ function init() {
     initStep = 0;
     sortedFileList = [];
     kodiPlaylistMap = [];
-
     syncVolume();
-
     initStep = 1;
     getDirectoryFiles();
     script.log("Step 1: Getting directory files for display...");
@@ -467,24 +541,39 @@ function init() {
 function wsMessageReceived(message) {
     var data = JSON.parse(message);
 
+    // 处理 Playlist.Clear 响应
+    if (data.id === "PlaylistClear" && !data.error) {
+        if (playlistStep === 1) {
+            playlistStep = 2;
+            addNextPlaylistFile();
+        }
+        return;
+    }
+
+    // 处理 Playlist.Add 响应
+    if (data.id === "PlaylistAdd" && !data.error) {
+        if (playlistStep === 2) {
+            addNextPlaylistFile();
+        }
+        return;
+    }
+
+    // 处理统一 id="init" 的响应
     if (data.id === "init" && !data.error) {
         if (initStep === 2) {
             initStep = 3;
-            playM3U();
-            script.log("Step 3: Playing m3u playlist...");
+            setLoop("all");
+            playListGetItems();
+            script.log("Step 3: Setting loop and getting playlist items...");
         }
         else if (initStep === 3) {
-            initStep = 4;
-            playListGetItems();
-            script.log("Step 4: Getting playlist items for display...");
-        }
-        else if (initStep === 4) {
             initStep = 0;
             script.log("Initialization complete.");
         }
         return;
     }
 
+    // 处理 GetDirectory 响应
     if (data.id === "GetDirectory" && data.result && data.result.files) {
         var files = data.result.files;
         var n = files.length;
@@ -517,11 +606,12 @@ function wsMessageReceived(message) {
         script.log(output);
 
         initStep = 2;
-        playM3U();
-        script.log("Step 2.5: Playing m3u playlist...");
+        buildPlaylistFromM3U();
+        script.log("Step 2: Building playlist from m3u...");
         return;
     }
 
+    // 处理 GetItems 响应
     if (data.id === "GetCurrentListAllItems" && data.result && data.result.items) {
         var items = data.result.items;
         var output = "";
@@ -535,7 +625,7 @@ function wsMessageReceived(message) {
         }
         var itemsValue = local.values.getChild("Items");
         if (itemsValue) itemsValue.set(output);
-        script.log("============ Playlist Items (actual playing order from m3u) ============");
+        script.log("============ Playlist Items ============");
         script.log(output);
         kodiPlaylistMap = [];
         for (var i = 0; i < items.length; i++) {
@@ -545,10 +635,11 @@ function wsMessageReceived(message) {
                 realIndex: i
             });
         }
-        if (initStep === 4) initStep = 0;
+        if (initStep === 3) initStep = 0;
         return;
     }
 
+    // 初始化时的音量响应
     if (data.id === "GetVolume" && data.result && data.result.volume !== undefined) {
         var volumeValue = local.values.getChild("Volume");
         if (volumeValue) {
@@ -560,12 +651,15 @@ function wsMessageReceived(message) {
         return;
     }
 
+    // 处理其他事件（仅更新 UI，无任何自动重载逻辑）
     if (data.method === "Player.OnPlay") {
         var videoFile = data.params.data.item.title;
         var playingValue = local.values.getChild("Playing");
         if (playingValue) playingValue.set(videoFile);
         var pausedValue = local.values.getChild("isPaused");
         if (pausedValue) pausedValue.set(false);
+        var isPlayingValue = local.values.getChild("isPlaying");
+        if (isPlayingValue) isPlayingValue.set(true);
         script.log("Kodi state: Playing - " + videoFile);
     }
     if (data.method === "Player.OnPause") {
@@ -583,16 +677,23 @@ function wsMessageReceived(message) {
         if (playingValue) playingValue.set("[Stopped]");
         var pausedValue = local.values.getChild("isPaused");
         if (pausedValue) pausedValue.set(false);
-        var itemsValue = local.values.getChild("Items");
-        if (itemsValue) itemsValue.set("(stopped)");
-        script.log("Kodi state: Stopped");
+        var isPlayingValue = local.values.getChild("isPlaying");
+        if (isPlayingValue) isPlayingValue.set(false);
+        var end = data.params && data.params.data && data.params.data.end;
+        if (end === true) {
+            script.log("Playlist ended naturally, rebuilding playlist...");
+            initStep = 2;
+            kodiPlaylistMap = [];
+            buildPlaylistFromM3U();
+        } else {
+            script.log("Kodi state: Stopped (by user)");
+        }
     }
     if (data.method === "Application.OnVolumeChanged") {
         var newVol = data.params.data.volume;
         var volumeValue = local.values.getChild("Volume");
-        // 关键修改：如果处于静音状态，忽略该事件，保持 UI 显示 0
         if (isMutedFlag) {
-            script.log("Volume event ignored because muted, UI volume remains 0.");
+            script.log("Volume event ignored because muted.");
             return;
         }
         if (volumeValue) {
