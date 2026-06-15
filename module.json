@@ -1,0 +1,360 @@
+{
+    "name": "KODI",
+    "type": "WebSocket Client",
+    "path": "ToCenTek",
+    "version": "1.0.0",
+    "description": "通过 WebSocket 控制 KODI, 基于 KODI Websocket API v13.0.0 版本.\nControl KODI by Websocket. Based on KODI Websocket API v13.0.0",
+    "url": "https://kodi.wiki",
+    "downloadURL": "",
+    "hasInput": true,
+    "hasOutput": true,
+    "hideDefaultCommands": true,
+    "defaults": {
+        "Protocol": "Lines",
+        "autoAdd": false,
+        "serverPath": "10.0.0.41:9090"
+    },
+    "values":{
+        "INIT":{
+            "type": "Trigger"
+        },
+        "isPlaying":{
+            "type":"Boolean",
+            "readOnly": true,
+            "description": "当前是否正在播放.\nWhether media is playing or not.",
+            "default": false
+        },
+        "isPaused":{
+            "type":"Boolean",
+            "readOnly": true,
+            "description": "是否已暂停.\nWhether media is paused or not."
+        },
+        "isLooped":{
+            "type":"Boolean",
+            "readOnly": true,
+            "description": "false = 不循环当前媒体, 但循环列表.\ntrue = 循环播放当前媒体.\nWhether media is looped or not."
+        },
+        "Random":{
+            "type": "Boolean",
+            "readOnly": true
+        },
+        "Playing":{
+            "description": "当前正在播放的媒体文件路径.\nPath to the Currently Playing File.",
+            "type":"String",
+            "default": ""
+        },
+        "Items":{
+            "description": "当前播放列表中的所有媒体项.\nAutomatically Retrieve from the Current playlist.",
+            "type":"String",
+            "multiline": true,
+            "default": ""
+        },
+        "isMuted":{
+            "type": "Boolean",
+            "readOnly": true
+        },
+        "Volume":{
+            "description": "音量.\nCurrent Volume Level.",
+            "type":"Float",
+            "ui": "slider",
+            "min": 0.0,
+            "max": 100.0,
+            "default": 60.0
+        }
+    },
+    
+    "scripts": ["kodi.js"],
+    "commands": {
+        "Initialization":{
+            "menu": "",
+            "description": "初始化, 加载视频播放列表\nInitialization, Load Playlist",
+            "callback": "init"
+        },
+        "Send Raw JSON": {
+            "menu": "",
+            "description": "要发送的原始命令 JSON 字符串.\nThe raw command JSON string to send.",
+            "callback": "sendJSON",
+            "parameters": {
+                "JSON": {
+                    "description": "完整且符合 KODI JSON-RPC 规范的命令字符串.\nComplete Command String Conforming to the KODI JSON-RPC Specification.",
+                    "type": "String",
+                    "default":""
+                }
+            }
+        },
+        "Show Notification": {
+            "menu": "System",
+            "description": "显示通知.\nShow Notification",
+            "callback": "showNotification",
+            "parameters": {
+                "Title": {
+                    "description": "通知的标题.\nNotification Title.",
+                    "type": "String",
+                    "default": "Hello"
+                },
+                "Message":{
+                    "description": "欢迎文本文件的路径.\nnNotification Message",
+                    "type": "File",
+                    "default": "Browse to a text File and Enter text into it."
+                },
+                "Displaytime": {
+                    "description": "通知持续时间.\nNotification Displaytime.",
+                    "type": "Integer",
+                    "min": 1000,
+                    "default": 5000
+                },
+                "Image": {
+                    "description": "通知的背景图.\nNotification image.",
+                    "type": "File",
+                    "default": ""
+                }
+            }
+        },
+        "Index": {
+            "menu": "Player",
+            "description": "播放指定索引的媒体项.\nPlay Media Item at Index",
+            "callback": "playIndex",
+            "parameters": {
+                "Index":{
+                    "description": "要播放的媒体项在当前播放列表中的索引.\nIndex of the media item in the current playlist to play.",
+                    "type": "Integer",
+                    "default": 0,
+                    "min": 0
+                }
+            }
+        },
+        "Play||Pause": {
+            "menu": "Player",
+            "description": "Toggle Play/Pause\n播放/暂停",
+            "callback": "playPause",
+            "parameters": {
+                "isPaused":{
+                    "description": "是否暂停",
+                    "type": "Boolean"
+                }
+            }
+        },
+        "Stop": {
+            "menu": "Player",
+            "description": "停止播放, 回到系统界面.\n初始化可重新播放\nStop Playback",
+            "callback": "stopPlay"
+        },
+        "File": {
+            "menu": "Player",
+            "description": "播放指定路径的媒体文件.\n但文件操作, 尽量不使用!\nPlay Media File at Path",
+            "callback": "playFile",
+            "parameters": {
+                "FilePath":{
+                    "type": "String",
+                    "default": "/storage/videos/***.mp4",
+                    "description": "要播放的媒体文件的路径.\nPath to the media file to play."
+                }
+            }
+        },
+        "Seek": {
+            "menu": "Seek",
+            "description": "快进/快退.\nForward or Backward",
+            "callback": "seek",
+            "parameters": {
+                "Step":{
+                    "description": "快进或快退的时间步长, 单位为秒.\n快进输入正值, 比如: 30\n快退输入负值, 比如: -30\nSeek step in seconds.",
+                    "type": "Integer",
+                    "default": 30
+                }
+            }
+        },
+        "Seek To Parameters": {
+            "menu": "Seek",
+            "description": "跳转到.\nSeek To",
+            "callback": "seekToParameters",
+             "parameters": {
+                "Parameters": {
+                    "description": "要跳转到的百分比.\nSeek to percentage.",
+                    "type": "Integer",
+                    "min": 0,
+                    "default": 15
+                }
+            }
+        },
+        "Seek To Time": {
+            "menu": "Seek",
+            "description": "跳转到.\nSeek To",
+            "callback": "seekToTime",
+            "parameters": {
+                "Hours":{
+                    "description": "要跳转到的小时.\nSeek to hours.",
+                    "type": "Integer",
+                    "min": 0,
+                    "default": 0
+                },
+                "Minutes":{
+                    "description": "要跳转到的分钟.\nSeek to minutes.",
+                    "type": "Integer",
+                    "min": 0,
+                    "default": 0
+                },
+                "Seconds":{
+                    "description": "要跳转到的秒.\nSeek to seconds.",
+                    "type": "Integer",
+                    "min": 0,
+                    "default": 0
+                },
+                "Milliseconds":{
+                    "description": "要跳转到的毫秒.\nSeek to milliseconds.",
+                    "type": "Integer",
+                    "min": 0,
+                    "default": 0
+                }
+            }
+        },
+        "Seek To Predefined": {
+            "menu": "Seek",
+            "description": "跳转到.\nSeek To",
+            "callback": "seekToPredefined",
+            "parameters": {
+                "Step": {
+                    "description": "要跳转到预定义.\nSeek to Predefined.",
+                    "type": "Enum",
+                    "options": {
+                        "BigForward": "bigforward",
+                        "SmallForward": "smallforward",
+                        "BigBackward": "bigbackward",
+                        "SmallBackward": "smallbackward"
+                    }
+                }
+            }
+        },
+        "Loop": {
+            "menu": "Playback Mode",
+            "description": "设置循环模式.\nSet Repeat Mode",
+            "callback": "setLoop",
+            "parameters": {
+                "Mode":{
+                    "description": "循环模式:\none = 循环播放当前媒体.\noff = 不循环.\nall = 循环播放列表中的所有媒体.\nRepeat mode:\none = Repeat Current Media.\noff = Not Repeat.\nall = Repeat All Media in Playlist.",
+                    "type": "Enum",
+                    "options": {
+                        "One": "one",
+                        "All": "all",
+                        "Off": "off"
+                    }
+                }   
+            }
+        },
+        "Random": {
+            "menu": "Playback Mode",
+            "description": "设置随机播放.\nSet Shuffle",
+            "callback": "setRandom",
+            "parameters": {
+                "Random":{
+                    "type": "Boolean",
+                    "default": false,
+                    "description": "是否启用随机播放.\nWhether to enable shuffle mode."
+                }   
+            }
+        }, 
+        "Mute":{
+            "menu": "Volume",
+            "callback": "mute",
+            "parameters": {
+                "Mute":{
+                    "type": "Boolean"
+                }
+            }
+        },
+        "Set Volume": {
+            "menu": "Volume",
+            "description": "设置音量.\nSet Volume",
+            "callback": "setVolume",
+            "parameters": {
+                "Volume":{
+                    "description": "要设置的音量级别.\nVolume Level to Set.",
+                    "type": "Integer",
+                    "min": 0,
+                    "max": 100,
+                    "default": 68
+                }
+            }
+        },
+        "Volume UP":{
+            "menu": "Volume",
+            "description": "音量递增.\nVolume increment",
+            "callback": "volumeUP"
+        },
+        "Volume Down":{
+            "menu": "Volume",
+            "description": "音量递减.\nVolume decrement",
+            "callback": "volumeDown"
+        },
+        "Restart KODI": {
+            "menu": "System",
+            "description": "仅重启 KODI, 不重启设备.\nOnly Restart KODI, Not the Whole Device.",
+            "callback": "restartKODI"
+        },
+        "Standby": {
+            "menu": "System",
+            "description": "将远程媒体中心置于待机状态.\nPut the Remote Media Center into Standby Mode.",
+            "callback": "standby"
+        },
+        "Reboot": {
+            "menu": "System",
+            "description": "重启远程媒体中心.\nReboot the Remote Media Center.",
+            "callback": "reboot"
+        },
+        "Shutdown": {
+            "menu": "System",
+            "description": "关闭远程媒体中心.\nShutdown the Remote Media Center.",
+            "callback": "shutdown"
+        },
+        "Show Info":{
+            "menu": "System",
+            "description": "切换 debug 消息显示",
+            "callback": "showInfo",
+            "parameters":{
+                "Show":{
+                    "type": "Boolean"
+                }
+            }
+        },
+        "Activate Window": {
+            "menu": "System",
+            "description": "激活视频窗口",
+            "callback": "activateWindow",
+            "parameters":{
+                "Window":{
+                    "type": "Enum",
+                    "options":{
+                        "fullscreenvideo": "fullscreenvideo",
+                        "home": "home",
+                        "systeminfo": "systeminfo",
+                        "settings": "settings",
+                        "profiles": "profiles",
+                        "filemanager": "filemanager",
+                        "addonbrowser": "addonbrowser",
+                        "videos": "videos",
+                        "movies": "movies",
+                        "movietitles": "movietitles",
+                        "moviegenres": "moviegenres",
+                        "tvshows": "tvshows",
+                        "tvshowtitles": "tvshowtitles",
+                        "musicvideos": "musicvideos",
+                        "videoplaylist": "videoplaylist",
+                        "music": "music",
+                        "artists": "artists",
+                        "albums": "albums",
+                        "songs": "songs",
+                        "genres": "genres",
+                        "pvr": "pvr",
+                        "programs": "programs",
+                        "pictures": "pictures",
+                        "loginscreen": "loginscreen"
+                    }
+                }
+            }
+        },
+        "Fullscreen":{
+            "menu": "System",
+            "callback": "forceFullscreenAndClean"
+
+        }
+    }
+}
