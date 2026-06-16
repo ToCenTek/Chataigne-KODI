@@ -3,3 +3,5 @@
 *.noisette
 *.html
 *_autosave/
+*.mp4
+.DS_Store
