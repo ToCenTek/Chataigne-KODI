@@ -58,27 +58,6 @@ function execShell(cmd) {
 }
 
 
-function trimStr(s) {
-    if (s == null) return "";
-    var start = 0;
-    var end = s.length - 1;
-    while (start <= end && s.charAt(start) <= " ") start++;
-    while (end >= start && s.charAt(end) <= " ") end--;
-    if (start > end) return "";
-    return s.substring(start, end + 1);
-}
-
-function parseSecondaryIps(str) {
-    if (str == null || str === "") { secondaryIps = []; return; }
-    var items = str.split(",");
-    var result = [];
-    for (var i = 0; i < items.length; i++) {
-        var p = trimStr(items[i]);
-        if (p.length > 0) result.push(p);
-    }
-    secondaryIps = result;
-}
-
 function httpPost(host, port, msg) {
     var jsonStr = JSON.stringify(msg);
     jsonStr = jsonStr.split("'").join("'\\''");
@@ -356,14 +335,51 @@ function syncAll() {
     local.send(JSON.stringify(playersMsg));
 }
 
+function getNextKodiIndex() {
+    var kodiContainer = local.parameters.getChild("KODIs");
+    if (kodiContainer == null) return 1;
+    var containers = kodiContainer.getContainers();
+    var maxIndex = 0;
+    for (var i = 0; i < containers.length; i++) {
+        var name = containers[i].name;
+        if (name.substring(0, 10) === "Secondary_") {
+            var num = parseInt(name.substring(10));
+            if (!isNaN(num) && num > maxIndex) maxIndex = num;
+        }
+    }
+    return maxIndex + 1;
+}
+
+function addSecondary() {
+    var kodiContainer = local.parameters.getChild("KODIs");
+    if (kodiContainer == null) return;
+    var idx = getNextKodiIndex();
+    var sec = kodiContainer.addContainer("Secondary_" + idx);
+    sec.addStringParameter("Host", "副机 IP 地址\nSecondary KODI IP", "10.0.0.42");
+    sec.addIntParameter("Port", "副机端口\nSecondary KODI port", 8080, 1, 65535);
+    sec.addTrigger("Remove", "移除此副机\nRemove this secondary KODI");
+    reloadSyncSettings();
+    script.log("Added secondary KODI #" + idx);
+}
+
 function reloadSyncSettings() {
     var val;
-    // 从 KODIs Container 加载 IP 列表
+    // 从 KODIs Container 加载副机列表
     secondaryIps = [];
     var kodiContainer = local.parameters.getChild("KODIs");
     if (kodiContainer != null) {
-        val = kodiContainer.getChild("Secondary KODIs");
-        if (val) parseSecondaryIps(val.get());
+        var secs = kodiContainer.getContainers();
+        for (var i = 0; i < secs.length; i++) {
+            var c = secs[i];
+            var hostParam = c.getChild("Host");
+            var portParam = c.getChild("Port");
+            if (hostParam != null) {
+                var h = hostParam.get();
+                var p = 8080;
+                if (portParam != null) p = portParam.get();
+                if (h != null && h.length > 0) secondaryIps.push(h + ":" + p);
+            }
+        }
     }
     val = local.values.getChild("Synchronizer").getChild("HTTP User");
     if (val) httpUser = val.get();
@@ -1215,10 +1231,23 @@ function moduleParameterChanged(param) {
         var infoContainer = local.values.getChild("Info");
         if (infoContainer) infoContainer.setCollapsed(false);
         init();
-    } else if (paramName === "Add Secondary") {
+    } else if (paramName === "Add KODI") {
         addSecondary();
-    } else if (paramName.substring(0, 10) === "Secondary_") {
-        rebuildSecondaryManager();
+    } else if (paramName === "Remove") {
+        var sec = param.getParent();
+        if (sec != null) {
+            var parent = sec.getParent();
+            if (parent != null) {
+                parent.removeContainer(sec.name);
+                script.log("Removed " + sec.name);
+                reloadSyncSettings();
+            }
+        }
+    } else if (paramName === "Host" || paramName === "Port") {
+        var parent = param.getParent();
+        if (parent != null && parent.name.substring(0, 10) === "Secondary_") {
+            reloadSyncSettings();
+        }
     } else if (paramName.toLowerCase() === "syncenabled") {
         syncEnabled = param.get();
         updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
