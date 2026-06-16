@@ -884,13 +884,16 @@ var launcherFileParam = null;
 
 function runCoreelecScript(ScriptFile, UpdatePlaylist) {
     if (UpdatePlaylist == null) UpdatePlaylist = true;
+    var moduleDir = "/Users/yhc/Documents/Chataigne/modules/KODI";
+    var suffix = UpdatePlaylist ? "update" : "init";
+    // Linux: open script in default terminal
+    execShell("x-terminal-emulator -e /bin/bash '" + moduleDir + "/kodi_" + suffix + ".sh'");
+    // macOS: .command file opens in Terminal.app via launchFile
     if (launcherFileParam == null) {
         launcherFileParam = script.addFileParameter("__coreelec_launcher", "", "");
         launcherFileParam.setAttribute("saveMode", false);
     }
-    var moduleDir = "/Users/yhc/Documents/Chataigne/modules/KODI";
-    var launcher = moduleDir + "/kodi_" + (UpdatePlaylist ? "update" : "init") + ".command";
-    launcherFileParam.set(launcher);
+    launcherFileParam.set(moduleDir + "/kodi_" + suffix + ".command");
     launcherFileParam.launchFile("");
     script.log("Running CoreELEC script (update=" + UpdatePlaylist + ")");
 }
