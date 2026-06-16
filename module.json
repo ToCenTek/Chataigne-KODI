@@ -2,9 +2,9 @@
     "name": "KODI",
     "type": "WebSocket Client",
     "path": "ToCenTek",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "通过 WebSocket 控制 KODI, 基于 KODI Websocket API v13.0.0 版本.\nControl KODI by Websocket. Based on KODI Websocket API v13.0.0",
-    "url": "https://kodi.wiki",
+    "url": "https://kodi.wiki/view/JSON-RPC_API/v13",
     "downloadURL": "",
     "hasInput": true,
     "hasOutput": true,
@@ -14,56 +14,110 @@
         "autoAdd": false,
         "serverPath": "10.0.0.41:9090"
     },
-    "values":{
-        "INIT":{
-            "type": "Trigger"
+    "parameters": {
+        "KODIs": {
+            "type": "Container",
+            "collapsed": false,
+            "Secondary KODIs": {
+                "description": "副 KODI 的 IP:port 列表, 逗号分隔.\nSecondary KODI IP:port list, comma separated.",
+                "type": "String",
+                "default": ""
+            }
         },
-        "isPlaying":{
-            "type":"Boolean",
-            "readOnly": true,
-            "description": "当前是否正在播放.\nWhether media is playing or not.",
+        "Initialization": {
+            "type": "Trigger",
+            "description": "初始化, 加载视频播放列表.\nInitialize, load playlist."
+        },
+        "Sync Enabled":{
+            "description": "启用多设备同步.\nEnable multi-device sync.",
+            "type": "Boolean",
             "default": false
+        }
+    },
+    "values":{
+        "Info":{
+            "type": "Container",
+            "collapsed": true,
+            "isPlaying":{
+                "type":"Boolean",
+                "readOnly": true,
+                "description": "当前是否正在播放.\nWhether media is playing or not.",
+                "default": false
+            },
+            "isPaused":{
+                "type":"Boolean",
+                "readOnly": true,
+                "description": "是否已暂停.\nWhether media is paused or not."
+            },
+            "Playing":{
+                "description": "当前正在播放的媒体文件路径.\nPath to the Currently Playing File.",
+                "type":"String",
+                "default": ""
+            },
+            "Items":{
+                "description": "当前播放列表中的所有媒体项.\nAutomatically Retrieve from the Current playlist.",
+                "type":"String",
+                "multiline": true,
+                "readOnly": true
+            },
+            "isLooped":{
+                "type":"Boolean",
+                "readOnly": true,
+                "description": "false = 不循环当前媒体, 但循环列表.\ntrue = 循环播放当前媒体.\nWhether media is looped or not."
+            },
+            "Random":{
+                "type": "Boolean",
+                "readOnly": true
+            },
+            "Volume":{
+                "description": "音量.\nCurrent Volume Level.",
+                "type":"Float",
+                "ui": "slider",
+                "min": 0.0,
+                "max": 100.0,
+                "default": 60.0
+            },
+            "isMuted":{
+                "type": "Boolean",
+                "readOnly": true
+            }
         },
-        "isPaused":{
-            "type":"Boolean",
-            "readOnly": true,
-            "description": "是否已暂停.\nWhether media is paused or not."
-        },
-        "isLooped":{
-            "type":"Boolean",
-            "readOnly": true,
-            "description": "false = 不循环当前媒体, 但循环列表.\ntrue = 循环播放当前媒体.\nWhether media is looped or not."
-        },
-        "Random":{
-            "type": "Boolean",
-            "readOnly": true
-        },
-        "Playing":{
-            "description": "当前正在播放的媒体文件路径.\nPath to the Currently Playing File.",
-            "type":"String",
-            "default": ""
-        },
-        "Items":{
-            "description": "当前播放列表中的所有媒体项.\nAutomatically Retrieve from the Current playlist.",
-            "type":"String",
-            "multiline": true,
-            "default": ""
-        },
-        "isMuted":{
-            "type": "Boolean",
-            "readOnly": true
-        },
-        "Volume":{
-            "description": "音量.\nCurrent Volume Level.",
-            "type":"Float",
-            "ui": "slider",
-            "min": 0.0,
-            "max": 100.0,
-            "default": 60.0
+        "Synchronizer":{
+            "type": "Container",
+            "collapsed": true,
+            "HTTP User":{
+                "description": "KODI HTTP 用户名.\nKODI HTTP username.",
+                "type": "String",
+                "default": "kodi"
+            },
+            "HTTP Pass":{
+                "description": "KODI HTTP 密码.\nKODI HTTP password.",
+                "type": "String",
+                "default": ""
+            },
+                "Sync Interval":{
+                    "description": "位置轮询间隔（毫秒）.\nPosition polling interval (ms).",
+                    "type": "Integer",
+                    "min": 4,
+                    "default": 2000
+                },
+                "Sync Threshold":{
+                    "description": "允许的最大偏移（毫秒），超过则纠偏.\nMax allowed drift (ms).",
+                    "type": "Integer",
+                    "min": 4,
+                    "default": 8
+                },
+            "Sync Status":{
+                "description": "同步状态.\nSync status.",
+                "type": "String",
+                "readOnly": true,
+                "default": "Idle"
+            }
         }
     },
     
     "scripts": ["kodi.js"],
+
     "commands": {
         "Initialization":{
             "menu": "",
@@ -72,44 +126,17 @@
         },
         "Send Raw JSON": {
             "menu": "",
-            "description": "要发送的原始命令 JSON 字符串.\nThe raw command JSON string to send.",
+            "description": "发送原始 JSON-RPC 命令到所有 KODI.\nSend raw JSON-RPC command to all KODIs.",
             "callback": "sendJSON",
             "parameters": {
                 "JSON": {
                     "description": "完整且符合 KODI JSON-RPC 规范的命令字符串.\nComplete Command String Conforming to the KODI JSON-RPC Specification.",
                     "type": "String",
-                    "default":""
+                    "default":"{\"jsonrpc\":\"2.0\",\"method\":\"Application.GetProperties\",\"params\":{\"properties\":[\"volume\",\"muted\"]},\"id\":\"test\"}"
                 }
             }
         },
-        "Show Notification": {
-            "menu": "System",
-            "description": "显示通知.\nShow Notification",
-            "callback": "showNotification",
-            "parameters": {
-                "Title": {
-                    "description": "通知的标题.\nNotification Title.",
-                    "type": "String",
-                    "default": "Hello"
-                },
-                "Message":{
-                    "description": "欢迎文本文件的路径.\nnNotification Message",
-                    "type": "File",
-                    "default": "Browse to a text File and Enter text into it."
-                },
-                "Displaytime": {
-                    "description": "通知持续时间.\nNotification Displaytime.",
-                    "type": "Integer",
-                    "min": 1000,
-                    "default": 5000
-                },
-                "Image": {
-                    "description": "通知的背景图.\nNotification image.",
-                    "type": "File",
-                    "default": ""
-                }
-            }
-        },
+
         "Index": {
             "menu": "Player",
             "description": "播放指定索引的媒体项.\nPlay Media Item at Index",
@@ -141,7 +168,7 @@
         },
         "File": {
             "menu": "Player",
-            "description": "播放指定路径的媒体文件.\n但文件操作, 尽量不使用!\nPlay Media File at Path",
+            "description": "播放指定路径的媒体文件.\nPlay Media File at Path",
             "callback": "playFile",
             "parameters": {
                 "FilePath":{
@@ -151,107 +178,7 @@
                 }
             }
         },
-        "Seek": {
-            "menu": "Seek",
-            "description": "快进/快退.\nForward or Backward",
-            "callback": "seek",
-            "parameters": {
-                "Step":{
-                    "description": "快进或快退的时间步长, 单位为秒.\n快进输入正值, 比如: 30\n快退输入负值, 比如: -30\nSeek step in seconds.",
-                    "type": "Integer",
-                    "default": 30
-                }
-            }
-        },
-        "Seek To Parameters": {
-            "menu": "Seek",
-            "description": "跳转到.\nSeek To",
-            "callback": "seekToParameters",
-             "parameters": {
-                "Parameters": {
-                    "description": "要跳转到的百分比.\nSeek to percentage.",
-                    "type": "Integer",
-                    "min": 0,
-                    "default": 15
-                }
-            }
-        },
-        "Seek To Time": {
-            "menu": "Seek",
-            "description": "跳转到.\nSeek To",
-            "callback": "seekToTime",
-            "parameters": {
-                "Hours":{
-                    "description": "要跳转到的小时.\nSeek to hours.",
-                    "type": "Integer",
-                    "min": 0,
-                    "default": 0
-                },
-                "Minutes":{
-                    "description": "要跳转到的分钟.\nSeek to minutes.",
-                    "type": "Integer",
-                    "min": 0,
-                    "default": 0
-                },
-                "Seconds":{
-                    "description": "要跳转到的秒.\nSeek to seconds.",
-                    "type": "Integer",
-                    "min": 0,
-                    "default": 0
-                },
-                "Milliseconds":{
-                    "description": "要跳转到的毫秒.\nSeek to milliseconds.",
-                    "type": "Integer",
-                    "min": 0,
-                    "default": 0
-                }
-            }
-        },
-        "Seek To Predefined": {
-            "menu": "Seek",
-            "description": "跳转到.\nSeek To",
-            "callback": "seekToPredefined",
-            "parameters": {
-                "Step": {
-                    "description": "要跳转到预定义.\nSeek to Predefined.",
-                    "type": "Enum",
-                    "options": {
-                        "BigForward": "bigforward",
-                        "SmallForward": "smallforward",
-                        "BigBackward": "bigbackward",
-                        "SmallBackward": "smallbackward"
-                    }
-                }
-            }
-        },
-        "Loop": {
-            "menu": "Playback Mode",
-            "description": "设置循环模式.\nSet Repeat Mode",
-            "callback": "setLoop",
-            "parameters": {
-                "Mode":{
-                    "description": "循环模式:\none = 循环播放当前媒体.\noff = 不循环.\nall = 循环播放列表中的所有媒体.\nRepeat mode:\none = Repeat Current Media.\noff = Not Repeat.\nall = Repeat All Media in Playlist.",
-                    "type": "Enum",
-                    "options": {
-                        "One": "one",
-                        "All": "all",
-                        "Off": "off"
-                    }
-                }   
-            }
-        },
-        "Random": {
-            "menu": "Playback Mode",
-            "description": "设置随机播放.\nSet Shuffle",
-            "callback": "setRandom",
-            "parameters": {
-                "Random":{
-                    "type": "Boolean",
-                    "default": false,
-                    "description": "是否启用随机播放.\nWhether to enable shuffle mode."
-                }   
-            }
-        }, 
+
         "Mute":{
             "menu": "Volume",
             "callback": "mute",
@@ -267,7 +194,7 @@
             "callback": "setVolume",
             "parameters": {
                 "Volume":{
-                    "description": "要设置的音量级别.\nVolume Level to Set.",
+                    "description": "音量级别.\nVolume Level.",
                     "type": "Integer",
                     "min": 0,
                     "max": 100,
@@ -285,6 +212,120 @@
             "description": "音量递减.\nVolume decrement",
             "callback": "volumeDown"
         },
+
+        "Seek": {
+            "menu": "Playback",
+            "description": "快进/快退.\nForward or Backward",
+            "callback": "seek",
+            "parameters": {
+                "Step":{
+                    "description": "快进或快退的时间步长, 单位为秒.\nForward: positive, e.g. 30\nBackward: negative, e.g. -30",
+                    "type": "Integer",
+                    "default": 30
+                }
+            }
+        },
+        "Seek To Parameters": {
+            "menu": "Playback",
+            "description": "跳转到百分比.\nSeek To Percentage",
+            "callback": "seekToParameters",
+             "parameters": {
+                "Parameters": {
+                    "description": "要跳转到的百分比.\nSeek to percentage.",
+                    "type": "Integer",
+                    "min": 0,
+                    "default": 15
+                }
+            }
+        },
+        "Seek To Time": {
+            "menu": "Playback",
+            "description": "跳转到指定时间.\nSeek To Time",
+            "callback": "seekToTime",
+            "parameters": {
+                "Hours":{
+                    "description": "小时.\nHours.",
+                    "type": "Integer",
+                    "min": 0,
+                    "default": 0
+                },
+                "Minutes":{
+                    "description": "分钟.\nMinutes.",
+                    "type": "Integer",
+                    "min": 0,
+                    "default": 0
+                },
+                "Seconds":{
+                    "description": "秒.\nSeconds.",
+                    "type": "Integer",
+                    "min": 0,
+                    "default": 0
+                },
+                "Milliseconds":{
+                    "description": "毫秒.\nMilliseconds.",
+                    "type": "Integer",
+                    "min": 0,
+                    "default": 0
+                }
+            }
+        },
+        "Seek To Predefined": {
+            "menu": "Playback",
+            "description": "跳转到预设步进.\nSeek To Predefined Step",
+            "callback": "seekToPredefined",
+            "parameters": {
+                "Step": {
+                    "description": "预定义步进.\nPredefined step.",
+                    "type": "Enum",
+                    "options": {
+                        "BigForward": "bigforward",
+                        "SmallForward": "smallforward",
+                        "BigBackward": "bigbackward",
+                        "SmallBackward": "smallbackward"
+                    }
+                }
+            }
+        },
+        "Loop": {
+            "menu": "Playback",
+            "description": "设置循环模式.\nSet Repeat Mode",
+            "callback": "setLoop",
+            "parameters": {
+                "Mode":{
+                    "description": "循环模式:\none = 循环当前媒体\noff = 不循环\nall = 循环列表\nRepeat mode:\none = Repeat Current\noff = Off\nall = Repeat All",
+                    "type": "Enum",
+                    "options": {
+                        "One": "one",
+                        "All": "all",
+                        "Off": "off"
+                    }
+                }   
+            }
+        },
+        "Random": {
+            "menu": "Playback",
+            "description": "设置随机播放.\nSet Shuffle",
+            "callback": "setRandom",
+            "parameters": {
+                "Random":{
+                    "type": "Boolean",
+                    "default": false,
+                    "description": "是否启用随机播放.\nWhether to enable shuffle mode."
+                }   
+            }
+        }, 
+
+        "Toggle Sync":{
+            "menu": "Sync",
+            "description": "开启/关闭多设备同步.\nEnable/disable multi-device sync.",
+            "callback": "toggleSync"
+        },
+        "ReSync Now":{
+            "menu": "Sync",
+            "description": "立即轮询所有 KODI 的位置并纠偏.\nPoll all KODI positions and correct drift now.",
+            "callback": "reSync"
+        },
+
         "Restart KODI": {
             "menu": "System",
             "description": "仅重启 KODI, 不重启设备.\nOnly Restart KODI, Not the Whole Device.",
@@ -307,7 +348,7 @@
         },
         "Show Info":{
             "menu": "System",
-            "description": "切换 debug 消息显示",
+            "description": "切换 debug 消息显示.\nToggle debug overlay info.",
             "callback": "showInfo",
             "parameters":{
                 "Show":{
@@ -315,9 +356,37 @@
                 }
             }
         },
+        "Show Notification": {
+            "menu": "System",
+            "description": "显示通知.\nShow Notification",
+            "callback": "showNotification",
+            "parameters": {
+                "Title": {
+                    "description": "通知的标题.\nNotification Title.",
+                    "type": "String",
+                    "default": "Hello"
+                },
+                "Message":{
+                    "description": "通知信息或文本文件路径.\nNotification Message or text file path.",
+                    "type": "File",
+                    "default": "Browse to a text File and Enter text into it."
+                },
+                "Displaytime": {
+                    "description": "通知持续时间.\nNotification Displaytime.",
+                    "type": "Integer",
+                    "min": 1000,
+                    "default": 5000
+                },
+                "Image": {
+                    "description": "通知的背景图.\nNotification image.",
+                    "type": "File",
+                    "default": ""
+                }
+            }
+        },
         "Activate Window": {
             "menu": "System",
-            "description": "激活视频窗口",
+            "description": "激活指定窗口.\nActivate a KODI window",
             "callback": "activateWindow",
             "parameters":{
                 "Window":{
@@ -355,6 +424,49 @@
             "menu": "System",
             "callback": "forceFullscreenAndClean"
 
+        },
+        "Cycle 3D Mode":{
+            "menu": "3D",
+            "description": "本地索引 Off→SBS→TAB→Off 循环。仅主 KODI。\nCycle Off→SBS→TAB→Off. Primary KODI only.",
+            "callback": "cycleStereoMode"
+        },
+        "Set 3D Mode":{
+            "menu": "3D",
+            "description": "设置 3D 模式，同步所有 KODI。\nSet 3D mode, synced to all KODIs.",
+            "callback": "setStereoMode",
+            "parameters": {
+                "Mode":{
+                    "description": "3D模式.\n3D mode.",
+                    "type": "Enum",
+                    "options": {
+                        "Off": "off",
+                        "Side-by-Side": "sbs",
+                        "Top-and-Bottom": "tab"
+                    }
+                },
+                "Swap":{
+                    "description": "交换左右眼(SBS)或上下(TAB)。Off 时无效。\n尝试通过 video.stereoscopicinvert 实现，KODI 20 可能不支持（实验性）。\nSwap L/R (SBS) or T/B (TAB). Tries video.stereoscopicinvert (experimental, KODI 20 may not support).",
+                    "type": "Boolean",
+                    "default": false
+                }
+            }
+        },
+        "Run CoreELEC Script":{
+            "menu": "System",
+            "description": "在终端中运行 coreelec.sh.\nRun coreelec.sh in a terminal window.",
+            "callback": "runCoreelecScript",
+            "parameters": {
+                "Script File":{
+                    "description": "coreelec.sh 脚本文件路径.\nPath to coreelec.sh script file.",
+                    "type": "File",
+                    "default": ""
+                },
+                "Update Playlist":{
+                    "description": "true=更新现有列表, false=完整初始化.\ntrue=update existing, false=full init.",
+                    "type": "Boolean",
+                    "default": true
+                }
+            }
         }
     }
 }

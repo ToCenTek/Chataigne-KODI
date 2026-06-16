@@ -15,6 +15,251 @@ var volumeBeforeMute = -1;
 var isMutedFlag = false;
 var currentLoopMode = "off";
 
+// 同步相关变量
+var secondaryIps = [];
+var httpUser = "kodi";
+var httpPass = "";
+var syncEnabled = false;
+var syncInterval = 2000;
+var syncThreshold = 8;
+var syncStatusValue = null;
+var syncStatusText = "";
+var syncGotPrimaryResponse = false;
+var syncPrimaryTime = null;
+var syncPrimarySpeed = 0;
+var sysHelperName = "OS";
+
+// 同步状态机变量（与 sync.js 声明的全局变量相同，作用域隔离）
+var SYNC_IDLE = 0;
+var SYNC_WAIT_PRIMARY = 1;
+var SYNC_CHECK = 2;
+var SYNC_WAIT_SECONDARY = 3;
+var SYNC_DONE = 4;
+var syncState = SYNC_IDLE;
+var syncLastCycleTime = 0;
+var syncSecondaryIndex = 0;
+var syncLastSeekMs = -1;
+var syncCurHost = "";
+var syncCurPort = 8080;
+var syncTempPrefix = "/tmp/kodi_sync_";
+
+function execShell(cmd) {
+    var helper = root.modules.getChild(sysHelperName);
+    if (helper == null) {
+        script.log("OS module not found, create one named '" + sysHelperName + "'");
+        return false;
+    }
+    if (helper.launchProcess) {
+        helper.launchProcess(cmd);
+        return true;
+    }
+    script.log("OS module '" + sysHelperName + "' has no launchProcess method");
+    return false;
+}
+
+
+function trimStr(s) {
+    if (s == null) return "";
+    var start = 0;
+    var end = s.length - 1;
+    while (start <= end && s.charAt(start) <= " ") start++;
+    while (end >= start && s.charAt(end) <= " ") end--;
+    if (start > end) return "";
+    return s.substring(start, end + 1);
+}
+
+function parseSecondaryIps(str) {
+    if (str == null || str === "") { secondaryIps = []; return; }
+    var items = str.split(",");
+    var result = [];
+    for (var i = 0; i < items.length; i++) {
+        var p = trimStr(items[i]);
+        if (p.length > 0) result.push(p);
+    }
+    secondaryIps = result;
+}
+
+function httpPost(host, port, msg) {
+    var jsonStr = JSON.stringify(msg);
+    jsonStr = jsonStr.split("'").join("'\\''");
+    var auth = "";
+    if (httpUser.length > 0) {
+        var u = httpUser.split("'").join("'\\''");
+        var p = httpPass.split("'").join("'\\''");
+        auth = " -u '" + u + ":" + p + "'";
+    }
+    var url = "http://" + host + ":" + port + "/jsonrpc";
+    var cmd = "curl -s --max-time 3" + auth + " -X POST -H 'Content-Type: application/json' -d '" + jsonStr + "' '" + url + "'";
+    execShell(cmd);
+}
+
+function httpGetToFile(host, port, msg, outFile) {
+    var jsonStr = JSON.stringify(msg);
+    jsonStr = jsonStr.split("'").join("'\\''");
+    var auth = "";
+    if (httpUser.length > 0) {
+        var u = httpUser.split("'").join("'\\''");
+        var p = httpPass.split("'").join("'\\''");
+        auth = " -u '" + u + ":" + p + "'";
+    }
+    var url = "http://" + host + ":" + port + "/jsonrpc";
+    var cmd = "curl -s --max-time 3" + auth + " -X POST -H 'Content-Type: application/json' -d '" + jsonStr + "' -o '" + outFile + "' '" + url + "'";
+    execShell(cmd);
+}
+
+function readJSONFile(filePath) {
+    var content = util.readFile(filePath);
+    if (content == null || content.length === 0) return null;
+    var c = content.length > 0 ? content.charAt(0) : "";
+    if (c !== "{" && c !== "[") return null;
+    return JSON.parse(content);
+}
+
+function timeToMs(t) {
+    if (t == null) return 0;
+    var ms = (t.milliseconds !== undefined) ? t.milliseconds : 0;
+    return (t.hours * 3600 + t.minutes * 60 + t.seconds) * 1000 + ms;
+}
+
+function advanceSyncState() {
+    if (!syncEnabled || secondaryIps.length === 0) {
+        syncState = SYNC_IDLE;
+        syncLastCycleTime = 0;
+        return;
+    }
+
+    var now = new Date() - 0;
+
+    // IDLE / DONE: 检查时间间隔
+    if (syncState === SYNC_IDLE || syncState === SYNC_DONE) {
+        if (syncLastCycleTime === 0) {
+            syncLastCycleTime = now;
+            return;
+        }
+        if (now - syncLastCycleTime < syncInterval) return;
+        syncLastCycleTime = now;
+        syncGotPrimaryResponse = false;
+        syncPrimaryTime = null;
+        syncState = SYNC_WAIT_PRIMARY;
+        var posMsg = {
+            jsonrpc: "2.0",
+            method: "Player.GetProperties",
+            params: {
+                playerid: currentPlayerId,
+                properties: ["time", "speed"]
+            },
+            id: "SyncGetPrimary"
+        };
+        local.send(JSON.stringify(posMsg));
+        updateSyncStatus("Polling...");
+        return;
+    }
+
+    // WAIT_PRIMARY: 等待 wsMessageReceived 设置 syncGotPrimaryResponse
+    if (syncState === SYNC_WAIT_PRIMARY) {
+        if (!syncGotPrimaryResponse) return;
+        syncGotPrimaryResponse = false;
+        if (syncPrimarySpeed === 0 || syncPrimaryTime == null) {
+            syncState = SYNC_DONE;
+            updateSyncStatus("Idle (not playing)");
+            return;
+        }
+        var primaryMs = timeToMs(syncPrimaryTime);
+        if (syncLastSeekMs >= 0 && Math.abs(primaryMs - syncLastSeekMs) < syncThreshold) {
+            syncState = SYNC_DONE;
+            return;
+        }
+        syncLastSeekMs = primaryMs;
+        syncSecondaryIndex = 0;
+        syncState = SYNC_CHECK;
+        return;
+    }
+
+    // CHECK: 启动 HTTP 获取副设备位置
+    if (syncState === SYNC_CHECK) {
+        if (syncSecondaryIndex >= secondaryIps.length) {
+            syncState = SYNC_DONE;
+            updateSyncStatus("In sync");
+            return;
+        }
+        var ip = secondaryIps[syncSecondaryIndex];
+        var parts = ip.split(":");
+        syncCurHost = parts[0];
+        syncCurPort = 8080;
+        if (parts.length > 1) {
+            var parsedPort = parseInt(parts[1]);
+            if (!isNaN(parsedPort)) syncCurPort = parsedPort;
+        }
+        var getMsg = {
+            jsonrpc: "2.0",
+            method: "Player.GetProperties",
+            params: {
+                playerid: currentPlayerId,
+                properties: ["time", "speed"]
+            },
+            id: "SyncGetSecondary"
+        };
+        var outFile = syncTempPrefix + syncSecondaryIndex + ".json";
+        httpGetToFile(syncCurHost, syncCurPort, getMsg, outFile);
+        syncState = SYNC_WAIT_SECONDARY;
+        return;
+    }
+
+    // WAIT_SECONDARY: 读取 HTTP 结果文件
+    if (syncState === SYNC_WAIT_SECONDARY) {
+        var outFile = syncTempPrefix + syncSecondaryIndex + ".json";
+        var data = readJSONFile(outFile);
+        if (data == null || data.error || data.result == null || data.result.time == null) {
+            syncSecondaryIndex++;
+            syncState = SYNC_CHECK;
+            return;
+        }
+        var secondaryTime = data.result.time;
+        var secondarySpeed = data.result.speed;
+        if (secondarySpeed !== 0 && syncPrimaryTime != null) {
+            var drift = Math.abs(timeToMs(syncPrimaryTime) - timeToMs(secondaryTime));
+            if (drift > syncThreshold) {
+                var seekMsg = {
+                    jsonrpc: "2.0",
+                    method: "Player.Seek",
+                    params: {
+                        playerid: currentPlayerId,
+                        value: { time: syncPrimaryTime }
+                    },
+                    id: "SyncSeek"
+                };
+                httpPost(syncCurHost, syncCurPort, seekMsg);
+                script.log("Sync: corrected " + syncCurHost + " drift=" + drift + "ms");
+            }
+        }
+        syncSecondaryIndex++;
+        syncState = SYNC_CHECK;
+        return;
+    }
+}
+
+function sendAll(msg) {
+    local.send(JSON.stringify(msg));
+    if (!syncEnabled) return;
+    for (var i = 0; i < secondaryIps.length; i++) {
+        var parts = secondaryIps[i].split(":");
+        var host = parts[0];
+        var port = 8080;
+        if (parts.length > 1) {
+            var parsedPort = parseInt(parts[1]);
+            if (!isNaN(parsedPort)) port = parsedPort;
+        }
+        httpPost(host, port, msg);
+    }
+}
+
+function updateSyncStatus(text) {
+    syncStatusText = text;
+    if (syncStatusValue == null) syncStatusValue = local.values.getChild("Synchronizer").getChild("Sync Status");
+    if (syncStatusValue) syncStatusValue.set(text);
+    script.log("Sync: " + text);
+}
+
 // 获取目录下的文件列表（仅用于 UI 显示）
 function getDirectoryFiles() {
     var msg = {
@@ -30,8 +275,6 @@ function getDirectoryFiles() {
     };
     local.send(JSON.stringify(msg));
 }
-
-
 
 // 通过 Playlist API 构建并播放列表
 function buildPlaylistFromM3U() {
@@ -96,15 +339,45 @@ function playListGetItems() {
     local.send(JSON.stringify(msg));
 }
 
-// 获取当前音量并更新 Values 面板
-function syncVolume() {
-    var msg = {
+// 获取所有状态并更新 Values 面板
+function syncAll() {
+    var volMsg = {
         jsonrpc: "2.0",
         method: "Application.GetProperties",
-        params: { properties: ["volume"] },
-        id: "GetVolume"
+        params: { properties: ["volume", "muted"] },
+        id: "GetAllState"
     };
-    local.send(JSON.stringify(msg));
+    local.send(JSON.stringify(volMsg));
+    var playersMsg = {
+        jsonrpc: "2.0",
+        method: "Player.GetActivePlayers",
+        id: "GetActivePlayers"
+    };
+    local.send(JSON.stringify(playersMsg));
+}
+
+function reloadSyncSettings() {
+    var val;
+    // 从 KODIs Container 加载 IP 列表
+    secondaryIps = [];
+    var kodiContainer = local.parameters.getChild("KODIs");
+    if (kodiContainer != null) {
+        val = kodiContainer.getChild("Secondary KODIs");
+        if (val) parseSecondaryIps(val.get());
+    }
+    val = local.values.getChild("Synchronizer").getChild("HTTP User");
+    if (val) httpUser = val.get();
+    val = local.values.getChild("Synchronizer").getChild("HTTP Pass");
+    if (val) httpPass = val.get();
+    val = local.parameters.getChild("Sync Enabled");
+    if (val) syncEnabled = val.get();
+    var syncContainer = local.values.getChild("Synchronizer");
+    if (syncContainer) syncContainer.setCollapsed(!syncEnabled);
+    val = local.values.getChild("Synchronizer").getChild("Sync Interval");
+    if (val) syncInterval = val.get();
+    val = local.values.getChild("Synchronizer").getChild("Sync Threshold");
+    if (val) syncThreshold = val.get();
+    updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
 }
 
 // ========== 监听 Values 面板值变化 ==========
@@ -122,7 +395,7 @@ function moduleValueChanged(value) {
             var intVol = Math.round(newVol);
             script.log("Volume slider changed: " + newVol + " -> intVol=" + intVol + ", lastSyncedVolume=" + lastSyncedVolume);
             
-            var isMutedParam = local.values.getChild("isMuted");
+            var isMutedParam = local.values.getChild("Info").getChild("isMuted");
             var wasMuted = isMutedParam && isMutedParam.get() === true;
             if (wasMuted && newVol > 0) {
                 script.log("Volume adjusted while muted, unmuting first.");
@@ -132,31 +405,47 @@ function moduleValueChanged(value) {
                     params: { mute: false },
                     id: "Application.SetMute"
                 };
-                local.send(JSON.stringify(unmuteMsg));
+                sendAll(unmuteMsg);
                 isMutedParam.set(false);
                 isMutedFlag = false;
                 volumeBeforeMute = intVol;
                 if (Math.abs(intVol - lastSyncedVolume) > 0.5) {
-                    setVolume(intVol);
+                    var volMsg = {
+                        jsonrpc: "2.0",
+                        method: "Application.SetVolume",
+                        params: { volume: intVol },
+                        id: "SetVolume"
+                    };
+                    sendAll(volMsg);
                     lastSyncedVolume = intVol;
                 }
                 script.log("Unmuted and set volume to: " + intVol);
             } else {
                 if (Math.abs(intVol - lastSyncedVolume) > 0.5) {
-                    setVolume(intVol);
+                    var volMsg = {
+                        jsonrpc: "2.0",
+                        method: "Application.SetVolume",
+                        params: { volume: intVol },
+                        id: "SetVolume"
+                    };
+                    sendAll(volMsg);
                     lastSyncedVolume = intVol;
                     script.log("Sent SetVolume command: " + intVol);
                 } else {
                     script.log("Volume change too small or equal to last synced, skipping send.");
                 }
             }
+        } else if (paramName.toLowerCase() === "httpuser") {
+            httpUser = value.get();
+        } else if (paramName.toLowerCase() === "httppass") {
+            httpPass = value.get();
+        } else if (paramName.toLowerCase() === "syncinterval") {
+            syncInterval = value.get();
+        } else if (paramName.toLowerCase() === "syncthreshold") {
+            syncThreshold = value.get();
         }
     } else {
         script.log("Module value triggered : " + value.name);
-        if (value.name === "init") {
-            script.log("INIT button pressed, starting initialization...");
-            init();
-        }
     }
 }
 
@@ -172,7 +461,7 @@ function playIndex(Index) {
         },
         id: "Player.Open.FilePath"
     };
-    local.send(JSON.stringify(msg));
+    sendAll(msg);
 }
 
 // 指定全路径播放
@@ -187,7 +476,7 @@ function playFile(FilePath) {
         params: { item: { file: FilePath } },
         id: "Player.Open.FilePath"
     };
-    local.send(JSON.stringify(msg));
+    sendAll(msg);
 }
 
 // 播放/暂停
@@ -203,7 +492,7 @@ function playPause(isPaused) {
         },
         id: "Player.SetSpeed"
     };
-    local.send(JSON.stringify(msg));
+    sendAll(msg);
 }
 
 // 停止播放
@@ -214,7 +503,7 @@ function stopPlay() {
         params: { playerid: currentPlayerId },
         id: "Player.Stop"
     };
-    local.send(JSON.stringify(msg));
+    sendAll(msg);
     script.log("Stop playback");
 }
 
@@ -230,7 +519,7 @@ function seek(Step) {
         },
         id: "Seek"
     };
-    local.send(JSON.stringify(msg));
+    sendAll(msg);
     script.log("Seek: " + Step);
 }
 
@@ -246,7 +535,7 @@ function seekToParameters(Parameters){
         },
         id: "SeekToParameters"
     };
-    local.send(JSON.stringify(msg));
+    sendAll(msg);
     script.log("Seek to Parameters: " + Parameters);
 }
 
@@ -272,7 +561,7 @@ function seekToTime(Hours, Minutes, Seconds, Milliseconds){
         },
         id: "SeekToTime"
     };
-    local.send(JSON.stringify(msg));
+    sendAll(msg);
     script.log("Seek to Time: " + Hours + ":" + Minutes + ":" + Seconds + "." + Milliseconds);
 }
 
@@ -287,7 +576,7 @@ function seekToPredefined(Step) {
         },
         id: "SeekTo"
     };
-    local.send(JSON.stringify(msg));
+    sendAll(msg);
     script.log("Seek to Predefined: " + Step);
 }
 
@@ -305,7 +594,7 @@ function setLoop(Mode) {
     };
     local.send(JSON.stringify(msg));
     currentLoopMode = Mode;
-    var loopParam = local.values.getChild("isLooped");
+    var loopParam = local.values.getChild("Info").getChild("isLooped");
     if (loopParam) loopParam.set(Mode !== "off");
     script.log("Setup Loop Mode: " + Mode);
 }
@@ -323,7 +612,7 @@ function setRandom(Mode) {
         id: "Player.SetShuffle.Random"
     };
     local.send(JSON.stringify(msg));
-    var randParam = local.values.getChild("Random");
+    var randParam = local.values.getChild("Info").getChild("Random");
     if (randParam) randParam.set(Mode);
     script.log("Setup Random Mode: " + Mode);
 }
@@ -337,7 +626,7 @@ function setVolume(Volume) {
         params: { volume: Volume },
         id: "SetVolume"
     };
-    local.send(JSON.stringify(msg));
+    sendAll(msg);
     script.log("Set volume: " + Volume);
 }
 
@@ -349,7 +638,7 @@ function volumeUP() {
         params: { volume: "increment" },
         id: "VolumeUp"
     };
-    local.send(JSON.stringify(msg));
+    sendAll(msg);
     script.log("Volume UP");
 }
 
@@ -361,7 +650,7 @@ function volumeDown() {
         params: { volume: "decrement" },
         id: "VolumeDown"
     };
-    local.send(JSON.stringify(msg));
+    sendAll(msg);
     script.log("Volume DOWN");
 }
 
@@ -374,12 +663,12 @@ function mute(Mute) {
         params: { mute: Mute },
         id: "Application.SetMute"
     };
-    local.send(JSON.stringify(msg));
-    var isMutedParam = local.values.getChild("isMuted");
+    sendAll(msg);
+    var isMutedParam = local.values.getChild("Info").getChild("isMuted");
     if (isMutedParam) isMutedParam.set(Mute);
     isMutedFlag = Mute;
-    
-    var volParam = local.values.getChild("Volume");
+
+    var volParam = local.values.getChild("Info").getChild("Volume");
     if (Mute) {
         var currentVol = volParam ? volParam.get() : lastSyncedVolume;
         if (currentVol < 0) currentVol = 50;
@@ -395,7 +684,13 @@ function mute(Mute) {
             ignoreNextVolumeChange = true;
             volParam.set(restoreVol);
         }
-        setVolume(Math.round(restoreVol));
+        var volMsg = {
+            jsonrpc: "2.0",
+            method: "Application.SetVolume",
+            params: { volume: Math.round(restoreVol) },
+            id: "SetVolume"
+        };
+        sendAll(volMsg);
         lastSyncedVolume = Math.round(restoreVol);
         script.log("Mute off, restored volume: " + restoreVol);
         volumeBeforeMute = -1;
@@ -505,14 +800,15 @@ function activateWindow(Window) {
 }
 
 // 发送原始 JSON 命令
-function sendJSON(JSON) {
-    if (JSON == null) JSON = "";
-    if (JSON === "") {
+function sendJSON(jsonText) {
+    if (jsonText == null) jsonText = "";
+    if (jsonText === "") {
         script.log("Warning: JSON string is empty.");
         return;
     }
-    local.send(JSON);
-    script.log("sendJSON: " + JSON);
+    var parsed = JSON.parse(jsonText);
+    sendAll(parsed);
+    script.log("sendJSON: " + jsonText);
 }
 
 // 强制全屏
@@ -526,12 +822,109 @@ function forceFullscreenAndClean() {
     local.send(JSON.stringify(fsAction));
 }
 
+// 3D 模式: 通过 GUI.SetStereoscopicMode(mode) 设置。
+// KODI 20 不再支持 Settings.SetSettingValue 方式。
+// 模式: off, split_vertical(SBS), split_horizontal(TAB), monoscopic(Flat)。
+// 循环: next, previous。
+var trackedStereoIdx = 0;
+var stereoModes = ["off", "split_vertical", "split_horizontal"];
+var stereoNames = ["off", "sbs", "tab"];
+
+function cycleStereoMode() {
+    trackedStereoIdx = (trackedStereoIdx + 1) % 3;
+    var mode = stereoModes[trackedStereoIdx];
+    var name = stereoNames[trackedStereoIdx];
+    var msg = {
+        jsonrpc: "2.0",
+        method: "GUI.SetStereoscopicMode",
+        params: { mode: mode },
+        id: "SetStereoMode"
+    };
+    local.send(JSON.stringify(msg));
+    script.log("Cycle 3D: " + name + " (mode=" + mode + ")");
+}
+
+function setStereoMode(Mode, Swap) {
+    if (Mode == null) Mode = "off";
+    if (Swap == null || !Swap) Swap = false;
+    if (Swap && Mode === "off") Swap = false;
+    var modeVal = "off";
+    if (Mode === "sbs") modeVal = "split_vertical";
+    else if (Mode === "tab") modeVal = "split_horizontal";
+    var msg = {
+        jsonrpc: "2.0",
+        method: "GUI.SetStereoscopicMode",
+        params: { mode: modeVal },
+        id: "SetStereoMode"
+    };
+    sendAll(msg);
+    if (Mode === "off") trackedStereoIdx = 0;
+    else if (Mode === "sbs") trackedStereoIdx = 1;
+    else if (Mode === "tab") trackedStereoIdx = 2;
+    script.log("Set 3D mode: " + Mode + " (mode=" + modeVal + ")");
+
+    // 实验性: 通过 video.stereoscopicinvert 尝试 swap。
+    // KODI 20 可能不支持此设置 (Settings API 返回 -32602)。
+    var invertVal = (Swap === true);
+    var swapMsg = {
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: {
+            setting: "video.stereoscopicinvert",
+            value: invertVal
+        },
+        id: "SetStereoInvert"
+    };
+    sendAll(swapMsg);
+    script.log("Swap=" + Swap + ": trying video.stereoscopicinvert=" + invertVal + " (may fail on KODI 20)");
+}
+
+// 在终端窗口中运行 coreelec.sh（有交互提示）
+var launcherFileParam = null;
+
+function runCoreelecScript(ScriptFile, UpdatePlaylist) {
+    if (UpdatePlaylist == null) UpdatePlaylist = true;
+    if (launcherFileParam == null) {
+        launcherFileParam = script.addFileParameter("__coreelec_launcher", "", "");
+        launcherFileParam.setAttribute("saveMode", false);
+    }
+    var moduleDir = "/Users/yhc/Documents/Chataigne/modules/KODI";
+    var launcher = moduleDir + "/kodi_" + (UpdatePlaylist ? "update" : "init") + ".command";
+    launcherFileParam.set(launcher);
+    launcherFileParam.launchFile("");
+    script.log("Running CoreELEC script (update=" + UpdatePlaylist + ")");
+}
+
+// 切换同步
+function toggleSync() {
+    syncEnabled = !syncEnabled;
+    var syncParam = local.parameters.getChild("Sync Enabled");
+    if (syncParam) syncParam.set(syncEnabled);
+    var syncContainer = local.values.getChild("Synchronizer");
+    if (syncContainer) syncContainer.setCollapsed(!syncEnabled);
+    updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
+    script.log("Sync toggled: " + (syncEnabled ? "ON" : "OFF"));
+}
+
+// 强制重新同步
+function reSync() {
+    if (!syncEnabled || secondaryIps.length === 0) {
+        script.log("ReSync: sync not enabled or no secondary KODIs");
+        return;
+    }
+    syncLastCycleTime = new Date() - syncInterval - 1;
+    syncState = SYNC_IDLE;
+    updateSyncStatus("Resyncing...");
+    advanceSyncState();
+}
+
 // ========== 模块初始化 ==========
 function init() {
     initStep = 0;
     sortedFileList = [];
     kodiPlaylistMap = [];
-    syncVolume();
+    reloadSyncSettings();
+    syncAll();
     initStep = 1;
     getDirectoryFiles();
     script.log("Step 1: Getting directory files for display...");
@@ -557,6 +950,30 @@ function wsMessageReceived(message) {
         }
         return;
     }
+
+    // 3D: 记录设置结果
+    if (data.id === "SetStereoMode") {
+        if (data.error) {
+            script.log("SetStereoMode error: " + JSON.stringify(data.error));
+        } else {
+            script.log("SetStereoMode OK");
+        }
+        return;
+    }
+
+    // 3D Swap: 尝试结果 (实验性)
+    if (data.id === "SetStereoInvert") {
+        if (data.error) {
+            script.log("Swap via video.stereoscopicinvert failed: " + JSON.stringify(data.error));
+        } else {
+            script.log("Swap via video.stereoscopicinvert OK");
+        }
+        return;
+    }
+
+    // 处理统一 id="init" 的响应
+
+    // 处理统一 id="init" 的响应
 
     // 处理统一 id="init" 的响应
     if (data.id === "init" && !data.error) {
@@ -600,7 +1017,7 @@ function wsMessageReceived(message) {
             output += i + ": " + sortedFileList[i].label;
             if (i < sortedFileList.length - 1) output += "\n";
         }
-        var itemsValue = local.values.getChild("Items");
+        var itemsValue = local.values.getChild("Info").getChild("Items");
         if (itemsValue) itemsValue.set(output);
         script.log("============ UI Items (sorted by label) ============");
         script.log(output);
@@ -623,7 +1040,7 @@ function wsMessageReceived(message) {
                 if (i < items.length - 1) output += "\n";
             }
         }
-        var itemsValue = local.values.getChild("Items");
+        var itemsValue = local.values.getChild("Info").getChild("Items");
         if (itemsValue) itemsValue.set(output);
         script.log("============ Playlist Items ============");
         script.log(output);
@@ -639,45 +1056,123 @@ function wsMessageReceived(message) {
         return;
     }
 
-    // 初始化时的音量响应
-    if (data.id === "GetVolume" && data.result && data.result.volume !== undefined) {
-        var volumeValue = local.values.getChild("Volume");
-        if (volumeValue) {
-            ignoreNextVolumeChange = true;
-            volumeValue.set(data.result.volume);
-            lastSyncedVolume = data.result.volume;
+    // 完整状态同步响应
+    if (data.id === "GetAllState" && data.result) {
+        if (data.result.volume !== undefined) {
+            var volumeValue = local.values.getChild("Info").getChild("Volume");
+            if (volumeValue) {
+                ignoreNextVolumeChange = true;
+                volumeValue.set(data.result.volume);
+                lastSyncedVolume = data.result.volume;
+            }
+            script.log("Volume synced: " + data.result.volume);
         }
-        script.log("Volume synced: " + data.result.volume);
+        if (data.result.muted !== undefined) {
+            var isMutedParam = local.values.getChild("Info").getChild("isMuted");
+            if (isMutedParam) isMutedParam.set(data.result.muted);
+            isMutedFlag = data.result.muted;
+            script.log("Mute synced: " + data.result.muted);
+        }
         return;
+    }
+    if (data.id === "GetActivePlayers" && data.result) {
+        if (data.result.length > 0) {
+            currentPlayerId = data.result[0].playerid;
+            var getProps = {
+                jsonrpc: "2.0",
+                method: "Player.GetProperties",
+                params: {
+                    playerid: currentPlayerId,
+                    properties: ["speed", "repeat", "shuffled"]
+                },
+                id: "GetPlayerProps"
+            };
+            local.send(JSON.stringify(getProps));
+            var getItem = {
+                jsonrpc: "2.0",
+                method: "Player.GetItem",
+                params: {
+                    playerid: currentPlayerId,
+                    properties: ["file", "title"]
+                },
+                id: "GetPlayerItem"
+            };
+            local.send(JSON.stringify(getItem));
+        } else {
+            var isPlayingValue = local.values.getChild("Info").getChild("isPlaying");
+            if (isPlayingValue) isPlayingValue.set(false);
+            var playingValue = local.values.getChild("Info").getChild("Playing");
+            if (playingValue) playingValue.set("[Stopped]");
+        }
+        return;
+    }
+    if (data.id === "GetPlayerProps" && data.result) {
+        var isPlayingValue = local.values.getChild("Info").getChild("isPlaying");
+        if (isPlayingValue) isPlayingValue.set(data.result.speed !== 0);
+        var pausedValue = local.values.getChild("Info").getChild("isPaused");
+        if (pausedValue) pausedValue.set(data.result.speed === 0);
+        var loopValue = local.values.getChild("Info").getChild("isLooped");
+        if (loopValue) loopValue.set(data.result.repeat === "one");
+        currentLoopMode = data.result.repeat;
+        var randValue = local.values.getChild("Info").getChild("Random");
+        if (randValue) randValue.set(data.result.shuffled);
+        script.log("Player state synced: repeat=" + data.result.repeat + " shuffled=" + data.result.shuffled);
+        return;
+    }
+    if (data.id === "GetPlayerItem" && data.result && data.result.item) {
+        var filePath = data.result.item.file;
+        if (filePath == null || filePath === "") filePath = data.result.item.title;
+        var playingValue = local.values.getChild("Info").getChild("Playing");
+        if (playingValue) playingValue.set(filePath);
+        script.log("Now playing synced: " + filePath);
+        return;
+    }
+
+    // 同步位置检查响应：将主设备位置存入共享变量
+    if (data.id === "SyncGetPrimary" && !data.error) {
+        syncPrimaryTime = data.result.time;
+        syncPrimarySpeed = data.result.speed;
+        syncGotPrimaryResponse = true;
     }
 
     // 处理其他事件（仅更新 UI，无任何自动重载逻辑）
     if (data.method === "Player.OnPlay") {
-        var videoFile = data.params.data.item.title;
-        var playingValue = local.values.getChild("Playing");
-        if (playingValue) playingValue.set(videoFile);
-        var pausedValue = local.values.getChild("isPaused");
+        var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(false);
-        var isPlayingValue = local.values.getChild("isPlaying");
+        var isPlayingValue = local.values.getChild("Info").getChild("isPlaying");
         if (isPlayingValue) isPlayingValue.set(true);
-        script.log("Kodi state: Playing - " + videoFile);
+        if (data.params && data.params.data && data.params.data.player) {
+            currentPlayerId = data.params.data.player.playerid;
+        }
+        // OnPlay 通知不含 file 路径，主动查询
+        var getItem = {
+            jsonrpc: "2.0",
+            method: "Player.GetItem",
+            params: {
+                playerid: currentPlayerId,
+                properties: ["file", "title"]
+            },
+            id: "GetPlayerItem"
+        };
+        local.send(JSON.stringify(getItem));
+        script.log("Kodi state: Playing");
     }
     if (data.method === "Player.OnPause") {
-        var pausedValue = local.values.getChild("isPaused");
+        var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(true);
         script.log("Kodi state: Paused");
     }
     if (data.method === "Player.OnResume") {
-        var pausedValue = local.values.getChild("isPaused");
+        var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(false);
         script.log("Kodi state: Resumed");
     }
     if (data.method === "Player.OnStop") {
-        var playingValue = local.values.getChild("Playing");
+        var playingValue = local.values.getChild("Info").getChild("Playing");
         if (playingValue) playingValue.set("[Stopped]");
-        var pausedValue = local.values.getChild("isPaused");
+        var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(false);
-        var isPlayingValue = local.values.getChild("isPlaying");
+        var isPlayingValue = local.values.getChild("Info").getChild("isPlaying");
         if (isPlayingValue) isPlayingValue.set(false);
         var end = data.params && data.params.data && data.params.data.end;
         if (end === true) {
@@ -691,7 +1186,7 @@ function wsMessageReceived(message) {
     }
     if (data.method === "Application.OnVolumeChanged") {
         var newVol = data.params.data.volume;
-        var volumeValue = local.values.getChild("Volume");
+        var volumeValue = local.values.getChild("Info").getChild("Volume");
         if (isMutedFlag) {
             script.log("Volume event ignored because muted.");
             return;
@@ -702,5 +1197,30 @@ function wsMessageReceived(message) {
             lastSyncedVolume = newVol;
         }
         script.log("Volume: " + newVol);
+    }
+
+    // 每次收到消息都推进同步状态机
+    advanceSyncState();
+}
+
+// ========== 监听 Parameters 面板值变化 ==========
+function moduleParameterChanged(param) {
+    var paramName = param.name;
+    script.log("moduleParameterChanged: " + paramName);
+    if (paramName.toLowerCase() === "initialization") {
+        script.log("Initialization button pressed, starting initialization...");
+        var infoContainer = local.values.getChild("Info");
+        if (infoContainer) infoContainer.setCollapsed(false);
+        init();
+    } else if (paramName === "Add Secondary") {
+        addSecondary();
+    } else if (paramName.substring(0, 10) === "Secondary_") {
+        rebuildSecondaryManager();
+    } else if (paramName.toLowerCase() === "syncenabled") {
+        syncEnabled = param.get();
+        updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
+        var syncContainer = local.values.getChild("Synchronizer");
+        if (syncContainer) syncContainer.setCollapsed(!syncEnabled);
+        script.log("Sync " + (syncEnabled ? "enabled" : "disabled"));
     }
 }
