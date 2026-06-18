@@ -91,33 +91,8 @@ function dataReceived(data) {
 
 function update(deltaTime) {
     driftPhase++;
-    if (allIps.length < 2) return;
-    // Phase 1: 发 curl 查询
-    if (driftPhase % 2 === 1) {
-        var cJson = '{"jsonrpc":"2.0","method":"Player.GetProperties","params":{"playerid":1,"properties":["time","speed"]},"id":"d"}';
-        for (var i = 0; i < allIps.length; i++) {
-            execShell("/usr/bin/curl -s --max-time 2 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + cJson + " -o /tmp/kodi_d_" + i + ".txt http://" + allIps[i].split(":")[0] + ":8080/jsonrpc");
-        }
-    }
-    // Phase 2: 读文件算漂移
-    if (driftPhase % 2 === 0) {
-        var minMs = -1, maxMs = -1;
-        for (var i = 0; i < allIps.length; i++) {
-            var c = util.readFile("/tmp/kodi_d_" + i + ".txt");
-            if (c && c.charAt(0) === "{") {
-                var d = JSON.parse(c);
-                if (d && d.result && d.result.time && d.result.speed > 0) {
-                    var ms = timeToMs(d.result.time);
-                    if (minMs < 0 || ms < minMs) minMs = ms;
-                    if (maxMs < 0 || ms > maxMs) maxMs = ms;
-                }
-            }
-        }
-        if (minMs >= 0 && maxMs >= 0) {
-            var dc = local.values.getChild("Status").getChild("Drift");
-            if (dc) dc.set("" + (maxMs - minMs) + "ms");
-        }
-    }
+    var dc = local.values.getChild("Status").getChild("Drift");
+    if (dc) dc.set("u" + driftPhase);
 }
 
 function init() {
