@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon id="service.chataigne-sync" name="Chataigne Sync" version="1.0.0" provider-name="ToCenTek">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0"/>
+    </requires>
+    <extension point="xbmc.service" library="service.py"/>
+    <extension point="xbmc.addon.metadata">
+        <summary lang="en">UDP sync receiver for Chataigne</summary>
+        <description lang="en">Receives UDP broadcast commands from Chataigne for low-latency multi-device sync.</description>
+        <platform>all</platform>
+    </extension>
+</addon>

@@ -158,35 +158,26 @@ function doSeekAll(priTime, totalTime) {
         },
         id: "SyncSeek"
     };
-    for (var i = 0; i < secondaryIps.length; i++) {
-        var parts = secondaryIps[i].split(":");
-        var host = parts[0];
-        var port = 8080;
-        if (parts.length > 1) {
-            var p = parseInt(parts[1]);
-            if (!isNaN(p)) port = p;
-        }
-        httpPost(host, port, seekMsg);
-    }
+    udpBroadcast(seekMsg);
 }
 
 // 向主 KODI（WebSocket）和所有副 KODI（HTTP POST）发送相同消息
 function sendAll(msg) {
     local.send(JSON.stringify(msg));
     if (!syncEnabled) return;
-    for (var i = 0; i < secondaryIps.length; i++) {
-        var parts = secondaryIps[i].split(":");
-        var host = parts[0];
-        var port = 8080;
-        if (parts.length > 1) {
-            var parsedPort = parseInt(parts[1]);
-            if (!isNaN(parsedPort)) port = parsedPort;
-        }
-        httpPost(host, port, msg);
-    }
+    udpBroadcast(msg);
 }
 
-// 更新同步状态文字到 Values.Synchronizer.Sync Status 和日志
+// UDP 广播发送到所有副 KODI（替代 HTTP POST，延迟 <5ms）
+function udpBroadcast(msg) {
+    if (secondaryIps.length === 0) return;
+    var jsonStr = compactJson(msg);
+    var pyCode = "import socket;s=socket.socket();s.setsockopt(1,6,1);s.sendto(b'" + jsonStr + "',('255.255.255.255',9527))";
+    execShell("echo '" + pyCode + "' > /tmp/kodi_udp.py");
+    execShell("/usr/bin/python3 /tmp/kodi_udp.py");
+}
+
+// 更新同步状态文字
 function updateSyncStatus(text) {
     syncStatusText = text;
     if (syncStatusValue == null) syncStatusValue = local.values.getChild("Synchronizer").getChild("Sync Status");
@@ -197,16 +188,7 @@ function updateSyncStatus(text) {
 // 强制发送到所有 KODI（不检查 syncEnabled）
 function sendAllForced(msg) {
     local.send(JSON.stringify(msg));
-    for (var i = 0; i < secondaryIps.length; i++) {
-        var parts = secondaryIps[i].split(":");
-        var host = parts[0];
-        var port = 8080;
-        if (parts.length > 1) {
-            var parsedPort = parseInt(parts[1]);
-            if (!isNaN(parsedPort)) port = parsedPort;
-        }
-        httpPost(host, port, msg);
-    }
+    udpBroadcast(msg);
 }
 
 // 获取目录下的文件列表（仅用于 UI 显示）
