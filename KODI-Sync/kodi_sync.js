@@ -126,6 +126,10 @@ function init() {
     if (rp) rcvPort = rp.get();
     reloadIps();
     sendPort();
+    // 测试 Drift 控件是否能写
+    var dc = local.values.getChild("Status").getChild("Drift");
+    if (dc) { dc.set("test"); script.log("Drift test: write OK"); }
+    else { script.log("Drift test: control not found!"); }
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
 }
