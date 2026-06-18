@@ -20,18 +20,23 @@ function compactJson(msg) {
     return j;
 }
 
-// UDP 广播到所有 KODI（端口 9527，Chataigne Sync 插件监听）
 function udpBroadcast(msg) {
-    var jsonStr = compactJson(msg);
-    script.log("udp: json=" + jsonStr.substring(0,60) + "...");
-    // 写入 shell 脚本
-    var sh = "echo -n '" + jsonStr + "' | nc -u -w1 10.0.0.255 9527";
-    util.writeFile("/tmp/kodi_udp.sh", sh, true);
-    var written = util.readFile("/tmp/kodi_udp.sh");
-    script.log("udp: wrote=" + (written != null) + " sh_len=" + sh.length);
-    // 执行
-    var ok = execShell("/bin/bash /tmp/kodi_udp.sh");
-    script.log("udp: exec=" + ok);
+    var jsonStr = JSON.stringify(msg);
+    // 通过内置 UDP 模块的参数发送广播
+    var rh = local.parameters.getChild("remoteHost");
+    var rp = local.parameters.getChild("remotePort");
+    var bc = local.parameters.getChild("broadcast");
+    if (rh) rh.set("10.0.0.255");
+    if (rp) rp.set(9527);
+    if (bc) bc.set(true);
+    // 通过输出发送
+    var out = local.outputs.getChild("output");
+    if (out) { out.set(jsonStr); script.log("udp: sent via output"); }
+    else {
+        var vOut = local.values.getChild("output");
+        if (vOut) { vOut.set(jsonStr); script.log("udp: sent via values"); }
+        else script.log("udp: no output found");
+    }
 }
 
 function updateSyncStatus(text) {
