@@ -84,27 +84,31 @@ function dataReceived(data) {
 
 function update(deltaTime) {
     driftTick++;
-    if (driftTick % 2 !== 0) return; // 每秒一次（2fps→每 2 tick）
+    if (driftTick % 2 !== 0) return;
     if (allIps.length < 2) return;
-    // 查询两台 KODI 的位置
+    // 查询所有 KODI 的位置
     var cJson = '{"jsonrpc":"2.0","method":"Player.GetProperties","params":{"playerid":1,"properties":["time","speed"]},"id":"d"}';
-    for (var i = 0; i < 2 && i < allIps.length; i++) {
+    for (var i = 0; i < allIps.length; i++) {
         var h = allIps[i].split(":")[0];
         execShell("/usr/bin/curl -s --max-time 2 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + cJson + " -o /tmp/kodi_d_" + i + ".txt http://" + h + ":8080/jsonrpc");
     }
-    // 读取并比较
-    var c0 = util.readFile("/tmp/kodi_d_0.txt");
-    var c1 = util.readFile("/tmp/kodi_d_1.txt");
-    if (c0 && c1 && c0.charAt(0) === "{" && c1.charAt(0) === "{") {
-        var d0 = JSON.parse(c0);
-        var d1 = JSON.parse(c1);
-        if (d0 && d0.result && d0.result.time && d1 && d1.result && d1.result.time && d0.result.speed > 0 && d1.result.speed > 0) {
-            var ms0 = timeToMs(d0.result.time);
-            var ms1 = timeToMs(d1.result.time);
-            var dv = ms0 > ms1 ? ms0 - ms1 : ms1 - ms0;
-            var dc = local.values.getChild("Status").getChild("Drift");
-            if (dc) dc.set("" + dv + "ms");
+    // 读取所有结果，找最大最小值
+    var minMs = -1, maxMs = -1;
+    for (var i = 0; i < allIps.length; i++) {
+        var c = util.readFile("/tmp/kodi_d_" + i + ".txt");
+        if (c && c.charAt(0) === "{") {
+            var d = JSON.parse(c);
+            if (d && d.result && d.result.time && d.result.speed > 0) {
+                var ms = timeToMs(d.result.time);
+                if (minMs < 0 || ms < minMs) minMs = ms;
+                if (maxMs < 0 || ms > maxMs) maxMs = ms;
+            }
         }
+    }
+    if (minMs >= 0 && maxMs >= 0) {
+        var dv = maxMs - minMs;
+        var dc = local.values.getChild("Status").getChild("Drift");
+        if (dc) dc.set("" + dv + "ms");
     }
 }
 
