@@ -18,7 +18,7 @@
         "Initialization": {
             "type": "Trigger",
             "description": "初始化, 加载视频播放列表.\nInitialize, load playlist."
-        },
+        }
     },
     "values":{
         "Info":{
@@ -73,7 +73,7 @@
                 "type": "Boolean",
                 "readOnly": true
             }
-        },
+        }
     },
     
     "scripts": ["kodi.js"],
@@ -326,16 +326,15 @@
         },
         "Set Non-linear Stretch":{
             "menu": "Player",
+            "description": "非线性拉伸.\nNon-linear stretch.",
             "callback": "setNonlinearStretch",
             "parameters": {
-                "description": "非线性拉伸.\nNon-linear stretch.",
                 "Stretch":{
                     "type": "Boolean",
                     "default": false
                 }
             }
         },
-        // sync commands moved to KODI Sync module
 
         "Restart KODI": {
             "menu": "System",
