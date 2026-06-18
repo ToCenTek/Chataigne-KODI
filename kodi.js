@@ -868,17 +868,6 @@ function init() {
     initStep = 0;
     sortedFileList = [];
     kodiPlaylistMap = [];
-    // 自动加载 KODI Sync 社区模块
-    var sMod = root.modules.getItemWithName("KODI Sync");
-    if (sMod == null) {
-        sMod = root.modules.addItem("KODI-Sync");
-        if (sMod) {
-            sMod.setName("KODI Sync");
-            var sScript = sMod.scripts.getChild("kodi_sync");
-            if (sScript) sScript.reload.trigger();
-            script.log("KODI Sync auto-loaded");
-        }
-    }
     reloadSyncSettings();
     syncAll();
     initStep = 1;
