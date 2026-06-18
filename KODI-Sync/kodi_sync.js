@@ -90,6 +90,7 @@ function dataReceived(data) {
 }
 
 function update(deltaTime) {
+    script.log("update called");
     driftPhase++;
     if (driftTick % 2 !== 0) return;
     if (allIps.length < 2) return;
