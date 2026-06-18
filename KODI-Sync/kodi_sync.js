@@ -90,9 +90,8 @@ function dataReceived(data) {
 }
 
 function update(deltaTime) {
-    script.log("update called");
     driftPhase++;
-    if (driftTick % 2 !== 0) return;
+    if (driftPhase % 2 !== 0) return;
     if (allIps.length < 2) return;
     // 查询所有 KODI 的位置
     var cJson = '{"jsonrpc":"2.0","method":"Player.GetProperties","params":{"playerid":1,"properties":["time","speed"]},"id":"d"}';
@@ -126,10 +125,6 @@ function init() {
     if (rp) rcvPort = rp.get();
     reloadIps();
     sendPort();
-    // 测试 Drift 控件是否能写
-    var dc = local.values.getChild("Status").getChild("Drift");
-    if (dc) { dc.set("test"); script.log("Drift test: write OK"); }
-    else { script.log("Drift test: control not found!"); }
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
 }
