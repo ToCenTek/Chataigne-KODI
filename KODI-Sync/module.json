@@ -4,8 +4,14 @@
     "path": "ToCenTek",
     "version": "1.0.0",
     "description": "多 KODI 同步控制器。通过 UDP 广播实现帧级多机同步。\nMulti-KODI sync controller. Frame-level sync via UDP broadcast.",
-	"hasInput": false,
+	"hasInput": true,
 	"hasOutput": true,
+    "defaults": {
+        "localPort": 0,
+        "remoteHost": "10.0.0.255",
+        "remotePort": 9527,
+        "broadcast": true
+    },
 	"hideDefaultParameters": true,
     "hideDefaultCommands": true,
     "parameters": {
