@@ -90,7 +90,7 @@ function dataReceived(data) {
 }
 
 function update(deltaTime) {
-    driftTick++;
+    driftPhase++;
     if (driftTick % 2 !== 0) return;
     if (allIps.length < 2) return;
     // 查询所有 KODI 的位置
