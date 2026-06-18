@@ -4,6 +4,7 @@ var httpPass = "tocentek";
 var syncEnabled = true;
 var syncStatusValue = null;
 var sysHelperName = "OS";
+var pythonBin = "/usr/bin/python3";
 var driftQueryInt = 0;
 var allIps = [];
 
@@ -22,9 +23,11 @@ function compactJson(msg) {
 
 function udpBroadcast(msg) {
     var jsonStr = JSON.stringify(msg);
-    // python3 -c + b''，launchProcess 无 shell 引号问题
     var py = "import socket;s=socket.socket(2,2);s.setsockopt(65535,32,1);s.sendto(b'" + jsonStr + "',('255.255.255.255',9527))";
-    execShell("/usr/bin/python3 -c " + py);
+    util.writeFile("/tmp/kodi_sync_udp.py", py, true);
+    execShell("/usr/bin/python3 /tmp/kodi_sync_udp.py");
+    execShell("/opt/homebrew/bin/python3 /tmp/kodi_sync_udp.py");
+    execShell("/usr/local/bin/python3 /tmp/kodi_sync_udp.py");
 }
 
 function updateSyncStatus(text) {
