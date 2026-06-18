@@ -8,12 +8,19 @@ var allIps = [];
 var rcvPort = 9528;
 var ackCount = 0;
 
+var lastFile = "/storage/videos/4K_29.97-Chimei-inn-RoastDuck.mp4";
+
 function udpSend(cmd, val) {
     var msg = cmd;
     if (val != null) msg += ":" + val;
     for (var i = 0; i < allIps.length; i++) {
         local.sendTo(allIps[i].split(":")[0], 9527, msg + "\n");
     }
+}
+
+function playAll() {
+    udpSend("OPEN", lastFile);
+    udpSend("PLAY");
 }
 
 function sendPort() {
