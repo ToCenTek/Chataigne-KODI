@@ -871,7 +871,7 @@ function init() {
     // 自动加载 KODI Sync 社区模块
     var sMod = root.modules.getItemWithName("KODI Sync");
     if (sMod == null) {
-        sMod = root.modules.addItem("UDP");
+        sMod = root.modules.addItem("KODI-Sync");
         if (sMod) {
             sMod.setName("KODI Sync");
             var sScript = sMod.scripts.getChild("kodi_sync");
