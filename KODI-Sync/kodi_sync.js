@@ -22,20 +22,22 @@ function compactJson(msg) {
 
 function udpBroadcast(msg) {
     var jsonStr = JSON.stringify(msg);
-    // 通过内置 UDP 模块的参数发送广播
-    var rh = local.parameters.getChild("remoteHost");
-    var rp = local.parameters.getChild("remotePort");
-    var bc = local.parameters.getChild("broadcast");
-    if (rh) rh.set("10.0.0.255");
-    if (rp) rp.set(9527);
-    if (bc) bc.set(true);
-    // 通过输出发送
-    var out = local.outputs.getChild("output");
-    if (out) { out.set(jsonStr); script.log("udp: sent via output"); }
-    else {
-        var vOut = local.values.getChild("output");
-        if (vOut) { vOut.set(jsonStr); script.log("udp: sent via values"); }
-        else script.log("udp: no output found");
+    // 设置 UDP 模块参数（按 UI 标签名）
+    var setP = function(name, val) {
+        var p = local.parameters.getChild(name);
+        if (p) { p.set(val); return true; }
+        return false;
+    };
+    setP("remote host", "10.0.0.255");
+    setP("remote port", 9527);
+    setP("broadcast", true);
+    // 通过输出发送（output 的 set 或 send 方法）
+    if (local.outputs) {
+        if (local.outputs.set) { local.outputs.set(jsonStr); script.log("udp: output.set"); }
+        else if (local.outputs.send) { local.outputs.send(jsonStr); script.log("udp: output.send"); }
+        else script.log("udp: output has no set/send");
+    } else {
+        script.log("udp: no output");
     }
 }
 
