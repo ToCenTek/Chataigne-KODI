@@ -178,19 +178,21 @@ function timeToMs(t) {
 
 function init() {
     script.log("KODI Sync init");
-    // 枚举所有参数名
-    var pList = local.parameters.getItems();
-    for (var i = 0; i < pList.length; i++) {
-        script.log("  param[" + i + "]: '" + pList[i].name + "' niceName='" + pList[i].niceName + "'");
-        var sub = pList[i].getItems;
-        if (sub) {
-            var subItems = sub();
-            for (var j = 0; j < subItems.length; j++) {
-                script.log("    sub[" + j + "]: '" + subItems[j].name + "'");
+    // 枚举参数（按索引）
+    for (var i = 0; i < 20; i++) {
+        var p = local.parameters.getChildAt(i);
+        if (p == null) break;
+        script.log("  param[" + i + "]: '" + p.name + "' nice='" + p.niceName + "' isParam=" + p.isParameter());
+        if (p.getChildAt) {
+            for (var j = 0; j < 10; j++) {
+                var sp = p.getChildAt(j);
+                if (sp == null) break;
+                script.log("    sub[" + j + "]: '" + sp.name + "'");
             }
         }
     }
     script.log("has outputs=" + (local.outputs != null));
+    if (local.outputs) script.log("outputs type=" + typeof(local.outputs) + " name=" + local.outputs.name);
     reloadIps();
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
