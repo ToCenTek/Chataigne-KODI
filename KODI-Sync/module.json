@@ -1,6 +1,6 @@
 {
     "name": "KODI Sync",
-    "type": "NoType",
+    "type": "HTTP",
     "path": "ToCenTek",
     "version": "1.0.0",
     "description": "多 KODI 同步控制器。通过 UDP 广播实现帧级多机同步。\nMulti-KODI sync controller. Frame-level sync via UDP broadcast.",
