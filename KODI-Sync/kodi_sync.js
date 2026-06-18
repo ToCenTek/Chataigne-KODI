@@ -72,7 +72,7 @@ function timeToMs(t) {
 
 function dataReceived(data) {
     ackCount++;
-    script.log("ACK[" + ackCount + "]: " + String(data).substring(0,80));
+    if (ackCount <= 5) script.log("ACK: " + data);
 }
 
 function init() {
