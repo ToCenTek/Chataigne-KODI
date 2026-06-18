@@ -11,6 +11,13 @@ var ackCount = 0;
 var lastFile = "/storage/videos/4K_29.97-Chimei-inn-RoastDuck.mp4";
 var driftTick = 0;
 
+function execShell(cmd) {
+    var helper = root.modules.getChild("OS");
+    if (helper == null) return false;
+    if (helper.launchProcess) { helper.launchProcess(cmd); return true; }
+    return false;
+}
+
 function udpSend(cmd, val) {
     var msg = cmd;
     if (val != null) msg += ":" + val;
