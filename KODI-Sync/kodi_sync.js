@@ -119,19 +119,17 @@ function reSync() {
         // 延迟后读取文件并 seek
         var content = util.readFile(outFile);
         if (content && content.charAt(0) === "{") {
-            try {
-                var d = JSON.parse(content);
-                if (d.result && d.result.time && d.result.totaltime && d.result.speed > 0) {
-                    var totalMs = timeToMs(d.result.totaltime);
-                    if (totalMs > 0) {
-                        var priMs = timeToMs(d.result.time) + 200;
-                        if (priMs > totalMs) priMs = totalMs;
-                        var pct = (priMs / totalMs) * 100;
-                        broadcastObj({jsonrpc:"2.0",method:"Player.Seek",params:{playerid:1,value:{percentage:pct}},id:"cs"});
-                        updateSyncStatus("Synced");
-                    }
+            var d = JSON.parse(content);
+            if (d && d.result && d.result.time && d.result.totaltime && d.result.speed > 0) {
+                var totalMs = timeToMs(d.result.totaltime);
+                if (totalMs > 0) {
+                    var priMs = timeToMs(d.result.time) + 200;
+                    if (priMs > totalMs) priMs = totalMs;
+                    var pct = (priMs / totalMs) * 100;
+                    broadcastObj({jsonrpc:"2.0",method:"Player.Seek",params:{playerid:1,value:{percentage:pct}},id:"cs"});
+                    updateSyncStatus("Synced");
                 }
-            } catch (e) { script.log("ReSync error: " + e); }
+            }
             execShell("/bin/rm " + outFile);
         }
     }
@@ -154,18 +152,16 @@ function update(deltaTime) {
         var c1 = util.readFile("/tmp/kodi_drift_0.txt");
         var c2 = util.readFile("/tmp/kodi_drift_1.txt");
         if (c1 && c2 && c1.charAt(0) === "{" && c2.charAt(0) === "{") {
-            try {
-                var d1 = JSON.parse(c1);
-                var d2 = JSON.parse(c2);
-                if (d1.result && d1.result.time && d2.result && d2.result.time && d1.result.speed > 0 && d2.result.speed > 0) {
-                    var ms1 = timeToMs(d1.result.time);
-                    var ms2 = timeToMs(d2.result.time);
-                    var dv = ms1 > ms2 ? ms1 - ms2 : ms2 - ms1;
-                    var dc = local.values.getChild("Status").getChild("Drift");
-                    if (dc && dc.set) dc.set("" + dv + "ms");
-                    script.log("Drift: " + dv + "ms");
-                }
-            } catch (e) {}
+            var d1 = JSON.parse(c1);
+            var d2 = JSON.parse(c2);
+            if (d1 && d1.result && d1.result.time && d2 && d2.result && d2.result.time && d1.result.speed > 0 && d2.result.speed > 0) {
+                var ms1 = timeToMs(d1.result.time);
+                var ms2 = timeToMs(d2.result.time);
+                var dv = ms1 > ms2 ? ms1 - ms2 : ms2 - ms1;
+                var dc = local.values.getChild("Status").getChild("Drift");
+                if (dc && dc.set) dc.set("" + dv + "ms");
+                script.log("Drift: " + dv + "ms");
+            }
             execShell("/bin/rm /tmp/kodi_drift_0.txt /tmp/kodi_drift_1.txt");
         }
     }
