@@ -20,15 +20,13 @@ function compactJson(msg) {
     return j;
 }
 
-function sendToAll(msg) {
+// UDP 广播到所有 KODI（端口 9527，Chataigne Sync 插件监听）
+function udpBroadcast(msg) {
+    if (allIps.length === 0) return;
     var jsonStr = compactJson(msg);
-    var auth = "";
-    if (httpUser.length > 0) auth = " -u " + httpUser + ":" + httpPass;
-    for (var i = 0; i < allIps.length; i++) {
-        var host = allIps[i].split(":")[0];
-        var url = "http://" + host + ":8080/jsonrpc";
-        execShell("/usr/bin/curl -s --max-time 3" + auth + " -X POST -H Content-Type:application/json -d " + jsonStr + " " + url);
-    }
+    var sh = "echo -n '" + jsonStr + "' | nc -u 255.255.255.255 9527";
+    util.writeFile("/tmp/kodi_udp.sh", sh, true);
+    execShell("/bin/bash /tmp/kodi_udp.sh");
 }
 
 function updateSyncStatus(text) {
@@ -61,11 +59,11 @@ function reloadIps() {
 
 function broadcastObj(msg) {
     if (!syncEnabled) return;
-    sendToAll(msg);
+    udpBroadcast(msg);
 }
 
-function playAll() { script.log("playAll called, syncEnabled=" + syncEnabled + " ips=" + allIps.length); broadcastObj({jsonrpc:"2.0",method:"Player.SetSpeed",params:{playerid:1,speed:1},id:"cs"}); }
-function pauseAll() { script.log("pauseAll called"); broadcastObj({jsonrpc:"2.0",method:"Player.SetSpeed",params:{playerid:1,speed:0},id:"cs"}); }
+function playAll() { broadcastObj({jsonrpc:"2.0",method:"Player.SetSpeed",params:{playerid:1,speed:1},id:"cs"}); }
+function pauseAll() { broadcastObj({jsonrpc:"2.0",method:"Player.SetSpeed",params:{playerid:1,speed:0},id:"cs"}); }
 function stopAll() { broadcastObj({jsonrpc:"2.0",method:"Player.Stop",params:{playerid:1},id:"cs"}); }
 function seekAll(Percentage) {
     if (Percentage == null) Percentage = 50;
@@ -95,12 +93,6 @@ function setAspectAll(Count) {
     }
 }
 
-function sendToAll(JSONText) {
-    if (JSONText == null || JSONText === "") return;
-    var parsed = JSON.parse(JSONText);
-    udpBroadcast(parsed);
-}
-
 function toggleSync() {
     syncEnabled = !syncEnabled;
     var syncParam = local.parameters.getChild("Sync Enabled");
@@ -114,13 +106,11 @@ function reSync() {
         return;
     }
     updateSyncStatus("Resyncing...");
-    // 通过 HTTP 查询第一个 KODI 的位置，然后广播 seek 到所有
     if (allIps.length > 0) {
         var host = allIps[0].split(":")[0];
         var qJson = compactJson({jsonrpc:"2.0",method:"Player.GetProperties",params:{playerid:1,properties:["time","speed","totaltime"]},id:"pos"});
         var outFile = "/tmp/kodi_sync_pos.txt";
         execShell("/usr/bin/curl -s --max-time 3 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + qJson + " -o " + outFile + " http://" + host + ":8080/jsonrpc");
-        // 延迟后读取文件并 seek
         var content = util.readFile(outFile);
         if (content && content.charAt(0) === "{") {
             var d = JSON.parse(content);
@@ -142,7 +132,6 @@ function reSync() {
 function update(deltaTime) {
     if (!syncEnabled || allIps.length === 0) return;
     driftQueryInt++;
-    // 每 60 tick (30秒) 查询漂移
     if (driftQueryInt >= 60) {
         driftQueryInt = 0;
         for (var i = 0; i < allIps.length && i < 2; i++) {
@@ -152,7 +141,6 @@ function update(deltaTime) {
             var cmd = "/usr/bin/curl -s --max-time 3 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + qJson + " -o /tmp/kodi_drift_" + i + ".txt http://" + host + ":8080/jsonrpc";
             execShell(cmd);
         }
-        // 对比漂移
         var c1 = util.readFile("/tmp/kodi_drift_0.txt");
         var c2 = util.readFile("/tmp/kodi_drift_1.txt");
         if (c1 && c2 && c1.charAt(0) === "{" && c2.charAt(0) === "{") {
