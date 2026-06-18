@@ -21,10 +21,10 @@ function compactJson(msg) {
 }
 
 function udpBroadcast(msg) {
-    var jsonStr = compactJson(msg);
-    var py = "import socket;s=socket.socket();s.setsockopt(1,6,1);s.sendto(b'" + jsonStr + "',('255.255.255.255',9527))";
-    execShell("echo '" + py + "' > /tmp/kodi_sync_udp.py");
-    execShell("/usr/bin/python3 /tmp/kodi_sync_udp.py");
+    var jsonStr = JSON.stringify(msg);
+    // python3 -c + b''，launchProcess 无 shell 引号问题
+    var py = "import socket;s=socket.socket(2,2);s.setsockopt(65535,32,1);s.sendto(b'" + jsonStr + "',('255.255.255.255',9527))";
+    execShell("/usr/bin/python3 -c " + py);
 }
 
 function updateSyncStatus(text) {
