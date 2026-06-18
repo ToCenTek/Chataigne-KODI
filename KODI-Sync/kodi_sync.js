@@ -9,6 +9,7 @@ var rcvPort = 9528;
 var ackCount = 0;
 
 var lastFile = "/storage/videos/4K_29.97-Chimei-inn-RoastDuck.mp4";
+var driftTick = 0;
 
 function udpSend(cmd, val) {
     var msg = cmd;
@@ -79,6 +80,32 @@ function timeToMs(t) {
 function dataReceived(data) {
     ackCount++;
     if (ackCount <= 5) script.log("ACK: " + data);
+}
+
+function update(deltaTime) {
+    driftTick++;
+    if (driftTick % 2 !== 0) return; // 每秒一次（2fps→每 2 tick）
+    if (allIps.length < 2) return;
+    // 查询两台 KODI 的位置
+    var cJson = '{"jsonrpc":"2.0","method":"Player.GetProperties","params":{"playerid":1,"properties":["time","speed"]},"id":"d"}';
+    for (var i = 0; i < 2 && i < allIps.length; i++) {
+        var h = allIps[i].split(":")[0];
+        execShell("/usr/bin/curl -s --max-time 2 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + cJson + " -o /tmp/kodi_d_" + i + ".txt http://" + h + ":8080/jsonrpc");
+    }
+    // 读取并比较
+    var c0 = util.readFile("/tmp/kodi_d_0.txt");
+    var c1 = util.readFile("/tmp/kodi_d_1.txt");
+    if (c0 && c1 && c0.charAt(0) === "{" && c1.charAt(0) === "{") {
+        var d0 = JSON.parse(c0);
+        var d1 = JSON.parse(c1);
+        if (d0 && d0.result && d0.result.time && d1 && d1.result && d1.result.time && d0.result.speed > 0 && d1.result.speed > 0) {
+            var ms0 = timeToMs(d0.result.time);
+            var ms1 = timeToMs(d1.result.time);
+            var dv = ms0 > ms1 ? ms0 - ms1 : ms1 - ms0;
+            var dc = local.values.getChild("Status").getChild("Drift");
+            if (dc) dc.set("" + dv + "ms");
+        }
+    }
 }
 
 function init() {
