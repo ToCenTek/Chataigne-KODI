@@ -19,11 +19,6 @@
             "type": "Trigger",
             "description": "初始化, 加载视频播放列表.\nInitialize, load playlist."
         },
-        "Sync Enabled":{
-            "description": "启用多设备同步.\nEnable multi-device sync.",
-            "type": "Boolean",
-            "default": false
-        }
     },
     "values":{
         "Info":{
@@ -79,54 +74,6 @@
                 "readOnly": true
             }
         },
-        "Synchronizer":{
-            "type": "Container",
-            "collapsed": true,
-            "HTTP User":{
-                "description": "KODI HTTP 用户名.\nKODI HTTP username.",
-                "type": "String",
-                "default": "kodi"
-            },
-            "HTTP Pass":{
-                "description": "KODI HTTP 密码.\nKODI HTTP password.",
-                "type": "String",
-                "default": "tocentek"
-            },
-                "Sync Interval":{
-                    "description": "位置轮询间隔（毫秒）.\nPosition polling interval (ms).",
-                    "type": "Integer",
-                    "min": 4,
-                    "default": 500
-                },
-                "Sync Threshold":{
-                    "description": "允许的最大偏移（毫秒），超过则纠偏.\nMax allowed drift (ms).",
-                    "type": "Integer",
-                    "min": 4,
-                    "default": 8
-                },
-            "Sync Status":{
-                "description": "同步状态.\nSync status.",
-                "type": "String",
-                "readOnly": true,
-                "default": "Idle"
-            },
-            "KODIs":{
-                "type": "Container",
-                "collapsed": false,
-                "Secondary":{
-                    "description": "副 KODI 的 IP:port 列表, 每行一个.\nSecondary KODI IP:port list, one per line.",
-                    "type": "String",
-                    "multiline": true,
-                    "default": ""
-                },
-                "Drift":{
-                    "description": "各副机漂移值(ms)。\nDrift values per secondary (ms).",
-                    "type": "String",
-                    "readOnly": true,
-                    "default": ""
-                }
-            }
-        }
     },
     
     "scripts": ["kodi.js"],
@@ -388,16 +335,7 @@
                 }
             }
         },
-        "Toggle Sync":{
-            "menu": "Sync",
-            "description": "开启/关闭多设备同步.\nEnable/disable multi-device sync.",
-            "callback": "toggleSync"
-        },
-        "ReSync Now":{
-            "menu": "Sync",
-            "description": "立即轮询所有 KODI 的位置并纠偏.\nPoll all KODI positions and correct drift now.",
-            "callback": "reSync"
-        },
+        // sync commands moved to KODI Sync module
 
         "Restart KODI": {
             "menu": "System",
