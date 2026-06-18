@@ -178,6 +178,19 @@ function timeToMs(t) {
 
 function init() {
     script.log("KODI Sync init");
+    // 枚举所有参数名
+    var pList = local.parameters.getItems();
+    for (var i = 0; i < pList.length; i++) {
+        script.log("  param[" + i + "]: '" + pList[i].name + "' niceName='" + pList[i].niceName + "'");
+        var sub = pList[i].getItems;
+        if (sub) {
+            var subItems = sub();
+            for (var j = 0; j < subItems.length; j++) {
+                script.log("    sub[" + j + "]: '" + subItems[j].name + "'");
+            }
+        }
+    }
+    script.log("has outputs=" + (local.outputs != null));
     reloadIps();
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
