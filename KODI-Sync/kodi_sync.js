@@ -22,23 +22,9 @@ function compactJson(msg) {
 
 function udpBroadcast(msg) {
     var jsonStr = JSON.stringify(msg);
-    // 设置 UDP 模块参数（按 UI 标签名）
-    var setP = function(name, val) {
-        var p = local.parameters.getChild(name);
-        if (p) { p.set(val); return true; }
-        return false;
-    };
-    setP("remote host", "10.0.0.255");
-    setP("remote port", 9527);
-    setP("broadcast", true);
-    // 通过输出发送（output 的 set 或 send 方法）
-    if (local.outputs) {
-        if (local.outputs.set) { local.outputs.set(jsonStr); script.log("udp: output.set"); }
-        else if (local.outputs.send) { local.outputs.send(jsonStr); script.log("udp: output.send"); }
-        else script.log("udp: output has no set/send");
-    } else {
-        script.log("udp: no output");
-    }
+    script.log("udp: sendTo 10.0.0.255:9527 len=" + jsonStr.length);
+    local.sendTo("10.0.0.255", 9527, jsonStr);
+    script.log("udp: done");
 }
 
 function updateSyncStatus(text) {
@@ -178,18 +164,6 @@ function timeToMs(t) {
 
 function init() {
     script.log("KODI Sync init");
-    // 枚举参数（按索引）
-    for (var i = 0; i < 20; i++) {
-        var p = local.parameters.getChild(i);
-        if (p == null) break;
-        script.log("  param[" + i + "]: '" + p.name + "' nice='" + p.niceName + "' isParam=" + p.isParameter());
-        for (var j = 0; j < 10; j++) {
-            var sp = p.getChild(j);
-            if (sp == null) break;
-            script.log("    sub[" + j + "]: '" + sp.name + "'");
-        }
-    }
-    script.log("has outputs=" + (local.outputs != null) + " | local=" + typeof(local));
     reloadIps();
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
