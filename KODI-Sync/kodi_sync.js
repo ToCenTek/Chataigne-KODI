@@ -18,11 +18,11 @@ function execShell(cmd) {
 function udpSend(cmd, val) {
     var msg = cmd;
     if (val != null) msg += ":" + val;
-    msg += "\\n";
-    // Python UDP 广播（正确设置 SO_BROADCAST）
-    var py = "__import__('socket');s=__import__('socket').socket(2,2);s.setsockopt(65535,32,1);s.sendto(b'" + msg + "',('255.255.255.255',9527))";
-    execShell("/opt/homebrew/bin/python3 -c " + py);
-    execShell("/usr/bin/python3 -c " + py);
+    // 单播到每个 KODI IP（模块本地端口监听 ACK）
+    for (var i = 0; i < allIps.length; i++) {
+        var host = allIps[i].split(":")[0];
+        local.sendTo(host, 9527, msg + "\n");
+    }
 }
 
 function playAll() { udpSend("PLAY"); }
