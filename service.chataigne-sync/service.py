@@ -4,10 +4,12 @@ import threading
 import xbmc
 
 UDP_PORT = 9527
+ACK_PORT = 0
 
 def ack(sock, addr, cmd):
     try:
-        sock.sendto(b"ACK:" + cmd.encode() + b"\n", addr)
+        target = (addr[0], ACK_PORT) if ACK_PORT > 0 else addr
+        sock.sendto(b"ACK:" + cmd.encode() + b"\n", target)
     except:
         pass
 
@@ -63,7 +65,11 @@ class SyncThread(threading.Thread):
         ack(self.sock, addr, cmd)
 
     def exec_cmd(self, cmd, val):
-        if cmd == "PLAY":
+        if cmd == "PORT":
+            global ACK_PORT
+            ACK_PORT = int(val) if val else 0
+            xbmc.log("ChataigneSync: ACK port set to " + str(ACK_PORT), xbmc.LOGINFO)
+        elif cmd == "PLAY":
             xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Player.SetSpeed","params":{"playerid":1,"speed":1},"id":"cs"}')
         elif cmd == "PAUSE":
             xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Player.SetSpeed","params":{"playerid":1,"speed":0},"id":"cs"}')

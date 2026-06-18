@@ -20,6 +20,13 @@
             "description": "启用多设备同步.\nEnable multi-device sync.",
             "type": "Boolean",
             "default": true
+        },
+        "Receive Port":{
+            "description": "用于接收插件 ACK 反馈的本地端口。\nLocal port for receiving plugin ACK feedback.",
+            "type": "Integer",
+            "min": 1024,
+            "max": 65535,
+            "default": 9528
         }
     },
     "values":{

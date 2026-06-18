@@ -4,25 +4,21 @@ var httpPass = "tocentek";
 var syncEnabled = true;
 var syncStatusValue = null;
 var sysHelperName = "OS";
-var driftQueryInt = 0;
 var allIps = [];
+var rcvPort = 9528;
 var ackCount = 0;
-
-function execShell(cmd) {
-    var helper = root.modules.getChild(sysHelperName);
-    if (helper == null) { script.log("OS module not found"); return false; }
-    if (helper.launchProcess) { helper.launchProcess(cmd); return true; }
-    script.log("OS module has no launchProcess"); return false;
-}
 
 function udpSend(cmd, val) {
     var msg = cmd;
     if (val != null) msg += ":" + val;
-    // 单播到每个 KODI IP（模块本地端口监听 ACK）
     for (var i = 0; i < allIps.length; i++) {
-        var host = allIps[i].split(":")[0];
-        local.sendTo(host, 9527, msg + "\n");
+        local.sendTo(allIps[i].split(":")[0], 9527, msg + "\n");
     }
+}
+
+function sendPort() {
+    udpSend("PORT", rcvPort);
+    script.log("PORT sent: " + rcvPort);
 }
 
 function playAll() { udpSend("PLAY"); }
@@ -82,12 +78,18 @@ function dataReceived(data) {
 
 function init() {
     script.log("KODI Sync init");
+    var rp = local.parameters.getChild("Receive Port");
+    if (rp) rcvPort = rp.get();
     reloadIps();
+    sendPort();
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
 }
 
 function moduleValueChanged(value) {
     var n = value.name.toLowerCase();
-    if (n === "secondaries" || n === "httpuser" || n === "httppass") reloadIps();
+    if (n === "receive port") {
+        rcvPort = value.get();
+        sendPort();
+    } else if (n === "secondaries" || n === "httpuser" || n === "httppass") reloadIps();
 }
