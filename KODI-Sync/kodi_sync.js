@@ -4,19 +4,14 @@ var httpPass = "tocentek";
 var syncEnabled = true;
 var syncStatusValue = null;
 var sysHelperName = "OS";
-var pythonBin = "/usr/bin/python3";
 var driftQueryInt = 0;
 var allIps = [];
 
 function execShell(cmd) {
     var helper = root.modules.getChild(sysHelperName);
-    if (helper == null) { script.log("execShell: OS module not found"); return false; }
-    if (helper.launchProcess) {
-        var ok = helper.launchProcess(cmd);
-        script.log("execShell: cmd=" + cmd.substring(0,60) + "... ok=" + ok);
-        return ok;
-    }
-    script.log("execShell: OS module has no launchProcess"); return false;
+    if (helper == null) { script.log("OS module not found"); return false; }
+    if (helper.launchProcess) { helper.launchProcess(cmd); return true; }
+    script.log("OS module has no launchProcess"); return false;
 }
 
 function compactJson(msg) {
@@ -25,12 +20,15 @@ function compactJson(msg) {
     return j;
 }
 
-function udpBroadcast(msg) {
-    var jsonStr = JSON.stringify(msg);
-    // __import__ 无空格，写文件 + python3 file 更可靠
-    var py = "__import__('socket');s=__import__('socket').socket(2,2);s.setsockopt(65535,32,1);s.sendto(b'" + jsonStr + "',('255.255.255.255',9527))";
-    util.writeFile("/tmp/kodi_sync_udp.py", py, true);
-    execShell(pythonBin + " /tmp/kodi_sync_udp.py");
+function sendToAll(msg) {
+    var jsonStr = compactJson(msg);
+    var auth = "";
+    if (httpUser.length > 0) auth = " -u " + httpUser + ":" + httpPass;
+    for (var i = 0; i < allIps.length; i++) {
+        var host = allIps[i].split(":")[0];
+        var url = "http://" + host + ":8080/jsonrpc";
+        execShell("/usr/bin/curl -s --max-time 3" + auth + " -X POST -H Content-Type:application/json -d " + jsonStr + " " + url);
+    }
 }
 
 function updateSyncStatus(text) {
@@ -63,7 +61,7 @@ function reloadIps() {
 
 function broadcastObj(msg) {
     if (!syncEnabled) return;
-    udpBroadcast(msg);
+    sendToAll(msg);
 }
 
 function playAll() { script.log("playAll called, syncEnabled=" + syncEnabled + " ips=" + allIps.length); broadcastObj({jsonrpc:"2.0",method:"Player.SetSpeed",params:{playerid:1,speed:1},id:"cs"}); }
@@ -180,11 +178,6 @@ function timeToMs(t) {
 
 function init() {
     script.log("KODI Sync init");
-    // 自动检测 python3 路径
-    if (util.readFile("/opt/homebrew/bin/python3") != null) pythonBin = "/opt/homebrew/bin/python3";
-    else if (util.readFile("/usr/local/bin/python3") != null) pythonBin = "/usr/local/bin/python3";
-    else pythonBin = "/usr/bin/python3";
-    script.log("python: " + pythonBin);
     reloadIps();
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
