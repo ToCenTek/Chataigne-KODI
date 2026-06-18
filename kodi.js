@@ -70,7 +70,7 @@ function trimStr(s) {
 
 function parseSecondaryIps(str) {
     if (str == null || str === "") { secondaryIps = []; return; }
-    var items = str.split(",");
+    var items = str.split("\n");
     var result = [];
     for (var i = 0; i < items.length; i++) {
         var p = trimStr(items[i]);
@@ -358,12 +358,12 @@ function syncAll() {
 
 function reloadSyncSettings() {
     var val;
-    // 从 KODIs Container 加载 IP 列表
+    // 从 Values.Synchronizer.KODIs.Secondary 加载 IP 列表
     secondaryIps = [];
-    var kodiContainer = local.parameters.getChild("KODIs");
-    if (kodiContainer != null) {
-        val = kodiContainer.getChild("Secondary KODIs");
-        if (val) parseSecondaryIps(val.get());
+    val = local.values.getChild("Synchronizer").getChild("KODIs");
+    if (val != null) {
+        var secVal = val.getChild("Secondary");
+        if (secVal) parseSecondaryIps(secVal.get());
     }
     val = local.values.getChild("Synchronizer").getChild("HTTP User");
     if (val) httpUser = val.get();
@@ -378,6 +378,7 @@ function reloadSyncSettings() {
     val = local.values.getChild("Synchronizer").getChild("Sync Threshold");
     if (val) syncThreshold = val.get();
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
+    script.log("Secondary KODIs: " + JSON.stringify(secondaryIps));
 }
 
 // ========== 监听 Values 面板值变化 ==========
@@ -462,6 +463,28 @@ function playIndex(Index) {
         id: "Player.Open.FilePath"
     };
     sendAll(msg);
+}
+
+function nextTrack() {
+    var msg = {
+        jsonrpc: "2.0",
+        method: "Player.GoTo",
+        params: { playerid: currentPlayerId, to: "next" },
+        id: "Player.GoTo"
+    };
+    sendAll(msg);
+    script.log("Next track");
+}
+
+function prevTrack() {
+    var msg = {
+        jsonrpc: "2.0",
+        method: "Player.GoTo",
+        params: { playerid: currentPlayerId, to: "previous" },
+        id: "Player.GoTo"
+    };
+    sendAll(msg);
+    script.log("Previous track");
 }
 
 // 指定全路径播放
@@ -879,6 +902,89 @@ function setStereoMode(Mode, Swap) {
     script.log("Swap=" + Swap + ": trying video.stereoscopicinvert=" + invertVal + " (may fail on KODI 20)");
 }
 
+// ========== 宽高比 ==========
+function cycleAspectRatio() {
+    var msg = {
+        jsonrpc: "2.0",
+        method: "Input.ExecuteAction",
+        params: { action: "aspectratio" },
+        id: "SetAspect"
+    };
+    local.send(JSON.stringify(msg));
+    script.log("Cycle aspect ratio");
+}
+
+function sendToHosts(msg, hosts) {
+    for (var i = 0; i < hosts.length; i++) {
+        var parts = hosts[i].split(":");
+        var host = parts[0];
+        var port = 8080;
+        if (parts.length > 1) {
+            var parsedPort = parseInt(parts[1]);
+            if (!isNaN(parsedPort)) port = parsedPort;
+        }
+        httpPost(host, port, msg);
+    }
+}
+
+function sendAspectToHosts(count, hostList) {
+    var msg = {
+        jsonrpc: "2.0",
+        method: "Input.ExecuteAction",
+        params: { action: "aspectratio" },
+        id: "SetAspect"
+    };
+    for (var n = 0; n < count; n++) {
+        sendToHosts(msg, hostList);
+    }
+    script.log("Aspect: cycled " + count + " time(s) to " + hostList.length + " host(s)");
+}
+
+function setAspectRatio(Count) {
+    if (Count == null || Count < 1) Count = 1;
+    for (var n = 0; n < Count; n++) {
+        var msg = {
+            jsonrpc: "2.0",
+            method: "Input.ExecuteAction",
+            params: { action: "aspectratio" },
+            id: "SetAspect"
+        };
+        local.send(JSON.stringify(msg));
+        if (syncEnabled) {
+            for (var i = 0; i < secondaryIps.length; i++) {
+                var parts = secondaryIps[i].split(":");
+                var host = parts[0];
+                var port = 8080;
+                if (parts.length > 1) {
+                    var parsedPort = parseInt(parts[1]);
+                    if (!isNaN(parsedPort)) port = parsedPort;
+                }
+                httpPost(host, port, msg);
+            }
+        }
+    }
+    script.log("Aspect: cycled " + Count + " time(s) to all");
+}
+
+function setAspectSecondaries(Count, hostsStr) {
+    if (hostsStr == null || hostsStr === "") {
+        script.log("No secondary hosts specified.");
+        return;
+    }
+    if (Count == null || Count < 1) Count = 1;
+    var items = hostsStr.split("\n");
+    var hosts = [];
+    for (var i = 0; i < items.length; i++) {
+        var p = trimStr(items[i]);
+        if (p.length > 0) hosts.push(p);
+    }
+    if (hosts.length === 0) {
+        script.log("No secondary hosts specified.");
+        return;
+    }
+    sendAspectToHosts(Count, hosts);
+}
+
 // 在终端窗口中运行 coreelec.sh（有交互提示）
 var launcherFileParam = null;
 
@@ -961,6 +1067,11 @@ function wsMessageReceived(message) {
         } else {
             script.log("SetStereoMode OK");
         }
+        return;
+    }
+
+    if (data.id === "SetAspect") {
+        if (data.error) script.log("SetAspect error: " + JSON.stringify(data.error));
         return;
     }
 

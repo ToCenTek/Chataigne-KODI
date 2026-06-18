@@ -15,15 +15,6 @@
         "serverPath": "10.0.0.41:9090"
     },
     "parameters": {
-        "KODIs": {
-            "type": "Container",
-            "collapsed": false,
-            "Secondary KODIs": {
-                "description": "副 KODI 的 IP:port 列表, 逗号分隔.\nSecondary KODI IP:port list, comma separated.",
-                "type": "String",
-                "default": ""
-            }
-        },
         "Initialization": {
             "type": "Trigger",
             "description": "初始化, 加载视频播放列表.\nInitialize, load playlist."
@@ -112,6 +103,16 @@
                 "type": "String",
                 "readOnly": true,
                 "default": "Idle"
+            },
+            "KODIs":{
+                "type": "Container",
+                "collapsed": false,
+                "Secondary":{
+                    "description": "副 KODI 的 IP:port 列表, 每行一个.\nSecondary KODI IP:port list, one per line.",
+                    "type": "String",
+                    "multiline": true,
+                    "default": ""
+                }
             }
         }
     },
@@ -149,6 +150,16 @@
                     "min": 0
                 }
             }
+        },
+        "Next": {
+            "menu": "Player",
+            "description": "下一曲.\nNext track.",
+            "callback": "nextTrack"
+        },
+        "Previous": {
+            "menu": "Player",
+            "description": "上一曲.\nPrevious track.",
+            "callback": "prevTrack"
         },
         "Play||Pause": {
             "menu": "Player",
@@ -448,6 +459,45 @@
                     "description": "交换左右眼(SBS)或上下(TAB)。Off 时无效。\n尝试通过 video.stereoscopicinvert 实现，KODI 20 可能不支持（实验性）。\nSwap L/R (SBS) or T/B (TAB). Tries video.stereoscopicinvert (experimental, KODI 20 may not support).",
                     "type": "Boolean",
                     "default": false
+                }
+            }
+        },
+        "Cycle Aspect":{
+            "menu": "Aspect",
+            "description": "循环切换宽高比一次。仅主 KODI。\nCycle aspect ratio once. Primary KODI only.",
+            "callback": "cycleAspectRatio"
+        },
+        "Set Aspect":{
+            "menu": "Aspect",
+            "description": "循环切换宽高比，同步所有 KODI。\nCycle aspect ratio, synced to all KODIs.",
+            "callback": "setAspectRatio",
+            "parameters": {
+                "Count":{
+                    "description": "循环次数（每个循环切换一个模式）。\nNumber of cycles (each cycle advances one mode).",
+                    "type": "Integer",
+                    "default": 1,
+                    "min": 1,
+                    "max": 10
+                }
+            }
+        },
+        "Set Aspect Secondaries":{
+            "menu": "Aspect",
+            "description": "循环切换指定副 KODI 的宽高比。\nCycle aspect ratio for specific secondary KODIs.",
+            "callback": "setAspectSecondaries",
+            "parameters": {
+                "Count":{
+                    "description": "循环次数（每个循环切换一个模式）。\nNumber of cycles (each cycle advances one mode).",
+                    "type": "Integer",
+                    "default": 1,
+                    "min": 1,
+                    "max": 10
+                },
+                "Hosts":{
+                    "description": "目标副 KODI 的 IP:port，每行一个。\nTarget secondary KODI IP:port, one per line.",
+                    "type": "String",
+                    "multiline": true,
+                    "default": ""
                 }
             }
         },
