@@ -72,8 +72,7 @@ function timeToMs(t) {
 
 function dataReceived(data) {
     ackCount++;
-    var text = data.toString();
-    script.log("ACK[" + ackCount + "]: " + text.substring(0,80));
+    script.log("ACK[" + ackCount + "]: " + String(data).substring(0,80));
 }
 
 function init() {
