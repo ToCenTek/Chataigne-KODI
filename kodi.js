@@ -18,9 +18,9 @@ var currentLoopMode = "off";
 // 同步相关变量
 var secondaryIps = [];
 var httpUser = "kodi";
-var httpPass = "";
+var httpPass = "tocentek";
 var syncEnabled = false;
-var syncInterval = 2000;
+var syncInterval = 200;
 var syncThreshold = 8;
 var syncStatusValue = null;
 var syncStatusText = "";
@@ -41,7 +41,9 @@ var syncSecondaryIndex = 0;
 var syncLastSeekMs = -1;
 var syncCurHost = "";
 var syncCurPort = 8080;
-var syncTempPrefix = "/tmp/kodi_sync_";
+var syncWaitCount = 0;
+var syncSeekTime = null;
+var syncPrimaryTotalTime = null;
 
 // 通过 OS 模块执行 shell 命令（依赖名为"OS"的模块提供 launchProcess）
 function execShell(cmd) {
@@ -69,45 +71,56 @@ function trimStr(s) {
     return s.substring(start, end + 1);
 }
 
+// 从 IP 行中提取纯地址（去掉 [漂移值] 部分）
+function extractIp(raw) {
+    var idx = raw.indexOf("[");
+    if (idx >= 0) return trimStr(raw.substring(0, idx));
+    return trimStr(raw);
+}
+
 // 解析 Values.Synchronizer.KODIs.Secondary 的多行文本，按换行分割成 IP 数组
 function parseSecondaryIps(str) {
     if (str == null || str === "") { secondaryIps = []; return; }
     var items = str.split("\n");
     var result = [];
     for (var i = 0; i < items.length; i++) {
-        var p = trimStr(items[i]);
+        var p = extractIp(items[i]);
         if (p.length > 0) result.push(p);
     }
     secondaryIps = result;
 }
 
+// 将 msg 对象转为完全无空格的单行 JSON（launchProcess 按空格分割参数，不能有空格）
+function compactJson(msg) {
+    var j = JSON.stringify(msg);
+    j = j.split("\n").join("");
+    j = j.split("\r").join("");
+    j = j.split(" ").join("");
+    return j;
+}
+
 // 通过 curl 向指定 KODI 发送 HTTP POST JSON-RPC 请求（用于同步等 HTTP 操作）
+// 注意：launchProcess 按空格分割参数，所有值不得含空格
 function httpPost(host, port, msg) {
-    var jsonStr = JSON.stringify(msg);
-    jsonStr = jsonStr.split("'").join("'\\''");
+    var jsonStr = compactJson(msg);
     var auth = "";
     if (httpUser.length > 0) {
-        var u = httpUser.split("'").join("'\\''");
-        var p = httpPass.split("'").join("'\\''");
-        auth = " -u '" + u + ":" + p + "'";
+        auth = " -u " + httpUser + ":" + httpPass;
     }
     var url = "http://" + host + ":" + port + "/jsonrpc";
-    var cmd = "curl -s --max-time 3" + auth + " -X POST -H 'Content-Type: application/json' -d '" + jsonStr + "' '" + url + "'";
+    var cmd = "/usr/bin/curl -s --max-time 3" + auth + " -X POST -H Content-Type:application/json -d " + jsonStr + " " + url;
     execShell(cmd);
 }
 
-// 通过 curl GET 请求将 JSON-RPC 响应保存到文件（同步时用于读取 KODI 播放位置）
+// 通过 curl 将 JSON-RPC 响应保存到文件（同步时用于读取 KODI 播放位置）
 function httpGetToFile(host, port, msg, outFile) {
-    var jsonStr = JSON.stringify(msg);
-    jsonStr = jsonStr.split("'").join("'\\''");
+    var jsonStr = compactJson(msg);
     var auth = "";
     if (httpUser.length > 0) {
-        var u = httpUser.split("'").join("'\\''");
-        var p = httpPass.split("'").join("'\\''");
-        auth = " -u '" + u + ":" + p + "'";
+        auth = " -u " + httpUser + ":" + httpPass;
     }
     var url = "http://" + host + ":" + port + "/jsonrpc";
-    var cmd = "curl -s --max-time 3" + auth + " -X POST -H 'Content-Type: application/json' -d '" + jsonStr + "' -o '" + outFile + "' '" + url + "'";
+    var cmd = "/usr/bin/curl -s --max-time 3" + auth + " -X POST -H Content-Type:application/json -d " + jsonStr + " -o " + outFile + " " + url;
     execShell(cmd);
 }
 
@@ -154,7 +167,7 @@ function advanceSyncState() {
             method: "Player.GetProperties",
             params: {
                 playerid: currentPlayerId,
-                properties: ["time", "speed"]
+                properties: ["time", "speed", "totaltime"]
             },
             id: "SyncGetPrimary"
         };
@@ -183,63 +196,47 @@ function advanceSyncState() {
         return;
     }
 
-    // CHECK: 启动 HTTP 获取副设备位置
+    // CHECK: 直接推送主设备位置到所有副机
     if (syncState === SYNC_CHECK) {
         if (syncSecondaryIndex >= secondaryIps.length) {
             syncState = SYNC_DONE;
-            updateSyncStatus("In sync");
+            return;
+        }
+        if (syncPrimaryTime == null) {
+            syncState = SYNC_DONE;
+            updateSyncStatus("Idle");
             return;
         }
         var ip = secondaryIps[syncSecondaryIndex];
         var parts = ip.split(":");
-        syncCurHost = parts[0];
-        syncCurPort = 8080;
+        var host = parts[0];
+        var port = 8080;
         if (parts.length > 1) {
-            var parsedPort = parseInt(parts[1]);
-            if (!isNaN(parsedPort)) syncCurPort = parsedPort;
+            var p = parseInt(parts[1]);
+            if (!isNaN(p)) port = p;
         }
-        var getMsg = {
-            jsonrpc: "2.0",
-            method: "Player.GetProperties",
-            params: {
-                playerid: currentPlayerId,
-                properties: ["time", "speed"]
-            },
-            id: "SyncGetSecondary"
-        };
-        var outFile = syncTempPrefix + syncSecondaryIndex + ".json";
-        httpGetToFile(syncCurHost, syncCurPort, getMsg, outFile);
-        syncState = SYNC_WAIT_SECONDARY;
-        return;
-    }
-
-    // WAIT_SECONDARY: 读取 HTTP 结果文件
-    if (syncState === SYNC_WAIT_SECONDARY) {
-        var outFile = syncTempPrefix + syncSecondaryIndex + ".json";
-        var data = readJSONFile(outFile);
-        if (data == null || data.error || data.result == null || data.result.time == null) {
-            syncSecondaryIndex++;
-            syncState = SYNC_CHECK;
-            return;
-        }
-        var secondaryTime = data.result.time;
-        var secondarySpeed = data.result.speed;
-        if (secondarySpeed !== 0 && syncPrimaryTime != null) {
-            var drift = Math.abs(timeToMs(syncPrimaryTime) - timeToMs(secondaryTime));
-            if (drift > syncThreshold) {
-                var seekMsg = {
-                    jsonrpc: "2.0",
-                    method: "Player.Seek",
-                    params: {
-                        playerid: currentPlayerId,
-                        value: { time: syncPrimaryTime }
-                    },
-                    id: "SyncSeek"
-                };
-                httpPost(syncCurHost, syncCurPort, seekMsg);
-                script.log("Sync: corrected " + syncCurHost + " drift=" + drift + "ms");
+        var pct = 0;
+        var sig = syncPrimaryTime;
+        if (syncPrimaryTotalTime != null) {
+            var totalMs = timeToMs(syncPrimaryTotalTime);
+            if (totalMs > 0) {
+                var priMs = timeToMs(sig) + 100; // 提前 100ms 补偿网络延迟
+                if (priMs > totalMs) priMs = totalMs;
+                pct = (priMs / totalMs) * 100;
             }
         }
+        var seekMsg = {
+            jsonrpc: "2.0",
+            method: "Player.Seek",
+            params: {
+                playerid: currentPlayerId,
+                value: { percentage: pct }
+            },
+            id: "SyncSeek"
+        };
+        syncSeekTime = syncPrimaryTime;
+        httpPost(host, port, seekMsg);
+        script.log("SyncSeek sent to " + host + ":" + port);
         syncSecondaryIndex++;
         syncState = SYNC_CHECK;
         return;
@@ -270,6 +267,21 @@ function updateSyncStatus(text) {
     script.log("Sync: " + text);
 }
 
+// 强制发送到所有 KODI（不检查 syncEnabled）
+function sendAllForced(msg) {
+    local.send(JSON.stringify(msg));
+    for (var i = 0; i < secondaryIps.length; i++) {
+        var parts = secondaryIps[i].split(":");
+        var host = parts[0];
+        var port = 8080;
+        if (parts.length > 1) {
+            var parsedPort = parseInt(parts[1]);
+            if (!isNaN(parsedPort)) port = parsedPort;
+        }
+        httpPost(host, port, msg);
+    }
+}
+
 // 获取目录下的文件列表（仅用于 UI 显示）
 function getDirectoryFiles() {
     var msg = {
@@ -296,7 +308,7 @@ function buildPlaylistFromM3U() {
         params: { playlistid: 1 },
         id: "PlaylistClear"
     };
-    local.send(JSON.stringify(msg));
+    sendAllForced(msg);
     script.log("Building playlist: clearing...");
 }
 
@@ -314,7 +326,7 @@ function addNextPlaylistFile() {
             },
             id: "PlaylistAdd"
         };
-        local.send(JSON.stringify(msg));
+        sendAllForced(msg);
     } else {
         playlistStep = 0;
         openManagedPlaylist();
@@ -332,7 +344,7 @@ function openManagedPlaylist() {
         },
         id: "init"
     };
-    local.send(JSON.stringify(msg));
+    sendAllForced(msg);
     script.log("Opening managed playlist...");
 }
 
@@ -379,7 +391,10 @@ function reloadSyncSettings() {
     val = local.values.getChild("Synchronizer").getChild("HTTP User");
     if (val) httpUser = val.get();
     val = local.values.getChild("Synchronizer").getChild("HTTP Pass");
-    if (val) httpPass = val.get();
+    if (val) {
+        var pw = val.get();
+        httpPass = (pw != null && pw.length > 0) ? pw : "tocentek";
+    }
     val = local.parameters.getChild("Sync Enabled");
     if (val) syncEnabled = val.get();
     var syncContainer = local.values.getChild("Synchronizer");
@@ -455,9 +470,17 @@ function moduleValueChanged(value) {
             syncInterval = value.get();
         } else if (paramName.toLowerCase() === "syncthreshold") {
             syncThreshold = value.get();
+        } else if (paramName.toLowerCase() === "secondary") {
+            parseSecondaryIps(value.get());
+            script.log("Secondary KODIs: " + JSON.stringify(secondaryIps));
         }
     } else {
         script.log("Module value triggered : " + value.name);
+        if (value.name.toLowerCase() === "play/pause" || value.name.toLowerCase() === "play_pause") {
+            var pausedVal = local.values.getChild("Info").getChild("isPaused");
+            var isPaused = pausedVal ? pausedVal.get() : false;
+            playPause(!isPaused);
+        }
     }
 }
 
@@ -630,7 +653,7 @@ function setLoop(Mode) {
         },
         id: "Player.SetRepeat.Loop"
     };
-    local.send(JSON.stringify(msg));
+    sendAllForced(msg);
     currentLoopMode = Mode;
     var loopParam = local.values.getChild("Info").getChild("isLooped");
     if (loopParam) loopParam.set(Mode !== "off");
@@ -649,7 +672,7 @@ function setRandom(Mode) {
         },
         id: "Player.SetShuffle.Random"
     };
-    local.send(JSON.stringify(msg));
+    sendAllForced(msg);
     var randParam = local.values.getChild("Info").getChild("Random");
     if (randParam) randParam.set(Mode);
     script.log("Setup Random Mode: " + Mode);
@@ -849,6 +872,51 @@ function sendJSON(jsonText) {
     script.log("sendJSON: " + jsonText);
 }
 
+// 测试 launchProcess 是否工作
+function testLaunch() {
+    execShell("/usr/bin/touch /tmp/chataigne_test.txt");
+    var json = compactJson({jsonrpc:"2.0",method:"Player.GetProperties",params:{playerid:1,properties:["time","speed"]},id:"test"});
+    var cmd = "/usr/bin/curl -s --max-time 3 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + json + " -o /tmp/chataigne_curl_test.txt http://10.0.0.53:8080/jsonrpc";
+    script.log("test cmd: " + cmd);
+    execShell(cmd);
+    script.log("Test launch: commands sent");
+}
+
+// 调试：查询主 KODI 播放位置并显示同步状态
+function debugPositions() {
+    var queryMsg = {
+        jsonrpc: "2.0",
+        method: "Player.GetProperties",
+        params: {
+            playerid: currentPlayerId,
+            properties: ["time", "speed"]
+        },
+        id: "DebugGetPrimary"
+    };
+    local.send(JSON.stringify(queryMsg));
+    script.log("Querying primary position...");
+    // 副机位置：通过 Mac 的 curl 查并用 logger 记录
+    for (var i = 0; i < secondaryIps.length; i++) {
+        var ip = secondaryIps[i];
+        var parts = ip.split(":");
+        var host = parts[0];
+        var port = 8080;
+        if (parts.length > 1) {
+            var p = parseInt(parts[1]);
+            if (!isNaN(p)) port = p;
+        }
+        var secQuery = '{\"jsonrpc\":\"2.0\",\"method\":\"Player.GetProperties\",\"params\":{\"playerid\":' + currentPlayerId + ',\"properties\":[\"time\",\"speed\"]},\"id\":\"sec\"}';
+        var cmd = "/usr/bin/curl -s --max-time 3 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + secQuery + " http://" + host + ":" + port + "/jsonrpc";
+        script.log("Secondary " + host + ":" + port + " - query via curl manually.");
+    }
+    script.log("--- To see both positions, run in terminal: ---");
+    script.log("curl -s -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d '{\"jsonrpc\":\"2.0\",\"method\":\"Player.GetProperties\",\"params\":{\"playerid\":1,\"properties\":[\"time\",\"speed\"]},\"id\":\"p\"}' http://10.0.0.41:8080/jsonrpc");
+    if (secondaryIps.length > 0) {
+        var sip = secondaryIps[0].split(":")[0];
+        script.log("curl -s -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d '{\"jsonrpc\":\"2.0\",\"method\":\"Player.GetProperties\",\"params\":{\"playerid\":1,\"properties\":[\"time\",\"speed\"]},\"id\":\"s\"}' http://" + sip + ":8080/jsonrpc");
+    }
+}
+
 // 强制全屏
 function forceFullscreenAndClean() {
     var fsAction = {
@@ -1011,7 +1079,6 @@ var launcherFileParam = null;
 // 在主机（Mac）终端中运行 kodi_init.sh 或 kodi_update.sh 脚本，
 // Linux 端通过 x-terminal-emulator 启动，macOS 端通过 launchFile 打开 .command 文件
 function runCoreelecScript(ScriptFile, UpdatePlaylist) {
-function runCoreelecScript(ScriptFile, UpdatePlaylist) {
     if (UpdatePlaylist == null) UpdatePlaylist = true;
     var moduleDir = "/Users/yhc/Documents/Chataigne/modules/KODI";
     var suffix = UpdatePlaylist ? "update" : "init";
@@ -1050,6 +1117,11 @@ function reSync() {
     advanceSyncState();
 }
 
+// 定时器：每秒推进同步状态机
+function update(deltaTime) {
+    advanceSyncState();
+}
+
 // ========== 模块初始化：加载设置、同步状态、获取文件列表 ==========
 function init() {
     initStep = 0;
@@ -1058,6 +1130,7 @@ function init() {
     reloadSyncSettings();
     syncAll();
     initStep = 1;
+    script.setUpdateRate(2);
     getDirectoryFiles();
     script.log("Step 1: Getting directory files for display...");
 }
@@ -1264,11 +1337,28 @@ function wsMessageReceived(message) {
         return;
     }
 
+    // 调试位置查询响应
+    if (data.id === "DebugGetPrimary" && data.result) {
+        var t = data.result.time;
+        var pos = (t.hours * 3600 + t.minutes * 60 + t.seconds) + "." + t.milliseconds;
+        script.log("=== Primary position: " + pos + "s ===");
+        script.log("Secondary KODIs: " + JSON.stringify(secondaryIps));
+        script.log("Sync status: " + syncStatusText);
+        if (secondaryIps.length > 0) {
+            script.log("Tip: Use the Aspect > Set Aspect Secondaries command to query secondary positions via HTTP.");
+        }
+        return;
+    }
+
     // 同步位置检查响应：将主设备位置存入共享变量
-    if (data.id === "SyncGetPrimary" && !data.error) {
-        syncPrimaryTime = data.result.time;
-        syncPrimarySpeed = data.result.speed;
+    if (data.id === "SyncGetPrimary") {
+        if (!data.error) {
+            syncPrimaryTime = data.result.time;
+            syncPrimarySpeed = data.result.speed;
+            syncPrimaryTotalTime = data.result.totaltime;
+        }
         syncGotPrimaryResponse = true;
+        return;
     }
 
     // 处理其他事件（仅更新 UI，无任何自动重载逻辑）
@@ -1350,10 +1440,6 @@ function moduleParameterChanged(param) {
         var infoContainer = local.values.getChild("Info");
         if (infoContainer) infoContainer.setCollapsed(false);
         init();
-    } else if (paramName === "Play/Pause") {
-        var pausedVal = local.values.getChild("Info").getChild("isPaused");
-        var isPaused = pausedVal ? pausedVal.get() : false;
-        playPause(!isPaused);
     } else if (paramName === "Add Secondary") {
         addSecondary();
     } else if (paramName.substring(0, 10) === "Secondary_") {

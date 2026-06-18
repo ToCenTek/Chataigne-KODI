@@ -82,13 +82,13 @@
             "HTTP Pass":{
                 "description": "KODI HTTP 密码.\nKODI HTTP password.",
                 "type": "String",
-                "default": ""
+                "default": "tocentek"
             },
                 "Sync Interval":{
                     "description": "位置轮询间隔（毫秒）.\nPosition polling interval (ms).",
                     "type": "Integer",
                     "min": 4,
-                    "default": 2000
+                    "default": 500
                 },
                 "Sync Threshold":{
                     "description": "允许的最大偏移（毫秒），超过则纠偏.\nMax allowed drift (ms).",
@@ -109,6 +109,12 @@
                     "description": "副 KODI 的 IP:port 列表, 每行一个.\nSecondary KODI IP:port list, one per line.",
                     "type": "String",
                     "multiline": true,
+                    "default": ""
+                },
+                "Drift":{
+                    "description": "各副机漂移值(ms)。\nDrift values per secondary (ms).",
+                    "type": "String",
+                    "readOnly": true,
                     "default": ""
                 }
             }
@@ -498,6 +504,16 @@
                     "default": ""
                 }
             }
+        },
+        "Test Launch":{
+            "menu": "",
+            "description": "测试 launchProcess 是否能执行命令。\nTest if launchProcess can execute commands.",
+            "callback": "testLaunch"
+        },
+        "Debug Positions":{
+            "menu": "",
+            "description": "显示主副 KODI 的播放位置和漂移。\nShow primary & secondary KODI playback positions and drift.",
+            "callback": "debugPositions"
         },
         "Run CoreELEC Script":{
             "menu": "System",
