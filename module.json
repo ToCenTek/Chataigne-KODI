@@ -442,7 +442,7 @@
         },
         "Cycle 3D Mode":{
             "menu": "3D",
-            "description": "本地索引 Off→SBS→TAB→Off 循环。仅主 KODI。\nCycle Off→SBS→TAB→Off. Primary KODI only.",
+            "description": "循环切换 3D 模式。仅主 KODI。\nCycle 3D mode. Primary KODI only.",
             "callback": "cycleStereoMode"
         },
         "Set 3D Mode":{
@@ -456,7 +456,11 @@
                     "options": {
                         "Off": "off",
                         "Side-by-Side": "sbs",
-                        "Top-and-Bottom": "tab"
+                        "Top-and-Bottom": "tab",
+                        "Red/Cyan": "anaglyph_cyan_red",
+                        "Green/Magenta": "anaglyph_green_magenta",
+                        "Yellow/Blue": "anaglyph_yellow_blue",
+                        "Monoscopic": "monoscopic"
                     }
                 },
                 "Swap":{

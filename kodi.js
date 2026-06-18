@@ -20,7 +20,7 @@ var secondaryIps = [];
 var httpUser = "kodi";
 var httpPass = "tocentek";
 var syncEnabled = false;
-var syncInterval = 200;
+var syncInterval = 500;
 var syncThreshold = 8;
 var syncStatusValue = null;
 var syncStatusText = "";
@@ -44,6 +44,7 @@ var syncCurPort = 8080;
 var syncWaitCount = 0;
 var syncSeekTime = null;
 var syncPrimaryTotalTime = null;
+var syncLastSeekWallTime = 0;
 
 // 通过 OS 模块执行 shell 命令（依赖名为"OS"的模块提供 launchProcess）
 function execShell(cmd) {
@@ -234,6 +235,12 @@ function advanceSyncState() {
             },
             id: "SyncSeek"
         };
+        var nowWall = new Date() - 0;
+        if (nowWall - syncLastSeekWallTime < 800) {
+            syncState = SYNC_DONE;
+            return;
+        }
+        syncLastSeekWallTime = nowWall;
         syncSeekTime = syncPrimaryTime;
         httpPost(host, port, seekMsg);
         script.log("SyncSeek sent to " + host + ":" + port);
@@ -933,8 +940,8 @@ function forceFullscreenAndClean() {
 // 模式: off, split_vertical(SBS), split_horizontal(TAB), monoscopic(Flat)。
 // 循环: next, previous。
 var trackedStereoIdx = 0;
-var stereoModes = ["off", "split_vertical", "split_horizontal"];
-var stereoNames = ["off", "sbs", "tab"];
+var stereoModes = ["off", "split_vertical", "split_horizontal", "anaglyph_cyan_red", "anaglyph_green_magenta", "anaglyph_yellow_blue", "monoscopic"];
+var stereoNames = ["off", "sbs", "tab", "anaglyph_cyan_red", "anaglyph_green_magenta", "anaglyph_yellow_blue", "monoscopic"];
 
 // 循环切换 3D 模式：Off → SBS → TAB → Off
 function cycleStereoMode() {
@@ -956,7 +963,7 @@ function setStereoMode(Mode, Swap) {
     if (Mode == null) Mode = "off";
     if (Swap == null || !Swap) Swap = false;
     if (Swap && Mode === "off") Swap = false;
-    var modeVal = "off";
+    var modeVal = Mode;
     if (Mode === "sbs") modeVal = "split_vertical";
     else if (Mode === "tab") modeVal = "split_horizontal";
     var msg = {
@@ -1117,9 +1124,46 @@ function reSync() {
     advanceSyncState();
 }
 
-// 定时器：每秒推进同步状态机
+var driftQueryPending = false;
+var driftQueryTimer = 0;
+var driftFilePath = "/Users/yhc/Documents/Chataigne/modules/KODI/kodi_drift.txt";
+
+// 定时器：推进同步 + 每 5 秒更新一次漂移
 function update(deltaTime) {
     advanceSyncState();
+    driftQueryTimer++;
+    if (driftQueryTimer >= 10 && !driftQueryPending && secondaryIps.length > 0 && syncEnabled) {
+        driftQueryTimer = 0;
+        var host = secondaryIps[0].split(":")[0];
+        var qJson = compactJson({jsonrpc:"2.0",method:"Player.GetProperties",params:{playerid:currentPlayerId,properties:["time","speed"]},id:"DriftUpd"});
+        var cmd = "/usr/bin/curl -s --max-time 3 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + qJson + " -o " + driftFilePath + " http://" + host + ":8080/jsonrpc";
+        execShell(cmd);
+        driftQueryPending = true;
+    }
+    if (driftQueryPending) {
+        var dContent = util.readFile(driftFilePath);
+        if (dContent != null && dContent.length > 0 && dContent.charAt(0) === "{") {
+            var dData = JSON.parse(dContent);
+            if (dData.result && dData.result.time && syncPrimaryTime != null) {
+                var sMs = timeToMs(dData.result.time);
+                var pMs = timeToMs(syncPrimaryTime);
+                if (pMs > 0) {
+                    var dv = Math.abs(pMs - sMs);
+                    var dp2 = local.values.getChild("Synchronizer");
+                    if (dp2) {
+                        var kc = dp2.getChild("KODIs");
+                        if (kc) {
+                            var dc = kc.getChild("Drift");
+                            if (dc != null && dc.set) dc.set("" + dv + "ms");
+                        }
+                    }
+                }
+            }
+            // 读完后删文件，确保下次读到的是新数据
+            execShell("/bin/rm " + driftFilePath);
+            driftQueryPending = false;
+        }
+    }
 }
 
 // ========== 模块初始化：加载设置、同步状态、获取文件列表 ==========
