@@ -9,11 +9,11 @@ var rcvPort = 9528;
 var ackCount = 0;
 
 var lastFile = "/storage/videos/4K_29.97-Chimei-inn-RoastDuck.mp4";
-var driftTick = 0;
+var driftPhase = 0;
 
 function execShell(cmd) {
     var helper = root.modules.getChild("OS");
-    if (helper == null) return false;
+    if (helper == null) { script.log("OS module missing"); return false; }
     if (helper.launchProcess) { helper.launchProcess(cmd); return true; }
     return false;
 }
