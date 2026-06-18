@@ -10,9 +10,13 @@ var allIps = [];
 
 function execShell(cmd) {
     var helper = root.modules.getChild(sysHelperName);
-    if (helper == null) { script.log("OS module not found"); return false; }
-    if (helper.launchProcess) { helper.launchProcess(cmd); return true; }
-    script.log("OS module has no launchProcess"); return false;
+    if (helper == null) { script.log("execShell: OS module not found"); return false; }
+    if (helper.launchProcess) {
+        var ok = helper.launchProcess(cmd);
+        script.log("execShell: cmd=" + cmd.substring(0,60) + "... ok=" + ok);
+        return ok;
+    }
+    script.log("execShell: OS module has no launchProcess"); return false;
 }
 
 function compactJson(msg) {
@@ -23,9 +27,10 @@ function compactJson(msg) {
 
 function udpBroadcast(msg) {
     var jsonStr = JSON.stringify(msg);
-    // __import__ 无空格，launchProcess 不分词；pythonBin 在 init 中自动检测
     var py = "__import__('socket');s=__import__('socket').socket(2,2);s.setsockopt(65535,32,1);s.sendto(b'" + jsonStr + "',('255.255.255.255',9527))";
-    execShell(pythonBin + " -c " + py);
+    var cmd = pythonBin + " -c " + py;
+    script.log("udp: bin=" + pythonBin + " py_len=" + py.length);
+    execShell(cmd);
 }
 
 function updateSyncStatus(text) {
@@ -175,6 +180,11 @@ function timeToMs(t) {
 
 function init() {
     script.log("KODI Sync init");
+    // 自动检测 python3 路径
+    if (util.readFile("/opt/homebrew/bin/python3") != null) pythonBin = "/opt/homebrew/bin/python3";
+    else if (util.readFile("/usr/local/bin/python3") != null) pythonBin = "/usr/local/bin/python3";
+    else pythonBin = "/usr/bin/python3";
+    script.log("python: " + pythonBin);
     reloadIps();
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
