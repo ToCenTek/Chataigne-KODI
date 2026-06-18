@@ -1,0 +1,161 @@
+{
+    "name": "KODI Sync",
+    "type": "NoType",
+    "path": "ToCenTek",
+    "version": "1.0.0",
+    "description": "多 KODI 同步控制器。通过 UDP 广播实现帧级多机同步。\nMulti-KODI sync controller. Frame-level sync via UDP broadcast.",
+    "hasInput": false,
+    "hasOutput": false,
+    "hideDefaultCommands": true,
+    "parameters": {
+        "Sync Enabled":{
+            "description": "启用多设备同步.\nEnable multi-device sync.",
+            "type": "Boolean",
+            "default": true
+        }
+    },
+    "values":{
+        "Status":{
+            "type": "Container",
+            "collapsed": false,
+            "Sync Status":{
+                "description": "同步状态.\nSync status.",
+                "type": "String",
+                "readOnly": true,
+                "default": "Idle"
+            },
+            "Drift":{
+                "description": "各副机漂移值(ms)。\nDrift values per secondary (ms).",
+                "type": "String",
+                "readOnly": true,
+                "default": ""
+            },
+            "Secondaries":{
+                "description": "副 KODI 的 IP:port 列表, 每行一个。主机自动包含。\nSecondary KODI IP:port list, one per line. Primary auto-included.",
+                "type": "String",
+                "multiline": true,
+                "default": "10.0.0.53\n10.0.0.90"
+            },
+            "HTTP User":{
+                "description": "KODI HTTP 用户名.\nKODI HTTP username.",
+                "type": "String",
+                "default": "kodi"
+            },
+            "HTTP Pass":{
+                "description": "KODI HTTP 密码.\nKODI HTTP password.",
+                "type": "String",
+                "default": "tocentek"
+            }
+        }
+    },
+    "scripts": ["kodi_sync.js"],
+    "commands": {
+        "Play All":{
+            "menu": "Control",
+            "description": "播放所有 KODI.\nPlay all KODIs.",
+            "callback": "playAll"
+        },
+        "Pause All":{
+            "menu": "Control",
+            "description": "暂停所有 KODI.\nPause all KODIs.",
+            "callback": "pauseAll"
+        },
+        "Stop All":{
+            "menu": "Control",
+            "description": "停止所有 KODI.\nStop all KODIs.",
+            "callback": "stopAll"
+        },
+        "Seek All":{
+            "menu": "Control",
+            "description": "所有 KODI 跳转到指定百分比.\nSeek all KODIs to percentage.",
+            "callback": "seekAll",
+            "parameters": {
+                "Percentage":{
+                    "type": "Float",
+                    "min": 0,
+                    "max": 100,
+                    "default": 50
+                }
+            }
+        },
+        "Set Volume All":{
+            "menu": "Control",
+            "description": "同步设置所有 KODI 音量.\nSet volume on all KODIs.",
+            "callback": "setVolumeAll",
+            "parameters": {
+                "Volume":{
+                    "type": "Integer",
+                    "min": 0,
+                    "max": 100,
+                    "default": 50
+                }
+            }
+        },
+        "Mute All":{
+            "menu": "Control",
+            "description": "同步静音/取消静音所有 KODI.\nMute/unmute all KODIs.",
+            "callback": "muteAll",
+            "parameters": {
+                "Mute":{
+                    "type": "Boolean",
+                    "default": true
+                }
+            }
+        },
+        "ReSync Now":{
+            "menu": "Sync",
+            "description": "立即查询并纠偏所有 KODI 的播放位置.\nQuery and correct drift on all KODIs now.",
+            "callback": "reSync"
+        },
+        "Toggle Sync":{
+            "menu": "Sync",
+            "description": "开启/关闭自动同步.\nEnable/disable auto sync.",
+            "callback": "toggleSync"
+        },
+        "Set 3D Mode All":{
+            "menu": "3D",
+            "description": "同步设置所有 KODI 的 3D 模式.\nSet 3D mode on all KODIs.",
+            "callback": "set3DModeAll",
+            "parameters": {
+                "Mode":{
+                    "description": "3D模式.\n3D mode.",
+                    "type": "Enum",
+                    "options": {
+                        "Off": "off",
+                        "Side-by-Side": "sbs",
+                        "Top-and-Bottom": "tab",
+                        "Red/Cyan": "anaglyph_cyan_red",
+                        "Green/Magenta": "anaglyph_green_magenta",
+                        "Yellow/Blue": "anaglyph_yellow_blue",
+                        "Monoscopic": "monoscopic"
+                    }
+                }
+            }
+        },
+        "Set Aspect All":{
+            "menu": "Aspect",
+            "description": "循环切换所有 KODI 的宽高比.\nCycle aspect ratio on all KODIs.",
+            "callback": "setAspectAll",
+            "parameters": {
+                "Count":{
+                    "type": "Integer",
+                    "default": 1,
+                    "min": 1,
+                    "max": 10
+                }
+            }
+        },
+        "Send to All":{
+            "menu": "",
+            "description": "发送原始 JSON-RPC 命令到所有 KODI.\nSend raw JSON-RPC command to all KODIs.",
+            "callback": "sendToAll",
+            "parameters": {
+                "JSON":{
+                    "description": "完整 JSON-RPC 命令字符串.\nComplete JSON-RPC command string.",
+                    "type": "String",
+                    "default": "{\"jsonrpc\":\"2.0\",\"method\":\"Player.GetProperties\",\"params\":{\"playerid\":1,\"properties\":[\"time\",\"speed\"]},\"id\":\"test\"}"
+                }
+            }
+        }
+    }
+}
