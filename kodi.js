@@ -500,6 +500,7 @@ function playFile(FilePath) {
         id: "Player.Open.FilePath"
     };
     sendAll(msg);
+    playListGetItems();
 }
 
 // 播放/暂停
@@ -1258,7 +1259,7 @@ function wsMessageReceived(message) {
         if (data.params && data.params.data && data.params.data.player) {
             currentPlayerId = data.params.data.player.playerid;
         }
-        // OnPlay 通知不含 file 路径，主动查询
+        // 主动查询当前文件路径
         var getItem = {
             jsonrpc: "2.0",
             method: "Player.GetItem",
@@ -1269,6 +1270,8 @@ function wsMessageReceived(message) {
             id: "GetPlayerItem"
         };
         local.send(JSON.stringify(getItem));
+        // 刷新播放列表（Player.Open File 会替换列表）
+        playListGetItems();
         script.log("Kodi state: Playing");
     }
     if (data.method === "Player.OnPause") {
