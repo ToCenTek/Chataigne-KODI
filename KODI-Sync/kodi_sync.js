@@ -28,7 +28,6 @@ function sendPort() {
     script.log("PORT sent: " + rcvPort);
 }
 
-function playAll() { udpSend("PLAY"); }
 function pauseAll() { udpSend("PAUSE"); }
 function stopAll() { udpSend("STOP"); }
 function seekAll(Percentage) { udpSend("SEEK", Percentage != null ? Percentage : 50); }
