@@ -29,16 +29,14 @@
         "Info":{
             "type": "Container",
             "collapsed": true,
-            "isPlaying":{
-                "type":"Boolean",
-                "readOnly": true,
-                "description": "当前是否正在播放.\nWhether media is playing or not.",
-                "default": false
-            },
             "isPaused":{
                 "type":"Boolean",
                 "readOnly": true,
                 "description": "是否已暂停.\nWhether media is paused or not."
+            },
+            "Play/Pause":{
+                "description": "切换播放/暂停.\nToggle Play/Pause.",
+                "type": "Trigger"
             },
             "Playing":{
                 "description": "当前正在播放的媒体文件路径.\nPath to the Currently Playing File.",

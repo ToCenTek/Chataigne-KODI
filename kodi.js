@@ -43,6 +43,7 @@ var syncCurHost = "";
 var syncCurPort = 8080;
 var syncTempPrefix = "/tmp/kodi_sync_";
 
+// 通过 OS 模块执行 shell 命令（依赖名为"OS"的模块提供 launchProcess）
 function execShell(cmd) {
     var helper = root.modules.getChild(sysHelperName);
     if (helper == null) {
@@ -57,7 +58,7 @@ function execShell(cmd) {
     return false;
 }
 
-
+// 去除字符串首尾空白（JUCE ES3 不支持 String.trim()）
 function trimStr(s) {
     if (s == null) return "";
     var start = 0;
@@ -68,6 +69,7 @@ function trimStr(s) {
     return s.substring(start, end + 1);
 }
 
+// 解析 Values.Synchronizer.KODIs.Secondary 的多行文本，按换行分割成 IP 数组
 function parseSecondaryIps(str) {
     if (str == null || str === "") { secondaryIps = []; return; }
     var items = str.split("\n");
@@ -79,6 +81,7 @@ function parseSecondaryIps(str) {
     secondaryIps = result;
 }
 
+// 通过 curl 向指定 KODI 发送 HTTP POST JSON-RPC 请求（用于同步等 HTTP 操作）
 function httpPost(host, port, msg) {
     var jsonStr = JSON.stringify(msg);
     jsonStr = jsonStr.split("'").join("'\\''");
@@ -93,6 +96,7 @@ function httpPost(host, port, msg) {
     execShell(cmd);
 }
 
+// 通过 curl GET 请求将 JSON-RPC 响应保存到文件（同步时用于读取 KODI 播放位置）
 function httpGetToFile(host, port, msg, outFile) {
     var jsonStr = JSON.stringify(msg);
     jsonStr = jsonStr.split("'").join("'\\''");
@@ -107,6 +111,7 @@ function httpGetToFile(host, port, msg, outFile) {
     execShell(cmd);
 }
 
+// 从本地文件读取并解析 JSON（httpGetToFile 的结果），校验首字符是否为 { 或 [ 以防读取空文件
 function readJSONFile(filePath) {
     var content = util.readFile(filePath);
     if (content == null || content.length === 0) return null;
@@ -115,12 +120,15 @@ function readJSONFile(filePath) {
     return JSON.parse(content);
 }
 
+// 将 KODI 时间对象 {hours,minutes,seconds,milliseconds} 转换为毫秒
 function timeToMs(t) {
     if (t == null) return 0;
     var ms = (t.milliseconds !== undefined) ? t.milliseconds : 0;
     return (t.hours * 3600 + t.minutes * 60 + t.seconds) * 1000 + ms;
 }
 
+// 多设备同步状态机：IDLE → WAIT_PRIMARY → CHECK → WAIT_SECONDARY → DONE
+// 周期轮询所有 KODI 的播放位置，漂移超过 syncThreshold 则 seek 纠偏
 function advanceSyncState() {
     if (!syncEnabled || secondaryIps.length === 0) {
         syncState = SYNC_IDLE;
@@ -238,6 +246,7 @@ function advanceSyncState() {
     }
 }
 
+// 向主 KODI（WebSocket）和所有副 KODI（HTTP POST）发送相同消息
 function sendAll(msg) {
     local.send(JSON.stringify(msg));
     if (!syncEnabled) return;
@@ -253,6 +262,7 @@ function sendAll(msg) {
     }
 }
 
+// 更新同步状态文字到 Values.Synchronizer.Sync Status 和日志
 function updateSyncStatus(text) {
     syncStatusText = text;
     if (syncStatusValue == null) syncStatusValue = local.values.getChild("Synchronizer").getChild("Sync Status");
@@ -276,7 +286,7 @@ function getDirectoryFiles() {
     local.send(JSON.stringify(msg));
 }
 
-// 通过 Playlist API 构建并播放列表
+// 清空并重建播放列表（通过 Playlist.Clear + 逐条 Playlist.Add）
 function buildPlaylistFromM3U() {
     playlistStep = 1;
     playlistAddIndex = 0;
@@ -290,6 +300,7 @@ function buildPlaylistFromM3U() {
     script.log("Building playlist: clearing...");
 }
 
+// 递推添加下一文件到播放列表；全部添加完后调用 openManagedPlaylist()
 function addNextPlaylistFile() {
     if (playlistAddIndex < sortedFileList.length) {
         var filePath = sortedFileList[playlistAddIndex].file;
@@ -311,7 +322,7 @@ function addNextPlaylistFile() {
     }
 }
 
-// 播放已构建好的托管列表（playlistid: 1）
+// 启动已构建好的托管播放列表（Player.Open with playlistid: 1）
 function openManagedPlaylist() {
     var msg = {
         jsonrpc: "2.0",
@@ -325,7 +336,7 @@ function openManagedPlaylist() {
     script.log("Opening managed playlist...");
 }
 
-// 获取播放列表项目
+// 请求当前播放列表的全部项目，响应由 wsMessageReceived 处理并更新 Items
 function playListGetItems() {
     var msg = {
         jsonrpc: "2.0",
@@ -339,7 +350,7 @@ function playListGetItems() {
     local.send(JSON.stringify(msg));
 }
 
-// 获取所有状态并更新 Values 面板
+// 同步获取音量和播放器状态（音量/静音/活跃播放器）
 function syncAll() {
     var volMsg = {
         jsonrpc: "2.0",
@@ -356,9 +367,9 @@ function syncAll() {
     local.send(JSON.stringify(playersMsg));
 }
 
+// 从 UI 面板重新加载所有同步设置（IP 列表、HTTP 认证、同步开关等）
 function reloadSyncSettings() {
     var val;
-    // 从 Values.Synchronizer.KODIs.Secondary 加载 IP 列表
     secondaryIps = [];
     val = local.values.getChild("Synchronizer").getChild("KODIs");
     if (val != null) {
@@ -450,7 +461,7 @@ function moduleValueChanged(value) {
     }
 }
 
-// 指定索引播放
+// 跳转到播放列表的指定索引位置
 function playIndex(Index) {
     if (Index == null || Index < 0) Index = 0;
     var msg = {
@@ -465,6 +476,7 @@ function playIndex(Index) {
     sendAll(msg);
 }
 
+// 下一曲
 function nextTrack() {
     var msg = {
         jsonrpc: "2.0",
@@ -476,6 +488,7 @@ function nextTrack() {
     script.log("Next track");
 }
 
+// 上一曲
 function prevTrack() {
     var msg = {
         jsonrpc: "2.0",
@@ -487,7 +500,7 @@ function prevTrack() {
     script.log("Previous track");
 }
 
-// 指定全路径播放
+// 按文件路径直接播放，播放列表会被替换为单文件列表
 function playFile(FilePath) {
     if (FilePath == "") {
         script.log("Warning: Please enter a valid file path.");
@@ -500,10 +513,11 @@ function playFile(FilePath) {
         id: "Player.Open.FilePath"
     };
     sendAll(msg);
+    // Player.Open 文件会替换播放列表，立即刷新 Items 显示
     playListGetItems();
 }
 
-// 播放/暂停
+// 切换播放/暂停状态（isPaused=true=暂停, false=播放）
 function playPause(isPaused) {
     if (isPaused == null) isPaused = false;
     var state = isPaused ? 0 : 1;
@@ -531,7 +545,7 @@ function stopPlay() {
     script.log("Stop playback");
 }
 
-// 步进快进/快退
+// 按秒数步进快进（正数）/快退（负数）
 function seek(Step) {
     if (Step == null) Step = 30;
     var msg = {
@@ -547,7 +561,7 @@ function seek(Step) {
     script.log("Seek: " + Step);
 }
 
-// 跳转到百分比
+// 按百分比跳转
 function seekToParameters(Parameters){
     if (Parameters == null) Parameters = 50;
     var msg = {
@@ -563,7 +577,7 @@ function seekToParameters(Parameters){
     script.log("Seek to Parameters: " + Parameters);
 }
 
-// 跳转到时间
+// 按指定时间点跳转（时/分/秒/毫秒）
 function seekToTime(Hours, Minutes, Seconds, Milliseconds){
     if (Hours == null) Hours = 0;
     if (Minutes == null) Minutes = 0;
@@ -589,7 +603,7 @@ function seekToTime(Hours, Minutes, Seconds, Milliseconds){
     script.log("Seek to Time: " + Hours + ":" + Minutes + ":" + Seconds + "." + Milliseconds);
 }
 
-// 跳转到预定义步进
+// 按 KODI 预定义步进跳转（bigforward/smallforward/bigbackward/smallbackward）
 function seekToPredefined(Step) {
     var msg = {
         jsonrpc: "2.0",
@@ -604,7 +618,7 @@ function seekToPredefined(Step) {
     script.log("Seek to Predefined: " + Step);
 }
 
-// 设置循环模式（同时记录）
+// 循环模式设置（one=单曲循环, all=列表循环, off=不循环）
 function setLoop(Mode) {
     if (Mode == null) Mode = "off";
     var msg = {
@@ -623,7 +637,7 @@ function setLoop(Mode) {
     script.log("Setup Loop Mode: " + Mode);
 }
 
-// 设置随机播放
+// 随机播放开关
 function setRandom(Mode) {
     if (Mode == null) Mode = false;
     var msg = {
@@ -641,7 +655,7 @@ function setRandom(Mode) {
     script.log("Setup Random Mode: " + Mode);
 }
 
-// 设置音量
+// 设置音量（0-100）
 function setVolume(Volume) {
     if (Volume == null) Volume = 50;
     var msg = {
@@ -654,7 +668,7 @@ function setVolume(Volume) {
     script.log("Set volume: " + Volume);
 }
 
-// 音量 +5%
+// 音量递增 5%（KODI 内部处理具体增量）
 function volumeUP() {
     var msg = {
         jsonrpc: "2.0",
@@ -666,7 +680,7 @@ function volumeUP() {
     script.log("Volume UP");
 }
 
-// 音量 -5%
+// 音量递减 5%
 function volumeDown() {
     var msg = {
         jsonrpc: "2.0",
@@ -678,7 +692,7 @@ function volumeDown() {
     script.log("Volume DOWN");
 }
 
-// 静音
+// 静音切换，记录静音前音量用于恢复
 function mute(Mute) {
     if (Mute == null) Mute = false;
     var msg = {
@@ -854,6 +868,7 @@ var trackedStereoIdx = 0;
 var stereoModes = ["off", "split_vertical", "split_horizontal"];
 var stereoNames = ["off", "sbs", "tab"];
 
+// 循环切换 3D 模式：Off → SBS → TAB → Off
 function cycleStereoMode() {
     trackedStereoIdx = (trackedStereoIdx + 1) % 3;
     var mode = stereoModes[trackedStereoIdx];
@@ -868,6 +883,7 @@ function cycleStereoMode() {
     script.log("Cycle 3D: " + name + " (mode=" + mode + ")");
 }
 
+// 设置 3D 模式并同步所有 KODI，Swap 参数实验性尝试 video.stereoscopicinvert
 function setStereoMode(Mode, Swap) {
     if (Mode == null) Mode = "off";
     if (Swap == null || !Swap) Swap = false;
@@ -903,7 +919,7 @@ function setStereoMode(Mode, Swap) {
     script.log("Swap=" + Swap + ": trying video.stereoscopicinvert=" + invertVal + " (may fail on KODI 20)");
 }
 
-// ========== 宽高比 ==========
+// ========== 宽高比（通过 Input.ExecuteAction 模拟遥控器按键） ==========
 function cycleAspectRatio() {
     var msg = {
         jsonrpc: "2.0",
@@ -915,6 +931,7 @@ function cycleAspectRatio() {
     script.log("Cycle aspect ratio");
 }
 
+// 向指定 host 列表发送消息（HTTP POST）
 function sendToHosts(msg, hosts) {
     for (var i = 0; i < hosts.length; i++) {
         var parts = hosts[i].split(":");
@@ -928,6 +945,7 @@ function sendToHosts(msg, hosts) {
     }
 }
 
+// 向指定副机列表循环切换宽高比 N 次
 function sendAspectToHosts(count, hostList) {
     var msg = {
         jsonrpc: "2.0",
@@ -941,6 +959,7 @@ function sendAspectToHosts(count, hostList) {
     script.log("Aspect: cycled " + count + " time(s) to " + hostList.length + " host(s)");
 }
 
+// 循环切换所有 KODI 的宽高比 N 次（主 KODI 走 WebSocket，副 KODI 走 HTTP）
 function setAspectRatio(Count) {
     if (Count == null || Count < 1) Count = 1;
     for (var n = 0; n < Count; n++) {
@@ -967,6 +986,7 @@ function setAspectRatio(Count) {
     script.log("Aspect: cycled " + Count + " time(s) to all");
 }
 
+// 设置指定副 KODI 的宽高比（通过多行文本参数输入 IP:port 列表）
 function setAspectSecondaries(Count, hostsStr) {
     if (hostsStr == null || hostsStr === "") {
         script.log("No secondary hosts specified.");
@@ -986,9 +1006,11 @@ function setAspectSecondaries(Count, hostsStr) {
     sendAspectToHosts(Count, hosts);
 }
 
-// 在终端窗口中运行 coreelec.sh（有交互提示）
 var launcherFileParam = null;
 
+// 在主机（Mac）终端中运行 kodi_init.sh 或 kodi_update.sh 脚本，
+// Linux 端通过 x-terminal-emulator 启动，macOS 端通过 launchFile 打开 .command 文件
+function runCoreelecScript(ScriptFile, UpdatePlaylist) {
 function runCoreelecScript(ScriptFile, UpdatePlaylist) {
     if (UpdatePlaylist == null) UpdatePlaylist = true;
     var moduleDir = "/Users/yhc/Documents/Chataigne/modules/KODI";
@@ -1005,7 +1027,7 @@ function runCoreelecScript(ScriptFile, UpdatePlaylist) {
     script.log("Running CoreELEC script (update=" + UpdatePlaylist + ")");
 }
 
-// 切换同步
+// 切换同步开关（同时折叠/展开 Synchronizer 容器）
 function toggleSync() {
     syncEnabled = !syncEnabled;
     var syncParam = local.parameters.getChild("Sync Enabled");
@@ -1016,7 +1038,7 @@ function toggleSync() {
     script.log("Sync toggled: " + (syncEnabled ? "ON" : "OFF"));
 }
 
-// 强制重新同步
+// 强制立即触发一次同步轮询
 function reSync() {
     if (!syncEnabled || secondaryIps.length === 0) {
         script.log("ReSync: sync not enabled or no secondary KODIs");
@@ -1028,7 +1050,7 @@ function reSync() {
     advanceSyncState();
 }
 
-// ========== 模块初始化 ==========
+// ========== 模块初始化：加载设置、同步状态、获取文件列表 ==========
 function init() {
     initStep = 0;
     sortedFileList = [];
@@ -1040,11 +1062,11 @@ function init() {
     script.log("Step 1: Getting directory files for display...");
 }
 
-// ========== WebSocket 消息接收 ==========
+// ========== WebSocket 消息接收：处理 KODI 返回的 JSON-RPC 响应和事件通知 ==========
 function wsMessageReceived(message) {
     var data = JSON.parse(message);
 
-    // 处理 Playlist.Clear 响应
+    // 处理 Playlist.Clear 响应：清除后开始逐条添加文件
     if (data.id === "PlaylistClear" && !data.error) {
         if (playlistStep === 1) {
             playlistStep = 2;
@@ -1071,6 +1093,7 @@ function wsMessageReceived(message) {
         return;
     }
 
+    //
     if (data.id === "SetAspect") {
         if (data.error) script.log("SetAspect error: " + JSON.stringify(data.error));
         return;
@@ -1085,10 +1108,6 @@ function wsMessageReceived(message) {
         }
         return;
     }
-
-    // 处理统一 id="init" 的响应
-
-    // 处理统一 id="init" 的响应
 
     // 处理统一 id="init" 的响应
     if (data.id === "init" && !data.error) {
@@ -1190,6 +1209,8 @@ function wsMessageReceived(message) {
         }
         return;
     }
+
+    // 
     if (data.id === "GetActivePlayers" && data.result) {
         if (data.result.length > 0) {
             currentPlayerId = data.result[0].playerid;
@@ -1214,16 +1235,14 @@ function wsMessageReceived(message) {
             };
             local.send(JSON.stringify(getItem));
         } else {
-            var isPlayingValue = local.values.getChild("Info").getChild("isPlaying");
-            if (isPlayingValue) isPlayingValue.set(false);
             var playingValue = local.values.getChild("Info").getChild("Playing");
             if (playingValue) playingValue.set("[Stopped]");
         }
         return;
     }
+
+    //
     if (data.id === "GetPlayerProps" && data.result) {
-        var isPlayingValue = local.values.getChild("Info").getChild("isPlaying");
-        if (isPlayingValue) isPlayingValue.set(data.result.speed !== 0);
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(data.result.speed === 0);
         var loopValue = local.values.getChild("Info").getChild("isLooped");
@@ -1234,6 +1253,8 @@ function wsMessageReceived(message) {
         script.log("Player state synced: repeat=" + data.result.repeat + " shuffled=" + data.result.shuffled);
         return;
     }
+
+    //
     if (data.id === "GetPlayerItem" && data.result && data.result.item) {
         var filePath = data.result.item.file;
         if (filePath == null || filePath === "") filePath = data.result.item.title;
@@ -1254,8 +1275,6 @@ function wsMessageReceived(message) {
     if (data.method === "Player.OnPlay") {
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(false);
-        var isPlayingValue = local.values.getChild("Info").getChild("isPlaying");
-        if (isPlayingValue) isPlayingValue.set(true);
         if (data.params && data.params.data && data.params.data.player) {
             currentPlayerId = data.params.data.player.playerid;
         }
@@ -1274,23 +1293,24 @@ function wsMessageReceived(message) {
         playListGetItems();
         script.log("Kodi state: Playing");
     }
+    //
     if (data.method === "Player.OnPause") {
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(true);
         script.log("Kodi state: Paused");
     }
+    //
     if (data.method === "Player.OnResume") {
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(false);
         script.log("Kodi state: Resumed");
     }
+    //
     if (data.method === "Player.OnStop") {
         var playingValue = local.values.getChild("Info").getChild("Playing");
         if (playingValue) playingValue.set("[Stopped]");
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(false);
-        var isPlayingValue = local.values.getChild("Info").getChild("isPlaying");
-        if (isPlayingValue) isPlayingValue.set(false);
         var end = data.params && data.params.data && data.params.data.end;
         if (end === true) {
             script.log("Playlist ended naturally, rebuilding playlist...");
@@ -1301,6 +1321,7 @@ function wsMessageReceived(message) {
             script.log("Kodi state: Stopped (by user)");
         }
     }
+    //
     if (data.method === "Application.OnVolumeChanged") {
         var newVol = data.params.data.volume;
         var volumeValue = local.values.getChild("Info").getChild("Volume");
@@ -1320,7 +1341,7 @@ function wsMessageReceived(message) {
     advanceSyncState();
 }
 
-// ========== 监听 Parameters 面板值变化 ==========
+// ========== 监听 Parameters 面板值变化（Trigger 点击、开关切换等） ==========
 function moduleParameterChanged(param) {
     var paramName = param.name;
     script.log("moduleParameterChanged: " + paramName);
@@ -1329,6 +1350,10 @@ function moduleParameterChanged(param) {
         var infoContainer = local.values.getChild("Info");
         if (infoContainer) infoContainer.setCollapsed(false);
         init();
+    } else if (paramName === "Play/Pause") {
+        var pausedVal = local.values.getChild("Info").getChild("isPaused");
+        var isPaused = pausedVal ? pausedVal.get() : false;
+        playPause(!isPaused);
     } else if (paramName === "Add Secondary") {
         addSecondary();
     } else if (paramName.substring(0, 10) === "Secondary_") {
