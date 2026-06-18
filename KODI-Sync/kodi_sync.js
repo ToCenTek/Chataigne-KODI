@@ -18,7 +18,11 @@ function execShell(cmd) {
 function udpSend(cmd, val) {
     var msg = cmd;
     if (val != null) msg += ":" + val;
-    local.send(msg + "\n");
+    msg += "\\n";
+    // Python UDP 广播（正确设置 SO_BROADCAST）
+    var py = "__import__('socket');s=__import__('socket').socket(2,2);s.setsockopt(65535,32,1);s.sendto(b'" + msg + "',('255.255.255.255',9527))";
+    execShell("/opt/homebrew/bin/python3 -c " + py);
+    execShell("/usr/bin/python3 -c " + py);
 }
 
 function playAll() { udpSend("PLAY"); }
