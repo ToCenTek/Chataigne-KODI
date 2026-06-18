@@ -23,11 +23,9 @@ function compactJson(msg) {
 
 function udpBroadcast(msg) {
     var jsonStr = JSON.stringify(msg);
-    var py = "import socket;s=socket.socket(2,2);s.setsockopt(65535,32,1);s.sendto(b'" + jsonStr + "',('255.255.255.255',9527))";
-    util.writeFile("/tmp/kodi_sync_udp.py", py, true);
-    execShell("/usr/bin/python3 /tmp/kodi_sync_udp.py");
-    execShell("/opt/homebrew/bin/python3 /tmp/kodi_sync_udp.py");
-    execShell("/usr/local/bin/python3 /tmp/kodi_sync_udp.py");
+    // __import__ 无空格，launchProcess 不分词；pythonBin 在 init 中自动检测
+    var py = "__import__('socket');s=__import__('socket').socket(2,2);s.setsockopt(65535,32,1);s.sendto(b'" + jsonStr + "',('255.255.255.255',9527))";
+    execShell(pythonBin + " -c " + py);
 }
 
 function updateSyncStatus(text) {
