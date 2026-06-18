@@ -21,8 +21,7 @@ function compactJson(msg) {
 }
 
 function udpBroadcast(msg) {
-    var jsonStr = JSON.stringify(msg);
-    local.send(jsonStr);
+    local.send(JSON.stringify(msg));
 }
 
 function updateSyncStatus(text) {
@@ -162,13 +161,6 @@ function timeToMs(t) {
 
 function init() {
     script.log("KODI Sync init");
-    // 测试参数访问
-    var p1 = local.parameters.getChild("localPort");
-    var p2 = local.parameters.getChild("remoteHost");
-    var p3 = local.parameters.getChild("remotePort");
-    var p4 = local.parameters.getChild("broadcast");
-    script.log("params: localPort=" + (p1 != null) + " remoteHost=" + (p2 != null) + " remotePort=" + (p3 != null) + " broadcast=" + (p4 != null));
-    script.log("local.send=" + (typeof local.send) + " local.sendTo=" + (typeof local.sendTo));
     reloadIps();
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
