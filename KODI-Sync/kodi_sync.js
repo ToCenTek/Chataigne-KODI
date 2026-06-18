@@ -60,8 +60,8 @@ function broadcastObj(msg) {
     udpBroadcast(msg);
 }
 
-function playAll() { broadcastObj({jsonrpc:"2.0",method:"Player.SetSpeed",params:{playerid:1,speed:1},id:"cs"}); }
-function pauseAll() { broadcastObj({jsonrpc:"2.0",method:"Player.SetSpeed",params:{playerid:1,speed:0},id:"cs"}); }
+function playAll() { script.log("playAll called, syncEnabled=" + syncEnabled + " ips=" + allIps.length); broadcastObj({jsonrpc:"2.0",method:"Player.SetSpeed",params:{playerid:1,speed:1},id:"cs"}); }
+function pauseAll() { script.log("pauseAll called"); broadcastObj({jsonrpc:"2.0",method:"Player.SetSpeed",params:{playerid:1,speed:0},id:"cs"}); }
 function stopAll() { broadcastObj({jsonrpc:"2.0",method:"Player.Stop",params:{playerid:1},id:"cs"}); }
 function seekAll(Percentage) {
     if (Percentage == null) Percentage = 50;
@@ -173,6 +173,7 @@ function timeToMs(t) {
 }
 
 function init() {
+    script.log("KODI Sync init");
     reloadIps();
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
