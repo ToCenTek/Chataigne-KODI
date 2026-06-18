@@ -5,6 +5,12 @@ import xbmc
 
 UDP_PORT = 9527
 
+def ack(sock, addr, cmd):
+    try:
+        sock.sendto(b"ACK:" + cmd.encode() + b"\n", addr)
+    except:
+        pass
+
 class SyncThread(threading.Thread):
     def __init__(self, monitor):
         threading.Thread.__init__(self)
@@ -12,6 +18,7 @@ class SyncThread(threading.Thread):
         self.monitor = monitor
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.sock.settimeout(0.5)
         try:
             self.sock.bind(('0.0.0.0', UDP_PORT))
@@ -23,44 +30,75 @@ class SyncThread(threading.Thread):
         while not self.monitor.abortRequested():
             try:
                 data, addr = self.sock.recvfrom(2048)
-                msg = json.loads(data.decode('utf-8'))
-                cmd = msg.get('cmd', '')
-                val = msg.get('value')
-                self.handle(cmd, val, msg)
+                text = data.decode('utf-8').strip()
+                # 兼容 JSON 格式
+                if text.startswith("{"):
+                    msg = json.loads(text)
+                    if 'jsonrpc' in msg:
+                        xbmc.executeJSONRPC(text)
+                        ack(self.sock, addr, "JSON")
+                    else:
+                        self.handle_simple(msg.get('cmd',''), msg.get('value'), addr)
+                else:
+                    self.handle_text(text, addr)
             except socket.timeout:
                 pass
             except Exception as e:
                 xbmc.log("ChataigneSync: " + str(e), xbmc.LOGERROR)
 
-    def handle(self, cmd, val, raw_msg):
-        # 完整 JSON-RPC 消息直接转发
-        if 'jsonrpc' in raw_msg:
-            xbmc.executeJSONRPC(json.dumps(raw_msg))
-            return
-        if cmd == 'seek':
-            xbmc.executeJSONRPC(json.dumps({
-                "jsonrpc": "2.0", "method": "Player.Seek",
-                "params": {"playerid": 1, "value": {"percentage": val}},
-                "id": "cs"
-            }))
-        elif cmd == 'pause':
-            xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Player.SetSpeed","params":{"playerid":1,"speed":0},"id":"cs"}')
-        elif cmd == 'play':
+    def handle_text(self, text, addr):
+        cmd = text
+        val = None
+        if ":" in text:
+            parts = text.split(":", 1)
+            cmd = parts[0].upper()
+            val = parts[1]
+        xbmc.log("ChataigneSync: " + cmd + " " + (val or ""), xbmc.LOGINFO)
+        self.exec_cmd(cmd, val)
+        ack(self.sock, addr, cmd)
+
+    def handle_simple(self, cmd, val, addr):
+        xbmc.log("ChataigneSync: " + cmd + " " + str(val or ""), xbmc.LOGINFO)
+        self.exec_cmd(cmd, val)
+        ack(self.sock, addr, cmd)
+
+    def exec_cmd(self, cmd, val):
+        if cmd == "PLAY":
             xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Player.SetSpeed","params":{"playerid":1,"speed":1},"id":"cs"}')
-        elif cmd == 'stop':
+        elif cmd == "PAUSE":
+            xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Player.SetSpeed","params":{"playerid":1,"speed":0},"id":"cs"}')
+        elif cmd == "STOP":
             xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Player.Stop","params":{"playerid":1},"id":"cs"}')
-        elif cmd == 'open':
-            xbmc.executeJSONRPC(json.dumps({
-                "jsonrpc": "2.0", "method": "Player.Open",
-                "params": {"item": {"file": val}},
-                "id": "cs"
-            }))
-        elif cmd == 'position':
-            xbmc.executeJSONRPC(json.dumps({
-                "jsonrpc": "2.0", "method": "Player.GetProperties",
-                "params": {"playerid": 1, "properties": ["time", "speed", "totaltime"]},
-                "id": "cs_pos"
-            }))
+        elif cmd == "SEEK":
+            pct = float(val) if val else 50
+            xbmc.executeJSONRPC(json.dumps({"jsonrpc":"2.0","method":"Player.Seek","params":{"playerid":1,"value":{"percentage":pct}},"id":"cs"}))
+        elif cmd == "VOLUME" or cmd == "VOL":
+            v = int(float(val)) if val else 50
+            xbmc.executeJSONRPC(json.dumps({"jsonrpc":"2.0","method":"Application.SetVolume","params":{"volume":v},"id":"cs"}))
+        elif cmd == "MUTE":
+            m = val == "1" or val == "true" if val else True
+            xbmc.executeJSONRPC(json.dumps({"jsonrpc":"2.0","method":"Application.SetMute","params":{"mute":m},"id":"cs"}))
+        elif cmd == "OPEN":
+            xbmc.executeJSONRPC(json.dumps({"jsonrpc":"2.0","method":"Player.Open","params":{"item":{"file":val}},"id":"cs"}))
+        elif cmd == "3D":
+            mode = val or "off"
+            if mode == "sbs": mode = "split_vertical"
+            elif mode == "tab": mode = "split_horizontal"
+            xbmc.executeJSONRPC(json.dumps({"jsonrpc":"2.0","method":"GUI.SetStereoscopicMode","params":{"mode":mode},"id":"cs"}))
+        elif cmd == "ASPECT":
+            xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Input.ExecuteAction","params":{"action":"aspectratio"},"id":"cs"}')
+        elif cmd == "POS":
+            r = xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Player.GetProperties","params":{"playerid":1,"properties":["time","speed","totaltime"]},"id":"cs"}')
+            try:
+                d = json.loads(r)
+                if d.get('result'):
+                    t = d['result'].get('time',{})
+                    tt = d['result'].get('totaltime',{})
+                    ms = t.get('hours',0)*3600000+t.get('minutes',0)*60000+t.get('seconds',0)*1000+t.get('milliseconds',0)
+                    tms = tt.get('hours',0)*3600000+tt.get('minutes',0)*60000+tt.get('seconds',0)*1000+tt.get('milliseconds',0)
+                    self.sock.sendto(("POS:" + str(ms) + ":" + str(tms) + "\n").encode(), ('255.255.255.255', UDP_PORT))
+            except:
+                pass
 
 if __name__ == '__main__':
     monitor = xbmc.Monitor()

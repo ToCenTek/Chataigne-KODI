@@ -6,6 +6,7 @@ var syncStatusValue = null;
 var sysHelperName = "OS";
 var driftQueryInt = 0;
 var allIps = [];
+var ackCount = 0;
 
 function execShell(cmd) {
     var helper = root.modules.getChild(sysHelperName);
@@ -14,14 +15,21 @@ function execShell(cmd) {
     script.log("OS module has no launchProcess"); return false;
 }
 
-function compactJson(msg) {
-    var j = JSON.stringify(msg);
-    j = j.split("\n").join(""); j = j.split("\r").join(""); j = j.split(" ").join("");
-    return j;
+function udpSend(cmd, val) {
+    var msg = cmd;
+    if (val != null) msg += ":" + val;
+    local.send(msg + "\n");
 }
 
-function udpBroadcast(msg) {
-    local.send(JSON.stringify(msg));
+function playAll() { udpSend("PLAY"); }
+function pauseAll() { udpSend("PAUSE"); }
+function stopAll() { udpSend("STOP"); }
+function seekAll(Percentage) { udpSend("SEEK", Percentage != null ? Percentage : 50); }
+function setVolumeAll(Volume) { udpSend("VOLUME", Volume != null ? Math.round(Volume) : 50); }
+function muteAll(Mute) { udpSend("MUTE", (Mute != null && Mute) ? "1" : "0"); }
+function set3DModeAll(Mode) { udpSend("3D", Mode || "off"); }
+function setAspectAll(Count) {
+    for (var n = 0; n < (Count || 1); n++) udpSend("ASPECT");
 }
 
 function updateSyncStatus(text) {
@@ -31,8 +39,7 @@ function updateSyncStatus(text) {
 }
 
 function reloadIps() {
-    secIps = [];
-    allIps = [];
+    secIps = []; allIps = [];
     var cont = local.values.getChild("Status");
     if (cont) {
         var secVal = cont.getChild("Secondaries");
@@ -49,43 +56,6 @@ function reloadIps() {
         if (pVal) { var pw = pVal.get(); httpPass = (pw && pw.length > 0) ? pw : "tocentek"; }
     }
     for (var i = 0; i < secIps.length; i++) allIps.push(secIps[i]);
-    script.log("Sync: " + allIps.length + " KODIs");
-}
-
-function broadcastObj(msg) {
-    if (!syncEnabled) return;
-    udpBroadcast(msg);
-}
-
-function playAll() { broadcastObj({jsonrpc:"2.0",method:"Player.SetSpeed",params:{playerid:1,speed:1},id:"cs"}); }
-function pauseAll() { broadcastObj({jsonrpc:"2.0",method:"Player.SetSpeed",params:{playerid:1,speed:0},id:"cs"}); }
-function stopAll() { broadcastObj({jsonrpc:"2.0",method:"Player.Stop",params:{playerid:1},id:"cs"}); }
-function seekAll(Percentage) {
-    if (Percentage == null) Percentage = 50;
-    broadcastObj({jsonrpc:"2.0",method:"Player.Seek",params:{playerid:1,value:{percentage:Percentage}},id:"cs"});
-}
-function setVolumeAll(Volume) {
-    if (Volume == null) Volume = 50;
-    broadcastObj({jsonrpc:"2.0",method:"Application.SetVolume",params:{volume:Math.round(Volume)},id:"cs"});
-}
-function muteAll(Mute) {
-    if (Mute == null) Mute = true;
-    broadcastObj({jsonrpc:"2.0",method:"Application.SetMute",params:{mute:Mute},id:"cs"});
-}
-
-function set3DModeAll(Mode) {
-    if (Mode == null) Mode = "off";
-    var modeVal = Mode;
-    if (Mode === "sbs") modeVal = "split_vertical";
-    else if (Mode === "tab") modeVal = "split_horizontal";
-    broadcastObj({jsonrpc:"2.0",method:"GUI.SetStereoscopicMode",params:{mode:modeVal},id:"cs"});
-}
-
-function setAspectAll(Count) {
-    if (Count == null || Count < 1) Count = 1;
-    for (var n = 0; n < Count; n++) {
-        broadcastObj({jsonrpc:"2.0",method:"Input.ExecuteAction",params:{action:"aspectratio"},id:"cs"});
-    }
 }
 
 function toggleSync() {
@@ -95,68 +65,15 @@ function toggleSync() {
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
 }
 
-function reSync() {
-    if (!syncEnabled || allIps.length < 2) {
-        script.log("ReSync: need 2+ KODIs");
-        return;
-    }
-    updateSyncStatus("Resyncing...");
-    if (allIps.length > 0) {
-        var host = allIps[0].split(":")[0];
-        var qJson = compactJson({jsonrpc:"2.0",method:"Player.GetProperties",params:{playerid:1,properties:["time","speed","totaltime"]},id:"pos"});
-        var outFile = "/tmp/kodi_sync_pos.txt";
-        execShell("/usr/bin/curl -s --max-time 3 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + qJson + " -o " + outFile + " http://" + host + ":8080/jsonrpc");
-        var content = util.readFile(outFile);
-        if (content && content.charAt(0) === "{") {
-            var d = JSON.parse(content);
-            if (d && d.result && d.result.time && d.result.totaltime && d.result.speed > 0) {
-                var totalMs = timeToMs(d.result.totaltime);
-                if (totalMs > 0) {
-                    var priMs = timeToMs(d.result.time) + 200;
-                    if (priMs > totalMs) priMs = totalMs;
-                    var pct = (priMs / totalMs) * 100;
-                    broadcastObj({jsonrpc:"2.0",method:"Player.Seek",params:{playerid:1,value:{percentage:pct}},id:"cs"});
-                    updateSyncStatus("Synced");
-                }
-            }
-            execShell("/bin/rm " + outFile);
-        }
-    }
-}
-
-function update(deltaTime) {
-    if (!syncEnabled || allIps.length === 0) return;
-    driftQueryInt++;
-    if (driftQueryInt >= 60) {
-        driftQueryInt = 0;
-        for (var i = 0; i < allIps.length && i < 2; i++) {
-            var ip = allIps[i];
-            var host = ip.split(":")[0];
-            var qJson = compactJson({jsonrpc:"2.0",method:"Player.GetProperties",params:{playerid:1,properties:["time","speed"]},id:"DriftUpd"});
-            var cmd = "/usr/bin/curl -s --max-time 3 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + qJson + " -o /tmp/kodi_drift_" + i + ".txt http://" + host + ":8080/jsonrpc";
-            execShell(cmd);
-        }
-        var c1 = util.readFile("/tmp/kodi_drift_0.txt");
-        var c2 = util.readFile("/tmp/kodi_drift_1.txt");
-        if (c1 && c2 && c1.charAt(0) === "{" && c2.charAt(0) === "{") {
-            var d1 = JSON.parse(c1);
-            var d2 = JSON.parse(c2);
-            if (d1 && d1.result && d1.result.time && d2 && d2.result && d2.result.time && d1.result.speed > 0 && d2.result.speed > 0) {
-                var ms1 = timeToMs(d1.result.time);
-                var ms2 = timeToMs(d2.result.time);
-                var dv = ms1 > ms2 ? ms1 - ms2 : ms2 - ms1;
-                var dc = local.values.getChild("Status").getChild("Drift");
-                if (dc && dc.set) dc.set("" + dv + "ms");
-                script.log("Drift: " + dv + "ms");
-            }
-            execShell("/bin/rm /tmp/kodi_drift_0.txt /tmp/kodi_drift_1.txt");
-        }
-    }
-}
-
 function timeToMs(t) {
     if (t == null) return 0;
     return (t.hours * 3600 + t.minutes * 60 + t.seconds) * 1000 + (t.milliseconds || 0);
+}
+
+function dataReceived(data) {
+    ackCount++;
+    var text = data.toString();
+    script.log("ACK[" + ackCount + "]: " + text.substring(0,80));
 }
 
 function init() {
@@ -170,5 +87,3 @@ function moduleValueChanged(value) {
     var n = value.name.toLowerCase();
     if (n === "secondaries" || n === "httpuser" || n === "httppass") reloadIps();
 }
-
-// NoType 模块无 WebSocket 连接，不需要 wsMessageReceived
