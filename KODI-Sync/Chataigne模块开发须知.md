@@ -184,67 +184,144 @@ OSC 类型模块收到 OSC 消息时调用。
 #### `dataEvent(data, requestURL)`
 HTTP 类型模块收到响应时调用。
 
-### 3.2 `script` 对象
+### 3.2 全部 API 参考表
 
-```javascript
-script.log("消息");            // 输出到日志
-script.setUpdateRate(10);       // 设置 update 频率(Hz)，仅当函数存在时有效
-script.showDialog("标题", "消息"); // 显示对话框（函数名可能不同）
-```
+#### 生命周期回调
 
-### 3.3 `local` 对象
+| 函数 | 触发时机 | 说明 |
+|------|---------|------|
+| `init()` | 脚本加载、参数创建后 | 读取配置、发握手、初始化数据 |
+| `update(deltaTime)` | 按 `setUpdateRate(Hz)` 频率 | 定时任务，deltaTime 单位为秒 |
+| `moduleCleanedUp()` | 模块销毁时 | 关闭连接、释放资源 |
+
+#### 值/参数变化回调
+
+| 函数 | 触发时机 | 说明 |
+|------|---------|------|
+| `moduleValueChanged(value)` | values 面板中的值变化 | value.isParameter() 区分参数/触发器 |
+| `moduleParameterChanged(param)` | parameters 面板中的值变化 | 含 Trigger 点击 |
+
+#### 协议接收回调
+
+| 函数 | 适用模块类型 | data 类型 | 说明 |
+|------|------------|-----------|------|
+| `dataReceived(data)` | UDP / TCP / Serial | **String** | 收到数据。**data 已是字符串，不要调用 .toString()** |
+| `wsMessageReceived(message)` | WebSocket Client | String | 收到文本消息 |
+| `wsDataReceived(data)` | WebSocket Client | 二进制 | 收到二进制数据 |
+| `oscEvent(address, args, originIp)` | OSC | - | 收到 OSC 消息 |
+| `dataEvent(data, requestURL)` | HTTP | String | HTTP 响应到达 |
+| `processDataReceived(data, cmd)` | OS Module | String | OS 模块进程输出 |
+| `noteOnEvent(channel, pitch, velocity)` | MIDI | - | MIDI Note On |
+| `ccEvent(channel, number, value)` | MIDI | - | MIDI CC |
+
+#### 连接状态回调
+
+| 函数 | 适用类型 |
+|------|---------|
+| `wsConnected()` / `wsDisconnected()` | WebSocket Client |
+| `tcpConnected()` / `tcpDisconnected()` | TCP Client/Server |
+
+#### 发送方法（`local.*`）
+
+| 方法 | 适用类型 | 说明 |
+|------|---------|------|
+| `local.send(message)` | WebSocket / UDP / OSC | 通过模块输出配置发送 |
+| `local.sendTo(ip, port, message)` | **UDP 专用** | 直接发到指定 IP:port，**忽略输出配置** |
+| `local.sendBytesTo(ip, port, b1, b2, ...)` | UDP | 发送字节到指定地址 |
+| `local.sendGET(url)` | HTTP | GET 请求 |
+| `local.sendPOST(url, data)` | HTTP | POST 请求 |
+
+`local.sendTo()` 是 UDP 模块发送的首选方式。它不需要配置 remoteHost/remotePort，直接指定目标。
+
+#### `script` 对象
+
+| 方法 | 说明 |
+|------|------|
+| `script.log(msg)` | 输出到 Chataigne 日志 |
+| `script.setUpdateRate(Hz)` | 设置 update() 调用频率 |
+| `script.showDialog(title, msg)` | 显示对话框（可能不存在） |
+| `script.addFileParameter(name, desc)` | 动态添加文件参数 |
+| `script.sharedData` | 模块间共享数据 |
+
+#### `local` 对象
 
 `local` 指向当前模块实例。
 
-```javascript
-local.parameters.getChild("name")     // 获取参数
-local.parameters.getChild("name").get()  // 获取参数值
-local.parameters.getChild("name").set(val) // 设置参数值
+| 表达式 | 说明 |
+|--------|------|
+| `local.parameters` | 自定义参数容器（module.json 中定义的） |
+| `local.values` | 自定义值容器（module.json 中定义的） |
+| `local.outputs` | 模块输出（可能为 null） |
 
-local.values.getChild("name")          // 获取值
-local.values.getChild("name").get()    // 获取值
-local.values.getChild("name").set(val) // 设置值
+#### `local.parameters` / `local.values` 子项方法
 
-local.send(jsonStr)         // 通过模块输出发送数据（WebSocket/UDP）
-local.sendTo(ip, port, msg) // UDP 单播到指定 IP:port
-local.sendBytesTo(ip, port, byte1, byte2, ...) // UDP 发送字节
+| 方法 | 说明 |
+|------|------|
+| `.getChild("name")` | 按名称获取子项 |
+| `.get()` | 获取当前值 |
+| `.set(val)` | 设置值 |
+| `.name` | 脚本名称 |
+| `.niceName` | UI 显示名称 |
+| `.isParameter()` | true=参数, false=触发器 |
+| `.getControlAddress()` | 获取控制地址 |
+| `.setAttribute("key", val)` | 设置属性（readonly, enabled 等） |
+
+**注意：** 容器不支持 `getChild(index)`（数字索引），也不支持 `getItems()`。只能通过 `getChild("name")` 按名称访问。
+
+#### `util` 对象
+
+| 方法 | 说明 |
+|------|------|
+| `util.readFile(path)` | 读取文件内容 |
+| `util.readFile(path, true)` | 读取并解析为 JSON |
+| `util.writeFile(path, data, overwrite)` | 写入文件 |
+| `util.listFiles(path)` | 列出目录文件 |
+| `util.getCurrentFileDirectory()` | 获取会话文件目录 |
+| `util.launchFile(path, args)` | 启动文件 |
+| `util.getFileName(path)` | 获取文件名 |
+| `util.getParentDirectory(path)` | 获取父目录 |
+
+#### `root` 对象
+
+| 方法 | 说明 |
+|------|------|
+| `root.modules.getChild("name")` | 按名称获取模块 |
+| `root.modules.getItemWithName("name")` | 按友好名称查找 |
+| `root.modules.addItem("UDP")` | 创建**空白内置模块**（不是社区模块） |
+| `root.modules.removeItem(module)` | 删除模块 |
+
+### 3.3 内置 UDP 参数说明
+
+UDP 类型模块具有以下内置参数。它们**不属于** `local.parameters`（后者只包含 module.json 中自定义的），而是在模块的 C++ 协议层中。
+
+| 参数名 | UI 位置 | 类型 | 默认值 | 说明 |
+|--------|---------|------|--------|------|
+| `localPort` | Parameters → Input → Local Port | Int | 10000 | UDP 接收端口 |
+| `remoteHost` | Parameters → Output → Remote Host | String | 255.255.255.255 | 目标地址 |
+| `remotePort` | Parameters → Output → Remote Port | Int | 8888 | 目标端口 |
+| `broadcast` | Parameters → Output → Broadcast | Bool | false | 启用广播模式 |
+| `autoAdd` | Parameters → Auto Add | Bool | false | 自动添加 |
+
+**关键限制：** `local.parameters.getChild("localPort")` **返回 null**。脚本中无法直接访问这些内置参数。
+
+**解决方案：** 在 module.json 中自定义一个参数来让用户配置，脚本通过自定义参数读写。
+
+```json
+"parameters": {
+    "Receive Port": {
+        "type": "Integer",
+        "default": 9528
+    }
+}
 ```
 
-**注意：** `local.parameters` 只包含 module.json 中自定义的参数。内置模块参数（如 UDP 的 remoteHost、broadcast 等）**无法**通过 `getChild()` 访问。
-
-### 3.4 `util` 对象
-
 ```javascript
-util.readFile(path)                 // 读取文件内容（文本或二进制）
-util.writeFile(path, data, overwrite) // 写入文件
-util.readFile(path, true)           // 读取并解析为 JSON
-util.listFiles(path)                // 列出目录文件
-util.getCurrentFileDirectory()      // 获取会话文件目录
-util.launchFile(path, args)         // 启动文件
-util.getFileName(path)              // 获取文件名
-util.getParentDirectory(path)       // 获取父目录
+// 脚本中通过自定义参数访问
+var rp = local.parameters.getChild("Receive Port");
+var port = rp.get(); // 用户设置的端口
 ```
 
-### 3.5 `root` 对象
-
-```javascript
-root.modules.getChild("OS")              // 获取指定模块
-root.modules.getItemWithName("模块名")    // 按名称查找模块
-root.modules.addItem("UDP")              // 创建新模块（空白内置模块）
-root.modules.removeItem(module)          // 删除模块
-```
-
-### 3.6 参数/值对象
-
-```javascript
-param.get()              // 获取值
-param.set(val)           // 设置值
-param.name               // 名称（脚本用）
-param.niceName           // 友好名称（UI 显示）
-param.isParameter()      // 是否为参数（true）或触发器（false）
-param.getControlAddress()// 控制地址
-param.setAttribute("readonly", true)  // 设置属性
-```
+**`hideDefaultParameters: false`** 会让这些内置参数在 UI 中可见，但脚本仍无法访问它们。
 
 ## 4. `execShell` 与 `launchProcess`
 
