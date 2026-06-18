@@ -85,14 +85,37 @@ function timeToMs(t) {
 }
 
 function dataReceived(data) {
-    ackCount++;
-    if (ackCount <= 5) script.log("ACK: " + data);
+    if (data.substring(0, 4) === "POS:") {
+        var parts = data.split(":");
+        if (parts.length >= 3) {
+            var ms = Number(parts[1]);
+            if (!isNaN(ms)) posData.push(ms);
+        }
+    } else {
+        ackCount++;
+        if (ackCount <= 5) script.log("ACK: " + data);
+    }
 }
+
+var posData = [];
 
 function update(deltaTime) {
     driftPhase++;
-    var dc = local.values.getChild("Status").getChild("Drift");
-    if (dc) dc.set("u" + driftPhase);
+    if (driftPhase % 2 === 1 && allIps.length >= 2) {
+        posData = [];
+        for (var i = 0; i < allIps.length; i++) {
+            local.sendTo(allIps[i].split(":")[0], 9527, "POS\n");
+        }
+    }
+    if (driftPhase % 2 === 0 && posData.length >= 2) {
+        var minMs = posData[0], maxMs = posData[0];
+        for (var i = 1; i < posData.length; i++) {
+            if (posData[i] < minMs) minMs = posData[i];
+            if (posData[i] > maxMs) maxMs = posData[i];
+        }
+        var dc = local.values.getChild("Status").getChild("Drift");
+        if (dc) dc.set("" + (maxMs - minMs) + "ms");
+    }
 }
 
 function init() {
