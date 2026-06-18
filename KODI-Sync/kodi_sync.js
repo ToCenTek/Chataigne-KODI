@@ -27,10 +27,10 @@ function compactJson(msg) {
 
 function udpBroadcast(msg) {
     var jsonStr = JSON.stringify(msg);
+    // __import__ 无空格，写文件 + python3 file 更可靠
     var py = "__import__('socket');s=__import__('socket').socket(2,2);s.setsockopt(65535,32,1);s.sendto(b'" + jsonStr + "',('255.255.255.255',9527))";
-    var cmd = pythonBin + " -c " + py;
-    script.log("udp: bin=" + pythonBin + " py_len=" + py.length);
-    execShell(cmd);
+    util.writeFile("/tmp/kodi_sync_udp.py", py, true);
+    execShell(pythonBin + " /tmp/kodi_sync_udp.py");
 }
 
 function updateSyncStatus(text) {
