@@ -25,7 +25,7 @@ function udpBroadcast(msg) {
     var jsonStr = compactJson(msg);
     script.log("udp: json=" + jsonStr.substring(0,60) + "...");
     // 写入 shell 脚本
-    var sh = "echo -n '" + jsonStr + "' | nc -u 255.255.255.255 9527";
+    var sh = "echo -n '" + jsonStr + "' | nc -u -w1 10.0.0.255 9527";
     util.writeFile("/tmp/kodi_udp.sh", sh, true);
     var written = util.readFile("/tmp/kodi_udp.sh");
     script.log("udp: wrote=" + (written != null) + " sh_len=" + sh.length);
@@ -171,11 +171,6 @@ function timeToMs(t) {
 
 function init() {
     script.log("KODI Sync init");
-    // 测试 util.writeFile 是否可用
-    util.writeFile("/tmp/kodi_test.txt", "hello", true);
-    var testContent = util.readFile("/tmp/kodi_test.txt");
-    script.log("writeFile test: content='" + testContent + "'");
-    script.log("allIps: " + JSON.stringify(allIps) + " syncEnabled=" + syncEnabled);
     reloadIps();
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
