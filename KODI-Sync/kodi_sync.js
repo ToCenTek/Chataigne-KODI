@@ -180,19 +180,16 @@ function init() {
     script.log("KODI Sync init");
     // 枚举参数（按索引）
     for (var i = 0; i < 20; i++) {
-        var p = local.parameters.getChildAt(i);
+        var p = local.parameters.getChild(i);
         if (p == null) break;
         script.log("  param[" + i + "]: '" + p.name + "' nice='" + p.niceName + "' isParam=" + p.isParameter());
-        if (p.getChildAt) {
-            for (var j = 0; j < 10; j++) {
-                var sp = p.getChildAt(j);
-                if (sp == null) break;
-                script.log("    sub[" + j + "]: '" + sp.name + "'");
-            }
+        for (var j = 0; j < 10; j++) {
+            var sp = p.getChild(j);
+            if (sp == null) break;
+            script.log("    sub[" + j + "]: '" + sp.name + "'");
         }
     }
-    script.log("has outputs=" + (local.outputs != null));
-    if (local.outputs) script.log("outputs type=" + typeof(local.outputs) + " name=" + local.outputs.name);
+    script.log("has outputs=" + (local.outputs != null) + " | local=" + typeof(local));
     reloadIps();
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
