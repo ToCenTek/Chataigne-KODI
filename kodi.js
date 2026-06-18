@@ -14,6 +14,13 @@ var ignoreNextVolumeChange = false;
 var volumeBeforeMute = -1;
 var isMutedFlag = false;
 var currentLoopMode = "off";
+var ignoreNextPlayingChange = false;
+var progBaseTick = 0;
+var progBasePct = 0;
+var progPerTick = 0;
+var progTotalMs = 0;
+var progFps = 0;
+var progQueryTick = -100;
 
 // 同步相关变量
 var secondaryIps = [];
@@ -21,30 +28,13 @@ var httpUser = "kodi";
 var httpPass = "tocentek";
 var syncEnabled = false;
 var syncInterval = 500;
-var syncThreshold = 8;
+var syncThreshold = 300;
 var syncStatusValue = null;
 var syncStatusText = "";
-var syncGotPrimaryResponse = false;
-var syncPrimaryTime = null;
-var syncPrimarySpeed = 0;
 var sysHelperName = "OS";
-
-// 同步状态机变量（与 sync.js 声明的全局变量相同，作用域隔离）
-var SYNC_IDLE = 0;
-var SYNC_WAIT_PRIMARY = 1;
-var SYNC_CHECK = 2;
-var SYNC_WAIT_SECONDARY = 3;
-var SYNC_DONE = 4;
-var syncState = SYNC_IDLE;
-var syncLastCycleTime = 0;
-var syncSecondaryIndex = 0;
-var syncLastSeekMs = -1;
-var syncCurHost = "";
-var syncCurPort = 8080;
-var syncWaitCount = 0;
-var syncSeekTime = null;
-var syncPrimaryTotalTime = null;
-var syncLastSeekWallTime = 0;
+var syncTickCount = 0;
+var driftPriTime = null;
+var driftFilePath = "/Users/yhc/Documents/Chataigne/modules/KODI/kodi_drift.txt";
 
 // 通过 OS 模块执行 shell 命令（依赖名为"OS"的模块提供 launchProcess）
 function execShell(cmd) {
@@ -141,112 +131,42 @@ function timeToMs(t) {
     return (t.hours * 3600 + t.minutes * 60 + t.seconds) * 1000 + ms;
 }
 
-// 多设备同步状态机：IDLE → WAIT_PRIMARY → CHECK → WAIT_SECONDARY → DONE
-// 周期轮询所有 KODI 的播放位置，漂移超过 syncThreshold 则 seek 纠偏
-function advanceSyncState() {
-    if (!syncEnabled || secondaryIps.length === 0) {
-        syncState = SYNC_IDLE;
-        syncLastCycleTime = 0;
-        return;
-    }
+// 将 drift 值同步到 UI
+function updateDriftDisplay(dv) {
+    var dp2 = local.values.getChild("Synchronizer");
+    if (!dp2) return;
+    var kc = dp2.getChild("KODIs");
+    if (!kc) return;
+    var dc = kc.getChild("Drift");
+    if (dc != null && dc.set) dc.set("" + dv + "ms");
+}
 
-    var now = new Date() - 0;
-
-    // IDLE / DONE: 检查时间间隔
-    if (syncState === SYNC_IDLE || syncState === SYNC_DONE) {
-        if (syncLastCycleTime === 0) {
-            syncLastCycleTime = now;
-            return;
-        }
-        if (now - syncLastCycleTime < syncInterval) return;
-        syncLastCycleTime = now;
-        syncGotPrimaryResponse = false;
-        syncPrimaryTime = null;
-        syncState = SYNC_WAIT_PRIMARY;
-        var posMsg = {
-            jsonrpc: "2.0",
-            method: "Player.GetProperties",
-            params: {
-                playerid: currentPlayerId,
-                properties: ["time", "speed", "totaltime"]
-            },
-            id: "SyncGetPrimary"
-        };
-        local.send(JSON.stringify(posMsg));
-        updateSyncStatus("Polling...");
-        return;
-    }
-
-    // WAIT_PRIMARY: 等待 wsMessageReceived 设置 syncGotPrimaryResponse
-    if (syncState === SYNC_WAIT_PRIMARY) {
-        if (!syncGotPrimaryResponse) return;
-        syncGotPrimaryResponse = false;
-        if (syncPrimarySpeed === 0 || syncPrimaryTime == null) {
-            syncState = SYNC_DONE;
-            updateSyncStatus("Idle (not playing)");
-            return;
-        }
-        var primaryMs = timeToMs(syncPrimaryTime);
-        if (syncLastSeekMs >= 0 && Math.abs(primaryMs - syncLastSeekMs) < syncThreshold) {
-            syncState = SYNC_DONE;
-            return;
-        }
-        syncLastSeekMs = primaryMs;
-        syncSecondaryIndex = 0;
-        syncState = SYNC_CHECK;
-        return;
-    }
-
-    // CHECK: 直接推送主设备位置到所有副机
-    if (syncState === SYNC_CHECK) {
-        if (syncSecondaryIndex >= secondaryIps.length) {
-            syncState = SYNC_DONE;
-            return;
-        }
-        if (syncPrimaryTime == null) {
-            syncState = SYNC_DONE;
-            updateSyncStatus("Idle");
-            return;
-        }
-        var ip = secondaryIps[syncSecondaryIndex];
-        var parts = ip.split(":");
+// 向副机发起一次 seek（将主设备当前位置 +200ms 推送过去）
+function doSeekAll(priTime, totalTime) {
+    if (!priTime || !totalTime) return;
+    var totalMs = timeToMs(totalTime);
+    if (totalMs <= 0) return;
+    var priMs = timeToMs(priTime) + 200;
+    if (priMs > totalMs) priMs = totalMs;
+    var pct = (priMs / totalMs) * 100;
+    var seekMsg = {
+        jsonrpc: "2.0",
+        method: "Player.Seek",
+        params: {
+            playerid: currentPlayerId,
+            value: { percentage: pct }
+        },
+        id: "SyncSeek"
+    };
+    for (var i = 0; i < secondaryIps.length; i++) {
+        var parts = secondaryIps[i].split(":");
         var host = parts[0];
         var port = 8080;
         if (parts.length > 1) {
             var p = parseInt(parts[1]);
             if (!isNaN(p)) port = p;
         }
-        var pct = 0;
-        var sig = syncPrimaryTime;
-        if (syncPrimaryTotalTime != null) {
-            var totalMs = timeToMs(syncPrimaryTotalTime);
-            if (totalMs > 0) {
-                var priMs = timeToMs(sig) + 100; // 提前 100ms 补偿网络延迟
-                if (priMs > totalMs) priMs = totalMs;
-                pct = (priMs / totalMs) * 100;
-            }
-        }
-        var seekMsg = {
-            jsonrpc: "2.0",
-            method: "Player.Seek",
-            params: {
-                playerid: currentPlayerId,
-                value: { percentage: pct }
-            },
-            id: "SyncSeek"
-        };
-        var nowWall = new Date() - 0;
-        if (nowWall - syncLastSeekWallTime < 800) {
-            syncState = SYNC_DONE;
-            return;
-        }
-        syncLastSeekWallTime = nowWall;
-        syncSeekTime = syncPrimaryTime;
         httpPost(host, port, seekMsg);
-        script.log("SyncSeek sent to " + host + ":" + port);
-        syncSecondaryIndex++;
-        syncState = SYNC_CHECK;
-        return;
     }
 }
 
@@ -418,7 +338,9 @@ function reloadSyncSettings() {
 function moduleValueChanged(value) {
     if (value.isParameter()) {
         var paramName = value.name;
-        script.log("moduleValueChanged: " + paramName + " > " + value.get());
+        if (paramName.toLowerCase() !== "playing") {
+            script.log("moduleValueChanged: " + paramName + " > " + value.get());
+        }
         if (paramName.toLowerCase() === "volume") {
             if (ignoreNextVolumeChange) {
                 ignoreNextVolumeChange = false;
@@ -480,6 +402,26 @@ function moduleValueChanged(value) {
         } else if (paramName.toLowerCase() === "secondary") {
             parseSecondaryIps(value.get());
             script.log("Secondary KODIs: " + JSON.stringify(secondaryIps));
+        } else if (paramName.toLowerCase() === "playing") {
+            if (ignoreNextPlayingChange) {
+                ignoreNextPlayingChange = false;
+                return;
+            }
+            var pct = value.get();
+            // 用户拖动后重置模拟起点，防止反弹
+            progBaseTick = syncTickCount;
+            progBasePct = pct;
+            progQueryTick = syncTickCount - 60;
+            var seekMsg = {
+                jsonrpc: "2.0",
+                method: "Player.Seek",
+                params: {
+                    playerid: currentPlayerId,
+                    value: { percentage: pct }
+                },
+                id: "SeekFromSlider"
+            };
+            local.send(JSON.stringify(seekMsg));
         }
     } else {
         script.log("Module value triggered : " + value.name);
@@ -879,6 +821,136 @@ function sendJSON(jsonText) {
     script.log("sendJSON: " + jsonText);
 }
 
+// 批量设置语言、时区、时间格式（仅当前连接的 KODI）
+function setRegionLanguage(ChineseLanguage, ChineseTimezone, RegionFormat24H) {
+    if (ChineseLanguage == null) ChineseLanguage = true;
+    if (ChineseTimezone == null) ChineseTimezone = true;
+    if (RegionFormat24H == null) RegionFormat24H = true;
+
+    // 1. 设置字体（先设字体防止中文乱码）
+    var fontVal = ChineseLanguage ? "Arial" : "Default";
+    var fontMsg = {
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: { setting: "lookandfeel.font", value: fontVal },
+        id: "SetFont"
+    };
+    local.send(JSON.stringify(fontMsg));
+
+    // 2. 设置语言
+    var langId = ChineseLanguage ? "resource.language.zh_cn" : "resource.language.en_gb";
+    var langMsg = {
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: { setting: "locale.language", value: langId },
+        id: "SetLang"
+    };
+    local.send(JSON.stringify(langMsg));
+
+    // 3. 设置时区国家（China 或 Britain(UK)）
+    var tzCountry = ChineseTimezone ? "China" : "Britain(UK)";
+    var tzCountryMsg = {
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: { setting: "locale.timezonecountry", value: tzCountry },
+        id: "SetTZCountry"
+    };
+    local.send(JSON.stringify(tzCountryMsg));
+
+    // 4. 设置时区（Asia/Shanghai 或 Europe/London）
+    var tzVal = ChineseTimezone ? "Asia/Shanghai" : "Europe/London";
+    var tzMsg = {
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: { setting: "locale.timezone", value: tzVal },
+        id: "SetTZ"
+    };
+    local.send(JSON.stringify(tzMsg));
+
+    // 5. 地区格式（country 带格式后缀，use24hourclock=regional 跟随）
+    var regionBase = ChineseTimezone ? "Beijing" : "UK";
+    var regionSuffix = RegionFormat24H ? " (24h)" : " (12h)";
+
+    var clockMsg = {
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: { setting: "locale.use24hourclock", value: "regional" },
+        id: "Set24HClock"
+    };
+    local.send(JSON.stringify(clockMsg));
+
+    var regionMsg = {
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: { setting: "locale.country", value: regionBase + regionSuffix },
+        id: "SetCountry"
+    };
+    local.send(JSON.stringify(regionMsg));
+
+    // 6. 刷新 UI 使所有设置生效
+    var refreshMsg = {
+        jsonrpc: "2.0",
+        method: "GUI.ActivateWindow",
+        params: { window: "home" },
+        id: "RefreshUI"
+    };
+    local.send(JSON.stringify(refreshMsg));
+
+    script.log("SetRegion: lang=" + (ChineseLanguage?"CN":"EN") + " tz=" + (ChineseTimezone?"CN":"UK") + " fmt=" + (RegionFormat24H?"24H":"12H"));
+}
+
+// 视频缩放
+function setVideoZoom(Zoom) {
+    if (Zoom == null) Zoom = 1.0;
+    var msg = {
+        jsonrpc: "2.0",
+        method: "Player.SetViewMode",
+        params: { viewmode: { zoom: Zoom } },
+        id: "SetZoom"
+    };
+    local.send(JSON.stringify(msg));
+    script.log("VideoZoom: " + Zoom);
+}
+
+// 纵向偏移
+function setVerticalShift(Shift) {
+    if (Shift == null) Shift = 0;
+    var msg = {
+        jsonrpc: "2.0",
+        method: "Player.SetViewMode",
+        params: { viewmode: { verticalshift: Shift } },
+        id: "SetVShift"
+    };
+    local.send(JSON.stringify(msg));
+    script.log("VShift: " + Shift);
+}
+
+// 画面宽高比（像素比）
+function setPixelRatio(Ratio) {
+    if (Ratio == null) Ratio = 1.0;
+    var msg = {
+        jsonrpc: "2.0",
+        method: "Player.SetViewMode",
+        params: { viewmode: { pixelratio: Ratio } },
+        id: "SetPixRatio"
+    };
+    local.send(JSON.stringify(msg));
+    script.log("PixelRatio: " + Ratio);
+}
+
+// 非线性拉伸
+function setNonlinearStretch(Stretch) {
+    if (Stretch == null) Stretch = false;
+    var msg = {
+        jsonrpc: "2.0",
+        method: "Player.SetViewMode",
+        params: { viewmode: { nonlinearstretch: Stretch } },
+        id: "SetNLStretch"
+    };
+    local.send(JSON.stringify(msg));
+    script.log("NLStretch: " + Stretch);
+}
+
 // 测试 launchProcess 是否工作
 function testLaunch() {
     execShell("/usr/bin/touch /tmp/chataigne_test.txt");
@@ -1112,58 +1184,94 @@ function toggleSync() {
     script.log("Sync toggled: " + (syncEnabled ? "ON" : "OFF"));
 }
 
-// 强制立即触发一次同步轮询
+// 手动 ReSync
 function reSync() {
     if (!syncEnabled || secondaryIps.length === 0) {
         script.log("ReSync: sync not enabled or no secondary KODIs");
         return;
     }
-    syncLastCycleTime = new Date() - syncInterval - 1;
-    syncState = SYNC_IDLE;
     updateSyncStatus("Resyncing...");
-    advanceSyncState();
+    var qMsg = {
+        jsonrpc: "2.0",
+        method: "Player.GetProperties",
+        params: {
+            playerid: currentPlayerId,
+            properties: ["time", "speed", "totaltime"]
+        },
+        id: "SyncReSync"
+    };
+    local.send(JSON.stringify(qMsg));
 }
 
-var driftQueryPending = false;
-var driftQueryTimer = 0;
-var driftFilePath = "/Users/yhc/Documents/Chataigne/modules/KODI/kodi_drift.txt";
-
-// 定时器：推进同步 + 每 5 秒更新一次漂移
+// 核心定时器：每 500ms 检测一次漂移（仅显示，不修正）
 function update(deltaTime) {
-    advanceSyncState();
-    driftQueryTimer++;
-    if (driftQueryTimer >= 10 && !driftQueryPending && secondaryIps.length > 0 && syncEnabled) {
-        driftQueryTimer = 0;
-        var host = secondaryIps[0].split(":")[0];
-        var qJson = compactJson({jsonrpc:"2.0",method:"Player.GetProperties",params:{playerid:currentPlayerId,properties:["time","speed"]},id:"DriftUpd"});
-        var cmd = "/usr/bin/curl -s --max-time 3 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + qJson + " -o " + driftFilePath + " http://" + host + ":8080/jsonrpc";
-        execShell(cmd);
-        driftQueryPending = true;
+    syncTickCount++;
+
+    // 首次获取影片时长（只查一次）
+    if (progTotalMs === 0 && syncTickCount % 10 === 0) {
+        var posMsg = {
+            jsonrpc: "2.0",
+            method: "Player.GetProperties",
+            params: {
+                playerid: currentPlayerId,
+                properties: ["time", "speed", "totaltime", "videostreams"]
+            },
+            id: "PosUpdate"
+        };
+        local.send(JSON.stringify(posMsg));
     }
-    if (driftQueryPending) {
-        var dContent = util.readFile(driftFilePath);
-        if (dContent != null && dContent.length > 0 && dContent.charAt(0) === "{") {
-            var dData = JSON.parse(dContent);
-            if (dData.result && dData.result.time && syncPrimaryTime != null) {
-                var sMs = timeToMs(dData.result.time);
-                var pMs = timeToMs(syncPrimaryTime);
-                if (pMs > 0) {
-                    var dv = Math.abs(pMs - sMs);
-                    var dp2 = local.values.getChild("Synchronizer");
-                    if (dp2) {
-                        var kc = dp2.getChild("KODIs");
-                        if (kc) {
-                            var dc = kc.getChild("Drift");
-                            if (dc != null && dc.set) dc.set("" + dv + "ms");
-                        }
-                    }
-                }
-            }
-            // 读完后删文件，确保下次读到的是新数据
-            execShell("/bin/rm " + driftFilePath);
-            driftQueryPending = false;
+
+    // 本地模拟进度条（不校准，全靠 perTick 计算）
+    if (progTotalMs > 0 && progPerTick > 0) {
+        var elapsedTicks = syncTickCount - progBaseTick;
+        var simPct = progBasePct + elapsedTicks * progPerTick;
+        if (simPct > 100) simPct = 100;
+        var progCtrl = local.values.getChild("Info").getChild("Playing");
+        if (progCtrl) {
+            ignoreNextPlayingChange = true;
+            progCtrl.set(simPct);
         }
     }
+
+    // 检查漂移文件
+    checkDriftFile();
+
+    // 同步相关
+    if (!syncEnabled || secondaryIps.length === 0) return;
+    if (driftPriTime != null) return;
+    var qMsg = {
+        jsonrpc: "2.0",
+        method: "Player.GetProperties",
+        params: {
+            playerid: currentPlayerId,
+            properties: ["time", "speed"]
+        },
+        id: "DriftQuery"
+    };
+    local.send(JSON.stringify(qMsg));
+}
+
+// 读取并用漂移值更新 UI（不执行任何修正）
+function checkDriftFile() {
+    if (driftPriTime == null) return;
+    var dContent = util.readFile(driftFilePath);
+    if (dContent == null || dContent.length === 0 || dContent.charAt(0) !== "{") return;
+    var dData = JSON.parse(dContent);
+    if (!dData.result || !dData.result.time || dData.result.speed <= 0) {
+        execShell("/bin/rm " + driftFilePath);
+        driftPriTime = null;
+        return;
+    }
+    var sMs = timeToMs(dData.result.time);
+    var pMs = timeToMs(driftPriTime);
+    execShell("/bin/rm " + driftFilePath);
+    if (pMs <= 0) { driftPriTime = null; return; }
+
+    var dv = pMs - sMs;
+    var absDv = dv > 0 ? dv : -dv;
+    updateDriftDisplay(absDv);
+    script.log("Drift: " + absDv + "ms");
+    driftPriTime = null;
 }
 
 // ========== 模块初始化：加载设置、同步状态、获取文件列表 ==========
@@ -1352,8 +1460,8 @@ function wsMessageReceived(message) {
             };
             local.send(JSON.stringify(getItem));
         } else {
-            var playingValue = local.values.getChild("Info").getChild("Playing");
-            if (playingValue) playingValue.set("[Stopped]");
+            var fileValue = local.values.getChild("Info").getChild("File");
+            if (fileValue) fileValue.set("[Stopped]");
         }
         return;
     }
@@ -1375,9 +1483,9 @@ function wsMessageReceived(message) {
     if (data.id === "GetPlayerItem" && data.result && data.result.item) {
         var filePath = data.result.item.file;
         if (filePath == null || filePath === "") filePath = data.result.item.title;
-        var playingValue = local.values.getChild("Info").getChild("Playing");
-        if (playingValue) playingValue.set(filePath);
-        script.log("Now playing synced: " + filePath);
+            var fileValue = local.values.getChild("Info").getChild("File");
+            if (fileValue) fileValue.set(filePath);
+            script.log("Now playing synced: " + filePath);
         return;
     }
 
@@ -1394,14 +1502,55 @@ function wsMessageReceived(message) {
         return;
     }
 
-    // 同步位置检查响应：将主设备位置存入共享变量
-    if (data.id === "SyncGetPrimary") {
-        if (!data.error) {
-            syncPrimaryTime = data.result.time;
-            syncPrimarySpeed = data.result.speed;
-            syncPrimaryTotalTime = data.result.totaltime;
+    // 漂移检测：保存主设备位置，启动副机 curl 查询
+    // 更新播放进度条（远程校准 + 更新模拟参数）
+    if (data.id === "PosUpdate" && !data.error && data.result) {
+        var t = data.result.time;
+        var tt = data.result.totaltime;
+        if (t && tt && data.result.speed > 0) {
+            var tMs = timeToMs(t);
+            var ttMs = timeToMs(tt);
+            if (ttMs > 0) {
+                progTotalMs = ttMs;
+                progBaseTick = syncTickCount;
+                progBasePct = (tMs / ttMs) * 100;
+                progPerTick = 500 / ttMs * 100;
+                var pct = progBasePct;
+                var progCtrl = local.values.getChild("Info").getChild("Playing");
+                if (progCtrl) {
+                    ignoreNextPlayingChange = true;
+                    progCtrl.set(pct);
+                }
+                // 获取帧率
+                if (data.result.videostreams && data.result.videostreams.length > 0) {
+                    progFps = data.result.videostreams[0].fps;
+                }
+            }
+        } else if (data.result && data.result.speed === 0) {
+            // 暂停时不更新模拟
         }
-        syncGotPrimaryResponse = true;
+        return;
+    }
+
+    if (data.id === "DriftQuery") {
+        if (!data.error && data.result && data.result.time && data.result.speed > 0) {
+            driftPriTime = data.result.time;
+            if (secondaryIps.length > 0) {
+                var host = secondaryIps[0].split(":")[0];
+                var qJson = compactJson({jsonrpc:"2.0",method:"Player.GetProperties",params:{playerid:1,properties:["time","speed"]},id:"DriftSec"});
+                var cmd = "/usr/bin/curl -s --max-time 3 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + qJson + " -o " + driftFilePath + " http://" + host + ":8080/jsonrpc";
+                execShell(cmd);
+            }
+        }
+        return;
+    }
+
+    // 手动 reSync（seek 备用）
+    if (data.id === "SyncReSync") {
+        if (!data.error && data.result && data.result.time && data.result.speed > 0) {
+            doSeekAll(data.result.time, data.result.totaltime);
+            script.log("ReSync: seek fired");
+        }
         return;
     }
 
@@ -1425,6 +1574,8 @@ function wsMessageReceived(message) {
         local.send(JSON.stringify(getItem));
         // 刷新播放列表（Player.Open File 会替换列表）
         playListGetItems();
+        progTotalMs = 0; progPerTick = 0; progFps = 0;
+        progQueryTick = syncTickCount - 60; // 触发立即校准
         script.log("Kodi state: Playing");
     }
     //
@@ -1441,8 +1592,11 @@ function wsMessageReceived(message) {
     }
     //
     if (data.method === "Player.OnStop") {
-        var playingValue = local.values.getChild("Info").getChild("Playing");
-        if (playingValue) playingValue.set("[Stopped]");
+        var fileValue = local.values.getChild("Info").getChild("File");
+        if (fileValue) fileValue.set("[Stopped]");
+        var progValue = local.values.getChild("Info").getChild("Playing");
+        if (progValue) progValue.set(0);
+        progTotalMs = 0; progPerTick = 0; progFps = 0;
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(false);
         var end = data.params && data.params.data && data.params.data.end;
@@ -1471,8 +1625,7 @@ function wsMessageReceived(message) {
         script.log("Volume: " + newVol);
     }
 
-    // 每次收到消息都推进同步状态机
-    advanceSyncState();
+    // 同步状态机已移除，不再需要推进
 }
 
 // ========== 监听 Parameters 面板值变化（Trigger 点击、开关切换等） ==========

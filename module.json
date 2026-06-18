@@ -38,10 +38,18 @@
                 "description": "切换播放/暂停.\nToggle Play/Pause.",
                 "type": "Trigger"
             },
-            "Playing":{
+            "File":{
                 "description": "当前正在播放的媒体文件路径.\nPath to the Currently Playing File.",
                 "type":"String",
                 "default": ""
+            },
+            "Playing":{
+                "description": "播放进度百分比。可拖动 seek。\nPlayback progress %. Draggable to seek.",
+                "type": "Float",
+                "ui": "slider",
+                "min": 0,
+                "max": 100,
+                "default": 0
             },
             "Items":{
                 "description": "当前播放列表中的所有媒体项.\nAutomatically Retrieve from the Current playlist.",
@@ -330,6 +338,56 @@
             }
         }, 
 
+        "Set Zoom":{
+            "menu": "Player",
+            "callback": "setVideoZoom",
+            "parameters": {
+                "Zoom":{
+                    "description": "视频缩放.\nVideo zoom.",
+                    "type": "Float",
+                    "min": 0.5,
+                    "max": 2.0,
+                    "default": 1.0
+                }
+            }
+        },
+        "Set Vertical Shift":{
+            "menu": "Player",
+            "callback": "setVerticalShift",
+            "parameters": {
+                "Shift":{
+                    "description": "纵向偏移.\nVertical shift.",
+                    "type": "Float",
+                    "min": -2.0,
+                    "max": 2.0,
+                    "default": 0
+                }
+            }
+        },
+        "Set Pixel Ratio":{
+            "menu": "Player",
+            "callback": "setPixelRatio",
+            "parameters": {
+                "Ratio":{
+                    "description": "画面宽高比.\nPixel aspect ratio.",
+                    "type": "Float",
+                    "min": 0.5,
+                    "max": 2.0,
+                    "default": 1.0
+                }
+            }
+        },
+        "Set Non-linear Stretch":{
+            "menu": "Player",
+            "callback": "setNonlinearStretch",
+            "parameters": {
+                "description": "非线性拉伸.\nNon-linear stretch.",
+                "Stretch":{
+                    "type": "Boolean",
+                    "default": false
+                }
+            }
+        },
         "Toggle Sync":{
             "menu": "Sync",
             "description": "开启/关闭多设备同步.\nEnable/disable multi-device sync.",
@@ -518,6 +576,28 @@
             "menu": "",
             "description": "显示主副 KODI 的播放位置和漂移。\nShow primary & secondary KODI playback positions and drift.",
             "callback": "debugPositions"
+        },
+        "Region & Language":{
+            "menu": "System",
+            "description": "批量设置语言、时区、时间格式.\nBatch set language, timezone, time format. Current KODI only.",
+            "callback": "setRegionLanguage",
+            "parameters": {
+                "Chinese Language":{
+                    "description": "true=中文/字体Arial, false=英文/字体Default.\ntrue=Chinese+Arial font, false=English+Default font.",
+                    "type": "Boolean",
+                    "default": true
+                },
+                "Chinese Timezone":{
+                    "description": "true=中国/Asia/Shanghai, false=英国/Europe/London.\ntrue=China/Shanghai, false=UK/London.",
+                    "type": "Boolean",
+                    "default": true
+                },
+                "24H Format":{
+                    "description": "true=24小时制, false=12小时制.\ntrue=24-hour, false=12-hour.",
+                    "type": "Boolean",
+                    "default": true
+                }
+            }
         },
         "Run CoreELEC Script":{
             "menu": "System",
