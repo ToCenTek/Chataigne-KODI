@@ -827,19 +827,28 @@ function runCoreelecScript(ScriptFile, UpdatePlaylist) {
     if (UpdatePlaylist == null) UpdatePlaylist = true;
     var moduleDir = "/Users/yhc/Documents/Chataigne/modules/KODI";
     var suffix = UpdatePlaylist ? "update" : "init";
-    // macOS: 用 launchFile 打开 .command
-    if (launcherFileParam == null) {
-        launcherFileParam = script.addFileParameter("__coreelec_launcher", "", "");
-        launcherFileParam.setAttribute("saveMode", false);
+    // 读取 OS 模块确定系统类型
+    var osMod = root.modules.getItemWithName("OS");
+    var osType = "";
+    if (osMod) {
+        var osVal = osMod.values.getChild("OS Type");
+        if (osVal) osType = osVal.get();
     }
-    launcherFileParam.set(moduleDir + "/kodi_" + suffix + ".command");
-    launcherFileParam.launchFile("");
-    // Linux: 直接运行脚本（无桌面环境，Wayland/树莓派通用）
-    var osHelper = root.modules.getChild("OS");
-    if (osHelper && osHelper.launchProcess) {
-        osHelper.launchProcess("/bin/bash " + moduleDir + "/kodi_" + suffix + ".sh");
+    if (osType === "MacOS" || osType === "macOS") {
+        // macOS: 用 launchFile 打开 .command
+        if (launcherFileParam == null) {
+            launcherFileParam = script.addFileParameter("__coreelec_launcher", "", "");
+            launcherFileParam.setAttribute("saveMode", false);
+        }
+        launcherFileParam.set(moduleDir + "/kodi_" + suffix + ".command");
+        launcherFileParam.launchFile("");
+    } else {
+        // Linux/其他: 直接运行 .sh
+        if (osMod && osMod.launchProcess) {
+            osMod.launchProcess("/bin/bash " + moduleDir + "/kodi_" + suffix + ".sh");
+        }
     }
-    script.log("Running CoreELEC script (update=" + UpdatePlaylist + ")");
+    script.log("Running CoreELEC script on " + osType + " (update=" + UpdatePlaylist + ")");
 }
 
 // KODI Sync module has been removed
