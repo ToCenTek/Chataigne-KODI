@@ -827,38 +827,25 @@ function runCoreelecScript(ScriptFile, UpdatePlaylist) {
     if (UpdatePlaylist == null) UpdatePlaylist = true;
     var moduleDir = "/Users/yhc/Documents/Chataigne/modules/KODI";
     var suffix = UpdatePlaylist ? "update" : "init";
-    if (ScriptFile == null || ScriptFile.length === 0) ScriptFile = moduleDir + "/coreelec.sh";
-    // 读取 OS 模块确定系统类型
     var osMod = root.modules.getItemWithName("OS");
-    var osType = "";
-    if (osMod) {
-        var osVal = osMod.values.getChild("osType");
-        if (osVal) osType = osVal.get();
-        script.log("osType=" + osType + " osMod=" + (osMod != null));
-        if (osType === "" || osType === "1") {
-            script.log("  OS type not found, trying alt names...");
-            var altNames = ["OS Type", "osType", "os-type", "OS type", "System", "platform"];
-            for (var ai = 0; ai < altNames.length; ai++) {
-                var av = osMod.values.getChild(altNames[ai]);
-                if (av) script.log("  alt[" + altNames[ai] + "]=" + av.get());
-            }
-        }
-    }
-    if (osType === "MacOS" || osType === "macOS") {
+    var isMac = (typeof launchFile !== "undefined");
+    script.log("isMac=" + isMac + " osMod=" + (osMod != null));
+    if (ScriptFile == null || ScriptFile.length === 0) ScriptFile = moduleDir + "/kodi_" + suffix + (isMac ? ".command" : ".sh");
+    if (isMac) {
         // macOS: 用 launchFile 打开 .command
         if (launcherFileParam == null) {
             launcherFileParam = script.addFileParameter("__coreelec_launcher", "", "");
             launcherFileParam.setAttribute("saveMode", false);
         }
-        launcherFileParam.set(moduleDir + "/kodi_" + suffix + ".command");
+        launcherFileParam.set(ScriptFile);
         launcherFileParam.launchFile("");
     } else {
         // Linux/其他: 直接运行 .sh
         if (osMod && osMod.launchProcess) {
-            osMod.launchProcess("/bin/bash " + moduleDir + "/kodi_" + suffix + ".sh");
+            osMod.launchProcess("/bin/bash " + ScriptFile);
         }
     }
-    script.log("Running CoreELEC script on " + osType + " (update=" + UpdatePlaylist + ")");
+    script.log("Running CoreELEC script (isMac=" + isMac + " update=" + UpdatePlaylist + ")");
 }
 
 // KODI Sync module has been removed
