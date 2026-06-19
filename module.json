@@ -79,18 +79,6 @@
     "scripts": ["kodi.js"],
 
     "commands": {
-        "Scan Media":{
-            "menu": "",
-            "description": "扫描/清理 KODI 媒体库. 文件增删改后使用.\nScan/Clean KODI media library. Use after files change.",
-            "callback": "scanMedia",
-            "parameters": {
-                "Update Only":{
-                    "description": "true=仅扫描新增, false=清理并重建.\ntrue=rescan only, false=clean then rescan.",
-                    "type": "Boolean",
-                    "default": true
-                }
-            }
-        },
         "Initialization":{
             "menu": "",
             "description": "初始化, 加载视频播放列表\nInitialization, Load Playlist",

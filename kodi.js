@@ -1,5 +1,4 @@
 var videoDirectory = "/storage/videos";
-var m3uPath = "/storage/.kodi/userdata/playlists/video/videos.m3u";
 
 // 全局变量
 var initStep = 0;
@@ -87,7 +86,6 @@ function openManagedPlaylist() {
         id: "init"
     };
     local.send(JSON.stringify(msg));
-    script.log("Opening managed playlist...");
 }
 
 // 请求当前播放列表的全部项目，响应由 wsMessageReceived 处理并更新 Items
@@ -822,19 +820,6 @@ function setAspectSecondaries(Count, hostsStr) {
     script.log("SetAspectSecondaries: moved to KODI Sync module");
 }
 
-function scanMedia(UpdateOnly) {
-    if (UpdateOnly == null) UpdateOnly = true;
-    script.log("ScanMedia: UpdateOnly=" + UpdateOnly);
-    if (!UpdateOnly) {
-        local.send(JSON.stringify({ jsonrpc: "2.0", method: "VideoLibrary.Clean", id: "clean" }));
-        local.send(JSON.stringify({ jsonrpc: "2.0", method: "AudioLibrary.Clean", id: "clean" }));
-        script.log("VideoLibrary.Clean + AudioLibrary.Clean sent");
-    }
-    local.send(JSON.stringify({ jsonrpc: "2.0", method: "VideoLibrary.Scan", id: "scan" }));
-    local.send(JSON.stringify({ jsonrpc: "2.0", method: "AudioLibrary.Scan", id: "scan" }));
-    script.log("VideoLibrary.Scan + AudioLibrary.Scan sent");
-}
-
 // KODI Sync module has been removed
 
 var progTick = 0;
@@ -958,10 +943,6 @@ function wsMessageReceived(message) {
             }
         }
         sortedFileList = files;
-        script.log("Sorted files (UI display only):");
-        for (var i = 0; i < sortedFileList.length; i++) {
-            script.log("  " + i + ": " + sortedFileList[i].label);
-        }
         var output = "";
         for (var i = 0; i < sortedFileList.length; i++) {
             output += i + ": " + sortedFileList[i].label;
@@ -969,12 +950,11 @@ function wsMessageReceived(message) {
         }
         var itemsValue = local.values.getChild("Info").getChild("Items");
         if (itemsValue) itemsValue.set(output);
-        script.log("============ UI Items (sorted by label) ============");
         script.log(output);
 
         initStep = 2;
         buildPlaylistFromM3U();
-        script.log("Step 2: Building playlist from m3u...");
+        script.log("Step 2: Building playlist...");
         return;
     }
 
@@ -992,8 +972,6 @@ function wsMessageReceived(message) {
         }
         var itemsValue = local.values.getChild("Info").getChild("Items");
         if (itemsValue) itemsValue.set(output);
-        script.log("============ Playlist Items ============");
-        script.log(output);
         kodiPlaylistMap = [];
         for (var i = 0; i < items.length; i++) {
             kodiPlaylistMap.push({
