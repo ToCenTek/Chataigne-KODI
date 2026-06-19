@@ -950,7 +950,7 @@ function wsMessageReceived(message) {
         }
         var itemsValue = local.values.getChild("Info").getChild("Items");
         if (itemsValue) itemsValue.set(output);
-        script.log(output);
+        script.log("Files: " + output.split("\n").length + " items");
 
         initStep = 2;
         buildPlaylistFromM3U();
@@ -972,6 +972,7 @@ function wsMessageReceived(message) {
         }
         var itemsValue = local.values.getChild("Info").getChild("Items");
         if (itemsValue) itemsValue.set(output);
+        script.log("Playlist: " + (items.length > 0 ? items.length + " items" : "(empty)"));
         kodiPlaylistMap = [];
         for (var i = 0; i < items.length; i++) {
             kodiPlaylistMap.push({
