@@ -142,10 +142,9 @@
 
 | 命令名 | 回调 | 参数 | 说明 |
 |--------|------|------|------|
-| `Video Calibration` | `openCalibration` | 无 | 打开 KODI 视频校准 GUI（手动调整过扫描/偏移） |
-| `Set Subtitle Height` | `setSubtitleHeight` | `Height`: Float (-50~50) | 设置字幕纵向位置 |
-| `Set Skin Zoom` | `setSkinZoom` | `Zoom`: Integer (-20~20) | 设置皮肤缩放（过扫描补偿） |
-| `Reset Calibration` | `resetCalibration` | 无 | 重置校准为默认值 |
+| `Video Calibration` | `openVideoSettings` | 无 | 打开播放中视频设置界面（内含过扫描校准） |
+| `Set Overscan Zoom` | `setOverscanZoom` | `Zoom`: Integer (-20~20) | 界面缩放补偿过扫描（负值缩小，正值放大） |
+| `Reset Calibration` | `resetCalibration` | 无 | 重置过扫描补偿为默认值 |
 
 ---
 

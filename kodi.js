@@ -719,30 +719,18 @@ function setNonlinearStretch(Stretch) {
 }
 
 // ========== 视频校准 ==========
-function openCalibration() {
+function openVideoSettings() {
     var msg = {
         jsonrpc: "2.0",
-        method: "Settings.SetSettingValue",
-        params: { setting: "videoscreen.guicalibration", value: true },
-        id: "Calib"
+        method: "GUI.ActivateWindow",
+        params: { window: "settings", parameters: ["videosettings"] },
+        id: "VidSet"
     };
     local.send(JSON.stringify(msg));
-    script.log("Video calibration GUI triggered");
+    script.log("Video settings opened (navigate to Video Calibration)");
 }
 
-function setSubtitleHeight(Height) {
-    if (Height == null) Height = 0;
-    var msg = {
-        jsonrpc: "2.0",
-        method: "Settings.SetSettingValue",
-        params: { setting: "subtitles.marginvertical", value: Height },
-        id: "SubtitleH"
-    };
-    local.send(JSON.stringify(msg));
-    script.log("Subtitle height set to " + Height);
-}
-
-function setSkinZoom(Zoom) {
+function setOverscanZoom(Zoom) {
     if (Zoom == null) Zoom = 0;
     var msg = {
         jsonrpc: "2.0",
@@ -751,12 +739,11 @@ function setSkinZoom(Zoom) {
         id: "SkinZoom"
     };
     local.send(JSON.stringify(msg));
-    script.log("Skin zoom set to " + Zoom);
+    script.log("Overscan zoom set to " + Zoom);
 }
 
 function resetCalibration() {
-    setSkinZoom(0);
-    setSubtitleHeight(4.95);
+    setOverscanZoom(0);
     script.log("Calibration reset");
 }
 
