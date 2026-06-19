@@ -84,6 +84,14 @@ class SyncThread(threading.Thread):
         elif cmd == "MUTE":
             m = val == "1" or val == "true" if val else True
             xbmc.executeJSONRPC(json.dumps({"jsonrpc":"2.0","method":"Application.SetMute","params":{"mute":m},"id":"cs"}))
+        elif cmd == "PLAYSYNC":
+            import time as _t
+            target = _t.time() + 2.0
+            while _t.time() < target:
+                if self.monitor.abortRequested(): return
+                _t.sleep(0.05)
+            xbmc.executeJSONRPC(json.dumps({"jsonrpc":"2.0","method":"Player.Open","params":{"item":{"file":val}},"id":"cs"}))
+            xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Player.SetSpeed","params":{"playerid":1,"speed":1},"id":"cs"}')
         elif cmd == "OPEN":
             xbmc.executeJSONRPC(json.dumps({"jsonrpc":"2.0","method":"Player.Open","params":{"item":{"file":val}},"id":"cs"}))
         elif cmd == "3D":

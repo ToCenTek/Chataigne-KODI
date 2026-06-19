@@ -29,9 +29,7 @@ function udpSend(cmd, val) {
 }
 
 function playAll() {
-    udpSend("OPEN", lastFile);
-    udpSend("PLAY");
-    udpSend("SEEK", "5");
+    udpSend("PLAYSYNC", lastFile);
 }
 
 function pauseAll() { udpSend("PAUSE"); }
