@@ -822,7 +822,6 @@ function setAspectSecondaries(Count, hostsStr) {
     script.log("SetAspectSecondaries: moved to KODI Sync module");
 }
 
-var tempLauncherParam = null;
 function runCoreelecScript(ScriptFile, UpdatePlaylist) {
     if (UpdatePlaylist == null) UpdatePlaylist = true;
     var suffix = UpdatePlaylist ? "update" : "init";
@@ -839,13 +838,7 @@ function runCoreelecScript(ScriptFile, UpdatePlaylist) {
         var tempPath = "/tmp/kodi_" + suffix + ".command";
         var content = "#!/bin/bash\nbash \"" + ScriptFile + "\"" + (suffix === "update" ? " update" : "") + "\nexit\n";
         util.writeFile(tempPath, content, true);
-        if (osMod && osMod.launchProcess) osMod.launchProcess("/bin/chmod +x " + tempPath);
-        if (tempLauncherParam == null) {
-            tempLauncherParam = script.addFileParameter("__kodi_temp_launcher", "", "");
-            tempLauncherParam.setAttribute("saveMode", false);
-        }
-        tempLauncherParam.set(tempPath);
-        tempLauncherParam.launchFile("");
+        if (osMod && osMod.launchProcess) osMod.launchProcess("/usr/bin/open " + tempPath);
     } else {
         if (osMod && osMod.launchProcess) {
             osMod.launchProcess("/bin/bash " + ScriptFile + (suffix === "update" ? " update" : ""));
