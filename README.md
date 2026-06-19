@@ -142,9 +142,9 @@
 
 | 命令名 | 回调 | 参数 | 说明 |
 |--------|------|------|------|
-| `Video Calibration` | `openVideoSettings` | 无 | 打开播放中视频设置界面（内含过扫描校准） |
-| `Set Overscan Zoom` | `setOverscanZoom` | `Zoom`: Integer (-20~20) | 界面缩放补偿过扫描（负值缩小，正值放大） |
-| `Reset Calibration` | `resetCalibration` | 无 | 重置过扫描补偿为默认值 |
+| `Remote Control` | `remoteControl` | `Action`: Enum | 发送任意按键/动作（↑↓←→ Enter Back Menu OSD Info 等 17 种） |
+| `Navigate Calibration` | `navigateCalibration` | `Steps`: String, `Delay`: Integer | 按动作序列导航到视频校准（可自定义步进和间隔） |
+| `Reset Calibration` | `resetCalibration` | 无 | 重置过扫描校准 |
 
 ---
 
@@ -176,7 +176,8 @@
 
 ## 版本历史
 
-- **1.1.0** (2026-06-19) – 新增 3D 模式、宽高比循环、视频画面控制、Region & Language、进度条、播放列表索引映射；移除 SSH 依赖和外部脚本
+- **1.2.0** (2026-06-19) – 新增视频校准（Remote Control / Navigate / Reset）；清理 sync 残留、启动器、外部脚本；重构初始化日志；文档全面补全
+- **1.1.0** (2026-06-19) – 新增 3D 模式、宽高比循环、视频画面控制、Region & Language、进度条、播放列表索引映射；移除 SSH 依赖
 - **1.0.0** (2026-06-15) – 初始发布
 
 ---
