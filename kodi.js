@@ -831,8 +831,17 @@ function runCoreelecScript(ScriptFile, UpdatePlaylist) {
     var osMod = root.modules.getItemWithName("OS");
     var osType = "";
     if (osMod) {
-        var osVal = osMod.values.getChild("OS Type");
+        var osVal = osMod.values.getChild("osType");
         if (osVal) osType = osVal.get();
+        script.log("osType=" + osType + " osMod=" + (osMod != null));
+        if (osType === "" || osType === "1") {
+            script.log("  OS type not found, trying alt names...");
+            var altNames = ["OS Type", "osType", "os-type", "OS type", "System", "platform"];
+            for (var ai = 0; ai < altNames.length; ai++) {
+                var av = osMod.values.getChild(altNames[ai]);
+                if (av) script.log("  alt[" + altNames[ai] + "]=" + av.get());
+            }
+        }
     }
     if (osType === "MacOS" || osType === "macOS") {
         // macOS: 用 launchFile 打开 .command
