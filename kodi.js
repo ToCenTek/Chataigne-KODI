@@ -186,7 +186,7 @@ function moduleValueChanged(value) {
                 seekToParameters(value.get());
             } else if (cname === "index") {
                 playIndex(value.get());
-            } else if (cname === "file") {
+            } else if (cname === "file" && value.getParent && value.getParent().name === "commands") {
                 playFile(value.get());
             } else if (cname === "mute") {
                 mute(value.get());
