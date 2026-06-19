@@ -85,36 +85,38 @@ function timeToMs(t) {
 }
 
 function dataReceived(data) {
-    if (data.substring(0, 4) === "POS:") {
-        var parts = data.split(":");
-        if (parts.length >= 3) {
-            var ms = Number(parts[1]);
-            if (!isNaN(ms)) posData.push(ms);
-        }
-    } else {
-        ackCount++;
-        if (ackCount <= 5) script.log("ACK: " + data);
-    }
+    ackCount++;
+    if (ackCount <= 5) script.log("ACK: " + data);
 }
-
-var posData = [];
 
 function update(deltaTime) {
     driftPhase++;
-    if (driftPhase % 2 === 1 && allIps.length >= 2) {
-        posData = [];
+    if (allIps.length < 2) return;
+    // Phase 1: curl 查询所有 KODI 位置
+    if (driftPhase % 2 === 1) {
+        var cJson = '{"jsonrpc":"2.0","method":"Player.GetProperties","params":{"playerid":1,"properties":["time","speed"]},"id":"d"}';
         for (var i = 0; i < allIps.length; i++) {
-            local.sendTo(allIps[i].split(":")[0], 9527, "POS\n");
+            execShell("/usr/bin/curl -s --max-time 2 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + cJson + " -o /tmp/kd" + i + ".txt http://" + allIps[i].split(":")[0] + ":8080/jsonrpc");
         }
     }
-    if (driftPhase % 2 === 0 && posData.length >= 2) {
-        var minMs = posData[0], maxMs = posData[0];
-        for (var i = 1; i < posData.length; i++) {
-            if (posData[i] < minMs) minMs = posData[i];
-            if (posData[i] > maxMs) maxMs = posData[i];
+    // Phase 2: 读文件算漂移（上一 tick curl 应已完成）
+    if (driftPhase % 2 === 0) {
+        var minMs = -1, maxMs = -1;
+        for (var i = 0; i < allIps.length; i++) {
+            var c = util.readFile("/tmp/kd" + i + ".txt");
+            if (c && c.charAt(0) === "{") {
+                var d = JSON.parse(c);
+                if (d && d.result && d.result.time && d.result.speed > 0) {
+                    var ms = timeToMs(d.result.time);
+                    if (minMs < 0 || ms < minMs) minMs = ms;
+                    if (maxMs < 0 || ms > maxMs) maxMs = ms;
+                }
+            }
         }
-        var dc = local.values.getChild("Status").getChild("Drift");
-        if (dc) dc.set("" + (maxMs - minMs) + "ms");
+        if (minMs >= 0 && maxMs >= 0) {
+            var dc = local.values.getChild("Status").getChild("Drift");
+            if (dc) dc.set("" + (maxMs - minMs) + "ms");
+        }
     }
 }
 
