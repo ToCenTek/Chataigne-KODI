@@ -755,6 +755,77 @@ param.select()
 // 在 UI 面板中高亮/选中。
 ```
 
+### Enum 参数专用方法
+
+```javascript
+myEnumParam.get()
+// 返回值取决于 Chataigne 版本:
+//   1.6.x → 返回选中的 key（字符串，如 "MacOS"）
+//   1.7.x → 返回选中的 data（值，如 1）
+// 如果你的代码需要兼容两种版本，用 getKey() 或 getData() 替代
+
+myEnumParam.getKey()
+// 返回当前选中的 key（标签名，字符串），适用于 1.7.x
+// 示例: "MacOS"
+
+myEnumParam.getData()
+// 返回当前选中的 data（值），适用于 1.6.x
+// 示例: 1
+
+myEnumParam.set(key)
+// 按 key 设置选项
+// 示例: myEnumParam.set("Option 1")
+
+myEnumParam.setData(data)
+// 按 data 值设置选项
+// 示例: myEnumParam.setData(3)
+
+myEnumParam.addOption(label, value)
+// 动态添加选项
+// 示例: myEnumParam.addOption("新选项", 42)
+
+myEnumParam.removeOptions()
+// 移除所有选项
+
+myEnumParam.setNext([loop])
+// 切换到下一个选项。loop=true 时循环（末尾跳到开头）
+
+myEnumParam.setPrevious([loop])
+// 切换到上一个选项。loop=true 时循环
+
+myEnumParam.getAllOptions()
+// 返回所有选项数组。每个元素是 {key: "...", value: ...}
+
+myEnumParam.getOptionAt(index)
+// 返回指定索引处的选项对象 {key, value}
+
+myEnumParam.getIndex()
+// 返回当前选中项的索引（从 0 开始）
+```
+
+### File 参数专用方法
+
+```javascript
+myFileParam.get()
+// 返回文件路径字符串
+
+myFileParam.getAbsolutePath()
+// 返回文件的绝对路径
+
+myFileParam.readFile([asJSON])
+// 读取文件内容。asJSON=true 时解析为对象
+// 示例: var content = myFileParam.readFile();
+//       var obj = myFileParam.readFile(true);
+
+myFileParam.writeFile(data, [overwriteIfExists])
+// 写入文件。data 可以是字符串或对象（自动 JSON 化）
+// overwriteIfExists 默认为 false
+
+myFileParam.launchFile(arguments)
+// 用系统默认程序打开文件
+// 可选 arguments 字符串传递给启动的应用程序
+```
+
 ---
 
 ## 7. Script 对象 API
@@ -994,7 +1065,7 @@ util.getIPs()
 
 ## 9. 根级对象访问
 
-`root` 对象提供对 Chataigne 完整运行时的访问。
+`root` 对象指向 Chataigne 引擎根，可访问完整运行时层次结构。
 
 ```javascript
 // 模块访问
@@ -1011,9 +1082,28 @@ root.states                       // 状态机
 root.customVariables              // 自定义变量
 root.masterCueManager             // Cue 管理器
 root.masterAudioManager           // 音频管理器
+
+// 引擎
+root.engine                       // Chataigne 引擎属性
 ```
 
 所有根属性都实现了 `ControllableContainer` API（§5）和管理器特定方法（§10）。
+
+`local` 对象的作用域取决于脚本运行位置:
+
+| 脚本类型 | `local` 指向 |
+|----------|-------------|
+| 模块脚本 | 模块本身（即 `root.modules.getItemWithName("模块名")`） |
+| 条件脚本 | 条件（Condition）对象 |
+| 映射过滤器/输出 | 过滤器（Filter）或输出（Output）对象 |
+
+在模块脚本中，`local` 等同于模块对象，可通过它访问模块的参数、值和发送数据:
+
+```javascript
+local.parameters.getChild("paramName")   // 模块参数
+local.values.getChild("valueName")       // 模块值
+local.send(JSON.stringify({...}))        // 发送数据（对协议模块）
+```
 
 ---
 

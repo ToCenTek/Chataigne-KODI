@@ -838,7 +838,10 @@ function runCoreelecScript(ScriptFile, UpdatePlaylist) {
         var tempPath = "/tmp/kodi_" + suffix + ".command";
         var content = "#!/bin/bash\nbash \"" + ScriptFile + "\"" + (suffix === "update" ? " update" : "") + "\nexit\n";
         util.writeFile(tempPath, content, true);
-        if (osMod && osMod.launchProcess) osMod.launchProcess("/usr/bin/open " + tempPath);
+        var bootPath = "/tmp/kodi_boot_" + suffix + ".sh";
+        var bootContent = "#!/bin/bash\nchmod +x \"" + tempPath + "\"\nopen \"" + tempPath + "\"\n";
+        util.writeFile(bootPath, bootContent, true);
+        if (osMod && osMod.launchProcess) osMod.launchProcess("/bin/bash " + bootPath);
     } else {
         if (osMod && osMod.launchProcess) {
             osMod.launchProcess("/bin/bash " + ScriptFile + (suffix === "update" ? " update" : ""));
