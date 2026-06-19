@@ -30,6 +30,7 @@ function udpSend(cmd, val) {
 
 function playAll() {
     udpSend("OPEN", lastFile);
+    udpSend("SEEK", "1");
     udpSend("PLAY");
 }
 
