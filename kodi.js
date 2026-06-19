@@ -822,32 +822,49 @@ function setAspectSecondaries(Count, hostsStr) {
     script.log("SetAspectSecondaries: moved to KODI Sync module");
 }
 
-function runCoreelecScript(ScriptFile, UpdatePlaylist) {
+function rebuildPlaylists(UpdatePlaylist) {
     if (UpdatePlaylist == null) UpdatePlaylist = true;
-    var suffix = UpdatePlaylist ? "update" : "init";
-    if (ScriptFile == null || ScriptFile.length === 0) {
-        script.log("Script File not set — please select a script in the command parameters");
-        return;
-    }
-    if (ScriptFile.charAt(0) !== "/") ScriptFile = util.getCurrentFileDirectory() + "/" + ScriptFile;
+    var ipParam = local.parameters.getChild("CoreELEC IP");
+    if (ipParam == null) { script.logError("CoreELEC IP parameter not found"); return; }
+    var coreIP = ipParam.get();
+    if (coreIP == null || coreIP.length === 0) { script.logError("CoreELEC IP is empty, configure it in module parameters"); return; }
+    script.log("Rebuilding playlists on " + coreIP + " (update=" + UpdatePlaylist + ")");
+
     var osMod = root.modules.getItemWithName("OS");
-    var osTypeVal = osMod ? osMod.values.getChild("osType") : null;
-    var isMac = osTypeVal && osTypeVal.get() == 1;
-    script.log("isMac=" + isMac + " ScriptFile=" + ScriptFile);
-    if (isMac) {
-        var tempPath = "/tmp/kodi_" + suffix + ".command";
-        var content = "#!/bin/bash\nbash \"" + ScriptFile + "\"" + (suffix === "update" ? " update" : "") + "\nexit\n";
-        util.writeFile(tempPath, content, true);
-        var bootPath = "/tmp/kodi_boot_" + suffix + ".sh";
-        var bootContent = "#!/bin/bash\nchmod +x \"" + tempPath + "\"\nopen \"" + tempPath + "\"\n";
-        util.writeFile(bootPath, bootContent, true);
-        if (osMod && osMod.launchProcess) osMod.launchProcess("/bin/bash " + bootPath);
+    if (osMod == null) { script.logError("OS module not found"); return; }
+
+    var tmpScript = "/tmp/kodi_rebuild.sh";
+    var content = "#!/bin/bash\nssh -T -o StrictHostKeyChecking=accept-new root@" + coreIP + " '";
+    if (UpdatePlaylist) {
+        content += "for plist in /storage/.kodi/userdata/playlists/*/*.m3u; do";
+        content += "  if [ -f \"$plist\" ]; then";
+        content += "    first=$(grep -v \"^#\" \"$plist\" | head -1)";
+        content += "    if [ -n \"$first\" ]; then";
+        content += "      dir=$(dirname \"$first\")";
+        content += "      echo \"#EXTM3U\" > \"$plist\"";
+        content += "      find \"$dir\" -maxdepth 3 -type f \\( -iname \"*.mp4\" -o -iname \"*.mkv\" -o -iname \"*.avi\" -o -iname \"*.ts\" -o -iname \"*.mov\" -o -iname \"*.m4v\" -o -iname \"*.wmv\" -o -iname \"*.flv\" -o -iname \"*.webm\" \\) >> \"$plist\" 2>/dev/null";
+        content += "      echo \"Updated $(basename \"$plist\")\"";
+        content += "    fi";
+        content += "  fi";
+        content += "done";
     } else {
-        if (osMod && osMod.launchProcess) {
-            osMod.launchProcess("/bin/bash " + ScriptFile + (suffix === "update" ? " update" : ""));
-        }
+        content += "find /storage -maxdepth 3 -type f \\( -iname \"*.mp4\" -o -iname \"*.mkv\" -o -iname \"*.avi\" -o -iname \"*.ts\" -o -iname \"*.mov\" -o -iname \"*.m4v\" -o -iname \"*.wmv\" -o -iname \"*.flv\" -o -iname \"*.webm\" \\) 2>/dev/null | sort | while read -r f; do";
+        content += "  dir=$(dirname \"$f\")";
+        content += "  plist_name=$(basename \"$dir\")";
+        content += "  plist_dir=\"/storage/.kodi/userdata/playlists/video\"";
+        content += "  mkdir -p \"$plist_dir\"";
+        content += "  if [ ! -f \"$plist_dir/$plist_name.m3u\" ]; then";
+        content += "    echo \"#EXTM3U\" > \"$plist_dir/$plist_name.m3u\"";
+        content += "  fi";
+        content += "  echo \"$f\" >> \"$plist_dir/$plist_name.m3u\"";
+        content += "done";
+        content += "echo \"Scan complete\"";
     }
-    script.log("Running CoreELEC script done");
+    content += "'\n";
+
+    util.writeFile(tmpScript, content, true);
+    osMod.launchProcess("/bin/bash " + tmpScript);
+    script.log("Playlist rebuild triggered on " + coreIP);
 }
 
 // KODI Sync module has been removed
@@ -879,7 +896,6 @@ function init() {
     initStep = 0;
     sortedFileList = [];
     kodiPlaylistMap = [];
-    // 自动加载 OS 模块（供 runCoreelecScript 使用）
     var osMod = root.modules.getItemWithName("OS");
     if (osMod == null) {
         osMod = root.modules.addItem("OS");

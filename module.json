@@ -18,6 +18,11 @@
         "Initialization": {
             "type": "Trigger",
             "description": "初始化, 加载视频播放列表.\nInitialize, load playlist."
+        },
+        "CoreELEC IP":{
+            "type": "String",
+            "default": "10.0.0.90",
+            "description": "CoreELEC 设备的 SSH IP 地址（用于重建播放列表）.\nCoreELEC SSH IP address (for rebuilding playlists)."
         }
     },
     "values":{
@@ -79,6 +84,18 @@
     "scripts": ["kodi.js"],
 
     "commands": {
+        "Rebuild Playlists":{
+            "menu": "",
+            "description": "SSH 到 CoreELEC, 更新/创建播放列表文件.\nSSH to CoreELEC, update/create playlist files.",
+            "callback": "rebuildPlaylists",
+            "parameters": {
+                "Update Playlist":{
+                    "description": "true=更新现有列表, false=扫描并创建所有.\ntrue=update existing, false=scan & create all.",
+                    "type": "Boolean",
+                    "default": true
+                }
+            }
+        },
         "Initialization":{
             "menu": "",
             "description": "初始化, 加载视频播放列表\nInitialization, Load Playlist",
@@ -531,23 +548,6 @@
                 },
                 "24H Format":{
                     "description": "true=24小时制, false=12小时制.\ntrue=24-hour, false=12-hour.",
-                    "type": "Boolean",
-                    "default": true
-                }
-            }
-        },
-        "Run CoreELEC Script":{
-            "menu": "System",
-            "description": "在终端中运行 coreelec.sh.\nRun coreelec.sh in a terminal window.",
-            "callback": "runCoreelecScript",
-            "parameters": {
-                "Script File":{
-                    "description": "核心脚本路径（通常在模块目录下，如 coreelec.sh）.\nPath to the core script (e.g. coreelec.sh).",
-                    "type": "File",
-                    "default": ""
-                },
-                "Update Playlist":{
-                    "description": "true=更新现有列表, false=完整初始化.\ntrue=update existing, false=full init.",
                     "type": "Boolean",
                     "default": true
                 }
