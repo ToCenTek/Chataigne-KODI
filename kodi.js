@@ -822,49 +822,18 @@ function setAspectSecondaries(Count, hostsStr) {
     script.log("SetAspectSecondaries: moved to KODI Sync module");
 }
 
-function rebuildPlaylists(UpdatePlaylist) {
-    if (UpdatePlaylist == null) UpdatePlaylist = true;
-    var ipParam = local.parameters.getChild("CoreELEC IP");
-    if (ipParam == null) { script.logError("CoreELEC IP parameter not found"); return; }
-    var coreIP = ipParam.get();
-    if (coreIP == null || coreIP.length === 0) { script.logError("CoreELEC IP is empty, configure it in module parameters"); return; }
-    script.log("Rebuilding playlists on " + coreIP + " (update=" + UpdatePlaylist + ")");
-
-    var osMod = root.modules.getItemWithName("OS");
-    if (osMod == null) { script.logError("OS module not found"); return; }
-
-    var tmpScript = "/tmp/kodi_rebuild.sh";
-    var content = "#!/bin/bash\nssh -T -o StrictHostKeyChecking=accept-new root@" + coreIP + " '";
-    if (UpdatePlaylist) {
-        content += "for plist in /storage/.kodi/userdata/playlists/*/*.m3u; do";
-        content += "  if [ -f \"$plist\" ]; then";
-        content += "    first=$(grep -v \"^#\" \"$plist\" | head -1)";
-        content += "    if [ -n \"$first\" ]; then";
-        content += "      dir=$(dirname \"$first\")";
-        content += "      echo \"#EXTM3U\" > \"$plist\"";
-        content += "      find \"$dir\" -maxdepth 3 -type f \\( -iname \"*.mp4\" -o -iname \"*.mkv\" -o -iname \"*.avi\" -o -iname \"*.ts\" -o -iname \"*.mov\" -o -iname \"*.m4v\" -o -iname \"*.wmv\" -o -iname \"*.flv\" -o -iname \"*.webm\" \\) >> \"$plist\" 2>/dev/null";
-        content += "      echo \"Updated $(basename \"$plist\")\"";
-        content += "    fi";
-        content += "  fi";
-        content += "done";
-    } else {
-        content += "find /storage -maxdepth 3 -type f \\( -iname \"*.mp4\" -o -iname \"*.mkv\" -o -iname \"*.avi\" -o -iname \"*.ts\" -o -iname \"*.mov\" -o -iname \"*.m4v\" -o -iname \"*.wmv\" -o -iname \"*.flv\" -o -iname \"*.webm\" \\) 2>/dev/null | sort | while read -r f; do";
-        content += "  dir=$(dirname \"$f\")";
-        content += "  plist_name=$(basename \"$dir\")";
-        content += "  plist_dir=\"/storage/.kodi/userdata/playlists/video\"";
-        content += "  mkdir -p \"$plist_dir\"";
-        content += "  if [ ! -f \"$plist_dir/$plist_name.m3u\" ]; then";
-        content += "    echo \"#EXTM3U\" > \"$plist_dir/$plist_name.m3u\"";
-        content += "  fi";
-        content += "  echo \"$f\" >> \"$plist_dir/$plist_name.m3u\"";
-        content += "done";
-        content += "echo \"Scan complete\"";
+function scanMedia(ScanType) {
+    if (ScanType == null) ScanType = "rescan";
+    script.log("ScanMedia: " + ScanType);
+    if (ScanType === "rescan") {
+        local.send(JSON.stringify({ jsonrpc: "2.0", method: "VideoLibrary.Scan", id: "scan" }));
+        local.send(JSON.stringify({ jsonrpc: "2.0", method: "AudioLibrary.Scan", id: "scan" }));
+        script.log("VideoLibrary.Scan + AudioLibrary.Scan sent");
+    } else if (ScanType === "clean") {
+        local.send(JSON.stringify({ jsonrpc: "2.0", method: "VideoLibrary.Clean", id: "clean" }));
+        local.send(JSON.stringify({ jsonrpc: "2.0", method: "AudioLibrary.Clean", id: "clean" }));
+        script.log("VideoLibrary.Clean + AudioLibrary.Clean sent");
     }
-    content += "'\n";
-
-    util.writeFile(tmpScript, content, true);
-    osMod.launchProcess("/bin/bash " + tmpScript);
-    script.log("Playlist rebuild triggered on " + coreIP);
 }
 
 // KODI Sync module has been removed

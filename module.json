@@ -18,11 +18,6 @@
         "Initialization": {
             "type": "Trigger",
             "description": "初始化, 加载视频播放列表.\nInitialize, load playlist."
-        },
-        "CoreELEC IP":{
-            "type": "String",
-            "default": "10.0.0.90",
-            "description": "CoreELEC 设备的 SSH IP 地址（用于重建播放列表）.\nCoreELEC SSH IP address (for rebuilding playlists)."
         }
     },
     "values":{
@@ -84,15 +79,19 @@
     "scripts": ["kodi.js"],
 
     "commands": {
-        "Rebuild Playlists":{
+        "Scan Media":{
             "menu": "",
-            "description": "SSH 到 CoreELEC, 更新/创建播放列表文件.\nSSH to CoreELEC, update/create playlist files.",
-            "callback": "rebuildPlaylists",
+            "description": "扫描/清理 KODI 媒体库. 文件增删改后使用.\nScan/Clean KODI media library. Use after files change.",
+            "callback": "scanMedia",
             "parameters": {
-                "Update Playlist":{
-                    "description": "true=更新现有列表, false=扫描并创建所有.\ntrue=update existing, false=scan & create all.",
-                    "type": "Boolean",
-                    "default": true
+                "Scan Type":{
+                    "description": "rescan=扫描新增, clean=清理已删除.\nrescan=find new files, clean=remove missing.",
+                    "type": "Enum",
+                    "options": {
+                        "扫描新增 (rescan)": "rescan",
+                        "清理已删除 (clean)": "clean"
+                    },
+                    "default": "rescan"
                 }
             }
         },
