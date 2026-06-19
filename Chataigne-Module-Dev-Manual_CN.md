@@ -1427,22 +1427,84 @@ automation.getKeysBetween(start, end)
 
 ## 15. 映射过滤器脚本
 
-对于**映射过滤器**模块，脚本定义 `filter()` 函数而不是标准回调:
+过滤器脚本在映射的过滤器链中运行，可对输入值进行数学转换或高级逻辑处理。
+
+### 15.1 filter() 回调
+
+有两个版本的 `filter` 回调:
+
+**新版 (支持多路复用/多输入):**
 
 ```javascript
 function filter(inputs, minValues, maxValues, multiplexIndex) {
-    // inputs: 输入值数组
-    // minValues, maxValues: 映射范围边界
+    // inputs:      输入值数组（多路复用时多个值）
+    // minValues:   每个输入的最小值
+    // maxValues:   每个输入的最大值
     // multiplexIndex: 当前多路复用通道索引
     // 必须返回与 inputs 长度相同的输出值数组
-    return inputs;  // 直通
+    var result = [];
+    for (var i = 0; i < inputs.length; i++) {
+        result[i] = inputs[i];  // 直通
+    }
+    return result;
 }
 ```
 
-**条件脚本**使用:
+**旧版 (单输入):**
+
 ```javascript
-local.setValid(true/false);  // 从脚本中设置条件结果
+function filter(inputValue, min, max) {
+    // inputValue:  来自输入或前一个过滤器的值
+    // min, max:    inputValue 的范围
+    // 必须返回一个值
+    return inputValue;
+}
 ```
+
+> ⚠ 新版推荐: 旧版签名已不再更新，过滤器现在原生支持多路复用和多输入。
+
+### 15.2 脚本参数
+
+过滤器脚本中可用 `script.add*()` 添加参数，参数出现在过滤器参数面板中:
+
+```javascript
+var multiplier = script.addFloatParameter("Multiplier", "乘数", 2, 0, 10);
+```
+
+### 15.3 完整示例
+
+[动图: 创建一个映射 → 添加 Script 过滤器 → 配置参数]
+
+以下示例从自定义变量读取 `masterVolume`，将淡入淡出序列的输出从 [0;1] 重新映射到 [0; masterVolume]:
+
+```javascript
+var multiplier = script.addFloatParameter("Multiplier", "乘数", 2, 0, 10);
+
+function filter(inputs, minValues, maxValues, multiplexIndex) {
+    var result = [];
+    for (var i = 0; i < inputs.length; i++) {
+        result[i] = inputs[i] * multiplier.get();
+    }
+    return result;
+}
+```
+
+> 💡 提示: 在 Chataigne 中右键参数 → **Copy Script Control Address** 可快速获取脚本地址，然后用 `.get()` 读取当前值。
+
+---
+
+## 15a. 条件脚本
+
+条件脚本用于复杂或多步骤的判断逻辑。
+
+### 特定方法
+
+```javascript
+local.setValid(true);   // 将条件设为有效（激活）
+local.setValid(false);  // 设为无效
+```
+
+[动图: 在条件中选择 Script 类型 → 编写条件脚本]
 
 ---
 
