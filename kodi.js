@@ -181,7 +181,7 @@ function moduleValueChanged(value) {
             local.send(JSON.stringify(seekMsg));
         } else {
             var cname = paramName.toLowerCase();
-            if (cname === "seek %") {
+            if (cname === "Seek %") {
                 seekToParameters(value.get());
             } else if (cname === "index") {
                 playIndex(value.get());
@@ -194,7 +194,7 @@ function moduleValueChanged(value) {
                 setLoop(value.get());
             } else if (cname === "random") {
                 setRandom(value.get());
-            } else if (cname === "show info") {
+            } else if (cname === "showinfo") {
                 showInfo(value.get());
             } else if (cname === "3d") {
                 set3DMode(value.get(), false);
@@ -208,9 +208,7 @@ function moduleValueChanged(value) {
             playPause(!isPaused);
         } else if (tname === "next") {
             nextTrack();
-        } else if (tname === "previous") {
-            prevTrack();
-        } else if (tname === "fullscreen") {
+        }  else if (tname === "fullscreen") {
             forceFullscreenAndClean();
         }
     }
@@ -542,9 +540,9 @@ function showInfo(Show) {
     if (Show == null) Show = false;
     var msg = {
         jsonrpc: "2.0",
-        method: "Input.ExecuteAction",
-        params: { action: "info" },
-        id: "Info"
+        method: "Settings.SetSettingValue",
+        params: { setting: "debug.showloginfo", value: Show },
+        id: "debug.showloginfo"
     };
     local.send(JSON.stringify(msg));
 }
