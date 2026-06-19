@@ -822,32 +822,40 @@ function setAspectSecondaries(Count, hostsStr) {
     script.log("SetAspectSecondaries: moved to KODI Sync module");
 }
 
-var launcherFileParam = null;
+var tempLauncherParam = null;
 function runCoreelecScript(ScriptFile, UpdatePlaylist) {
     if (UpdatePlaylist == null) UpdatePlaylist = true;
-    var moduleDir = "/Users/yhc/Documents/Chataigne/modules/KODI";
     var suffix = UpdatePlaylist ? "update" : "init";
+    if (ScriptFile == null || ScriptFile.length === 0) {
+        script.log("Script File not set — please select a script in the command parameters");
+        return;
+    }
     var osMod = root.modules.getItemWithName("OS");
-    // osType 是 EnumParameter，.get() 返回索引: 0=Windows, 1=MacOS, 2=Linux
     var osTypeVal = osMod ? osMod.values.getChild("osType") : null;
-    var isMac = osTypeVal && osTypeVal.get() === 1;
-    script.log("osType=" + (osTypeVal ? osTypeVal.get() : "N/A") + " isMac=" + isMac);
-    if (ScriptFile == null || ScriptFile.length === 0) ScriptFile = moduleDir + "/kodi_" + suffix + (isMac ? ".command" : ".sh");
+    if (osTypeVal) {
+        var raw = osTypeVal.get();
+        script.log("RAW osType=[" + raw + "] eq1=" + (raw == 1) + " eqMac=" + (raw == "MacOS"));
+    }
+    var isMac = osTypeVal && osTypeVal.get() == "MacOS";
+    script.log("isMac=" + isMac + " ScriptFile=" + ScriptFile);
     if (isMac) {
-        // macOS: 用 launchFile 打开 .command
-        if (launcherFileParam == null) {
-            launcherFileParam = script.addFileParameter("__coreelec_launcher", "", "");
-            launcherFileParam.setAttribute("saveMode", false);
+        // macOS: 写临时 .command，在 Terminal 中执行 ScriptFile
+        var tempPath = "/tmp/kodi_" + suffix + ".command";
+        var content = "#!/bin/bash\nbash \"" + ScriptFile + "\"" + (suffix === "update" ? " update" : "") + "\nexit\n";
+        util.writeFile(tempPath, content, true);
+        if (tempLauncherParam == null) {
+            tempLauncherParam = script.addFileParameter("__kodi_temp_launcher", "", "");
+            tempLauncherParam.setAttribute("saveMode", false);
         }
-        launcherFileParam.set(ScriptFile);
-        launcherFileParam.launchFile("");
+        tempLauncherParam.set(tempPath);
+        tempLauncherParam.launchFile("");
     } else {
-        // Linux/其他: 直接运行 .sh
+        // Linux: 直接运行
         if (osMod && osMod.launchProcess) {
-            osMod.launchProcess("/bin/bash " + ScriptFile);
+            osMod.launchProcess("/bin/bash " + ScriptFile + (suffix === "update" ? " update" : ""));
         }
     }
-    script.log("Running CoreELEC script (isMac=" + isMac + " update=" + UpdatePlaylist + ")");
+    script.log("Running CoreELEC script done");
 }
 
 // KODI Sync module has been removed
