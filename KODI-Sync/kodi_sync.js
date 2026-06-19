@@ -12,6 +12,10 @@ var localPort = 9527;
 
 var lastFile = "/storage/videos/4K_29.97-Chimei-inn-RoastDuck.mp4";
 var driftPhase = 0;
+var syncPhase = 0;
+var syncRefPct = 0;
+var syncTries = 0;
+var syncMinPct = 0;
 
 function execShell(cmd) {
     var helper = root.modules.getChild("OS");
@@ -70,21 +74,10 @@ function reloadIps() {
 
 function reSync() {
     if (allIps.length < 2) return;
-    var host = allIps[0].split(":")[0];
-    var qJson = '{"jsonrpc":"2.0","method":"Player.GetProperties","params":{"playerid":1,"properties":["time","speed","totaltime"]},"id":"re"}';
-    execShell("/usr/bin/curl -s --max-time 3 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + qJson + " -o /tmp/kodi_re.txt http://" + host + ":8080/jsonrpc");
-    var c = util.readFile("/tmp/kodi_re.txt");
-    if (c && c.charAt(0) === "{") {
-        var d = JSON.parse(c);
-        if (d && d.result && d.result.time && d.result.totaltime && d.result.speed > 0) {
-            var totalMs = timeToMs(d.result.totaltime);
-            if (totalMs > 0) {
-                var pct = (timeToMs(d.result.time) / totalMs) * 100;
-                for (var i = 0; i < allIps.length; i++) {
-                    local.sendTo(allIps[i].split(":")[0], 9527, "SEEK:" + pct + "\n");
-                }
-            }
-        }
+    syncPhase = 1;
+    updateSyncStatus("Syncing...");
+    for (var i = 0; i < allIps.length; i++) {
+        local.sendTo(allIps[i].split(":")[0], 9527, "PAUSE\n");
     }
 }
 
@@ -126,24 +119,77 @@ function dataReceived(data) {
 function update(deltaTime) {
     driftPhase++;
     if (allIps.length < 2) return;
-    // Phase 1: UDP POS 查询所有 KODI 位置
-    if (driftPhase % 2 === 1) {
-        posMs = []; posReady = 0;
-        for (var i = 0; i < allIps.length; i++) {
-            var ip = allIps[i].split(":")[0];
-            local.sendTo(ip, 9527, "POS:" + ip + "\n");
+    // ── 漂移监控（正常运行时的 POS 轮询）──
+    if (syncPhase === 0) {
+        if (driftPhase % 2 === 1) {
+            posMs = []; posReady = 0;
+            for (var i = 0; i < allIps.length; i++) {
+                local.sendTo(allIps[i].split(":")[0], 9527, "POS:" + allIps[i].split(":")[0] + "\n");
+            }
         }
+        if (driftPhase % 2 === 0 && posReady >= allIps.length) {
+            var parts = [];
+            for (var i = 1; i < allIps.length; i++) {
+                var d = parseFloat(posMs[i]) - parseFloat(posMs[0]);
+                parts.push("" + (d > 0 ? Math.floor(d + 0.5) : Math.ceil(d - 0.5)));
+            }
+            var dc = local.values.getChild("Status").getChild("Drift");
+            if (dc) dc.set(parts.join(", "));
+        }
+        return;
     }
-    // Phase 2: 以第一台为基准，显示其他各台的差值
-    if (driftPhase % 2 === 0 && posReady >= allIps.length) {
-        var refMs = posMs[0];
-        var parts = [];
-        for (var i = 1; i < allIps.length; i++) {
-            var driftVal = parseFloat(posMs[i]) - parseFloat(refMs);
-            parts.push("" + parseInt(driftVal + (driftVal > 0 ? 0.5 : -0.5)));
+    // ── ReSync 状态机（暂停→校准→恢复）──
+    if (syncPhase === 1) {
+        syncPhase = 2; posMs = []; posReady = 0;
+        for (var i = 0; i < allIps.length; i++) {
+            local.sendTo(allIps[i].split(":")[0], 9527, "POS:" + allIps[i].split(":")[0] + "\n");
         }
-        var dc = local.values.getChild("Status").getChild("Drift");
-        if (dc) dc.set(parts.join(", "));
+        return;
+    }
+    if (syncPhase === 2 && posReady >= allIps.length) {
+        syncRefPct = posMs[0]; syncMinPct = posMs[0];
+        for (var i = 1; i < allIps.length; i++) {
+            if (posMs[i] < syncMinPct) syncMinPct = posMs[i];
+        }
+        syncPhase = 3; syncTries = 0;
+        for (var i = 0; i < allIps.length; i++) {
+            local.sendTo(allIps[i].split(":")[0], 9527, "SEEK:" + syncMinPct + "\n");
+        }
+        return;
+    }
+    if (syncPhase === 3) {
+        syncPhase = 4; posMs = []; posReady = 0;
+        for (var i = 0; i < allIps.length; i++) {
+            local.sendTo(allIps[i].split(":")[0], 9527, "POS:" + allIps[i].split(":")[0] + "\n");
+        }
+        return;
+    }
+    if (syncPhase === 4 && posReady >= allIps.length) {
+        var minP = posMs[0], maxP = posMs[0];
+        for (var i = 1; i < allIps.length; i++) {
+            if (posMs[i] < minP) minP = posMs[i];
+            if (posMs[i] > maxP) maxP = posMs[i];
+        }
+        if (maxP - minP < 100) { // 100ms 以内算成功
+            for (var i = 0; i < allIps.length; i++) {
+                local.sendTo(allIps[i].split(":")[0], 9527, "PLAY\n");
+            }
+            syncPhase = 0; updateSyncStatus("Synced");
+        } else {
+            syncTries++;
+            if (syncTries < 3) {
+                syncPhase = 3;
+                for (var i = 0; i < allIps.length; i++) {
+                    local.sendTo(allIps[i].split(":")[0], 9527, "SEEK:" + syncRefPct + "\n");
+                }
+            } else {
+                for (var i = 0; i < allIps.length; i++) {
+                    local.sendTo(allIps[i].split(":")[0], 9527, "PLAY\n");
+                }
+                syncPhase = 0; updateSyncStatus("Sync failed");
+            }
+        }
+        return;
     }
 }
 
