@@ -84,9 +84,18 @@ function timeToMs(t) {
 function dataReceived(data) {
     if (data.length > 4 && data.substring(0, 4) === "POS:") {
         var parts = data.split(":");
-        if (parts.length >= 3) {
-            var ms = parseFloat(parts[1]);
-            if (ms > 0) { posMs[posReady] = ms; posReady++; }
+        if (parts.length >= 4) {
+            var tag = parts[1];
+            var ms = parseFloat(parts[2]);
+            if (ms > 0) {
+                for (var j = 0; j < allIps.length; j++) {
+                    if (allIps[j].split(":")[0] === tag) {
+                        posMs[j] = ms;
+                        posReady++;
+                        break;
+                    }
+                }
+            }
         }
     } else {
         ackCount++;
@@ -101,7 +110,8 @@ function update(deltaTime) {
     if (driftPhase % 2 === 1) {
         posMs = []; posReady = 0;
         for (var i = 0; i < allIps.length; i++) {
-            local.sendTo(allIps[i].split(":")[0], 9527, "POS\n");
+            var ip = allIps[i].split(":")[0];
+            local.sendTo(ip, 9527, "POS:" + ip + "\n");
         }
     }
     // Phase 2: 以第一台为基准，显示其他各台的差值

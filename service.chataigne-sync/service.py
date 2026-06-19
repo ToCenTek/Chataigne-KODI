@@ -94,6 +94,8 @@ class SyncThread(threading.Thread):
         elif cmd == "ASPECT":
             xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Input.ExecuteAction","params":{"action":"aspectratio"},"id":"cs"}')
         elif cmd == "POS":
+            # val 包含发送方标识（如 "53"），原样带回
+            tag = val if val else ""
             r = xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Player.GetProperties","params":{"playerid":1,"properties":["time","speed","totaltime"]},"id":"cs"}')
             try:
                 d = json.loads(r)
@@ -103,7 +105,7 @@ class SyncThread(threading.Thread):
                     ms = t.get('hours',0)*3600000+t.get('minutes',0)*60000+t.get('seconds',0)*1000+t.get('milliseconds',0)
                     tms = tt.get('hours',0)*3600000+tt.get('minutes',0)*60000+tt.get('seconds',0)*1000+tt.get('milliseconds',0)
                     target = (addr[0], ACK_PORT) if ACK_PORT > 0 else addr
-                    self.sock.sendto(("POS:" + str(ms) + ":" + str(tms) + "\n").encode(), target)
+                    self.sock.sendto(("POS:" + tag + ":" + str(ms) + ":" + str(tms) + "\n").encode(), target)
             except:
                 pass
 
