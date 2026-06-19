@@ -719,7 +719,7 @@ function setNonlinearStretch(Stretch) {
 }
 
 // ========== 视频校准 & 按键输入 ==========
-function sendInput(Action) {
+function remoteControl(Action) {
     if (Action == null || Action.length === 0) Action = "osd";
     local.send(JSON.stringify({
         jsonrpc: "2.0",
@@ -727,17 +727,8 @@ function sendInput(Action) {
         params: { action: Action },
         id: "Input"
     }));
-    script.log("Input: " + Action);
+    script.log("Remote: " + Action);
 }
-
-function keyLeft()   { sendInput("left"); }
-function keyRight()  { sendInput("right"); }
-function keyUp()     { sendInput("up"); }
-function keyDown()   { sendInput("down"); }
-function keySelect() { sendInput("select"); }
-function keyBack()   { sendInput("back"); }
-function keyMenu()   { sendInput("menu"); }
-function keyOSD()    { sendInput("osd"); }
 
 function navigateCalibration(Steps, Delay) {
     if (Steps == null || Steps.length === 0) Steps = "osd,left,left,left,select,select,up,select";
@@ -747,14 +738,14 @@ function navigateCalibration(Steps, Delay) {
     for (var ni = 0; ni < actions.length; ni++) {
         var a = actions[ni];
         if (a.length === 0) continue;
-        sendInput(a);
+        remoteControl(a);
         util.delayThreadMS(Delay);
     }
     script.log("Navigation complete");
 }
 
 function resetCalibration() {
-    sendInput("resetcalibration");
+    remoteControl("resetcalibration");
 }
 
 // 强制全屏
