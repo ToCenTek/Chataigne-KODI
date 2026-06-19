@@ -718,47 +718,43 @@ function setNonlinearStretch(Stretch) {
     script.log("NLStretch: " + Stretch);
 }
 
-// ========== 视频校准 ==========
+// ========== 视频校准 & 按键输入 ==========
 function sendInput(Action) {
     if (Action == null || Action.length === 0) Action = "osd";
-    var msg = {
+    local.send(JSON.stringify({
         jsonrpc: "2.0",
         method: "Input.ExecuteAction",
         params: { action: Action },
         id: "Input"
-    };
-    local.send(JSON.stringify(msg));
+    }));
     script.log("Input: " + Action);
 }
 
+function keyLeft()   { sendInput("left"); }
+function keyRight()  { sendInput("right"); }
+function keyUp()     { sendInput("up"); }
+function keyDown()   { sendInput("down"); }
+function keySelect() { sendInput("select"); }
+function keyBack()   { sendInput("back"); }
+function keyMenu()   { sendInput("menu"); }
+function keyOSD()    { sendInput("osd"); }
+
 function navigateCalibration(Steps, Delay) {
-    if (Steps == null || Steps.length === 0) Steps = "osd,select,down,select,down,select";
+    if (Steps == null || Steps.length === 0) Steps = "osd,left,left,left,select,select,up,select";
     if (Delay == null || Delay < 50) Delay = 300;
     var actions = Steps.split(",");
-    script.log("Navigate " + actions.length + " steps...");
+    script.log("Navigate " + actions.length + " steps (delay=" + Delay + "ms)...");
     for (var ni = 0; ni < actions.length; ni++) {
         var a = actions[ni];
         if (a.length === 0) continue;
-        local.send(JSON.stringify({
-            jsonrpc: "2.0",
-            method: "Input.ExecuteAction",
-            params: { action: a },
-            id: "Nav" + ni
-        }));
+        sendInput(a);
         util.delayThreadMS(Delay);
     }
     script.log("Navigation complete");
 }
 
 function resetCalibration() {
-    var action = {
-        jsonrpc: "2.0",
-        method: "Input.ExecuteAction",
-        params: { action: "resetcalibration" },
-        id: "ResetCal"
-    };
-    local.send(JSON.stringify(action));
-    script.log("Calibration reset");
+    sendInput("resetcalibration");
 }
 
 // 强制全屏

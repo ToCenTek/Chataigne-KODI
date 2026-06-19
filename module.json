@@ -484,27 +484,15 @@
                 }
             }
         },
-        "Send Input":{
-            "menu": "Calibration",
-            "description": "发送按键/动作到 KODI（用于导航到视频校准等）.\nSend input action to KODI (navigate to video calibration etc.).",
-            "callback": "sendInput",
-            "parameters": {
-                "Action":{
-                    "description": "动作名称，如 osd/up/down/left/right/select/contextmenu.\nAction name, e.g. osd/up/down/left/right/select/contextmenu.",
-                    "type": "String",
-                    "default": "osd"
-                }
-            }
-        },
         "Navigate Calibration":{
             "menu": "Calibration",
-            "description": "依次发送动作序列到达视频校准（逗号分隔）。\nSend action sequence to reach video calibration (comma-separated).",
+            "description": "导航到视频校准（按当前皮肤调整步骤序列）.\nNavigate to video calibration (adjust steps for your skin).",
             "callback": "navigateCalibration",
             "parameters": {
                 "Steps":{
-                    "description": "动作序列，逗号分隔，默认打开OSD→进入视频设置→选择校准.\nAction steps, comma-separated.",
+                    "description": "动作序列，逗号分隔.\nAction steps, comma-separated.",
                     "type": "String",
-                    "default": "osd,select,down,select,down,select"
+                    "default": "osd,left,left,left,select,select,up,select"
                 },
                 "Delay":{
                     "description": "每步间隔毫秒.\nDelay between steps in ms.",
@@ -515,9 +503,61 @@
                 }
             }
         },
+        "←":{
+            "menu": "Calibration",
+            "description": "方向键: 左.\nDirection: Left.",
+            "callback": "keyLeft"
+        },
+        "→":{
+            "menu": "Calibration",
+            "description": "方向键: 右.\nDirection: Right.",
+            "callback": "keyRight"
+        },
+        "↑":{
+            "menu": "Calibration",
+            "description": "方向键: 上.\nDirection: Up.",
+            "callback": "keyUp"
+        },
+        "↓":{
+            "menu": "Calibration",
+            "description": "方向键: 下.\nDirection: Down.",
+            "callback": "keyDown"
+        },
+        "Enter":{
+            "menu": "Calibration",
+            "description": "确认/选择.\nSelect/Confirm.",
+            "callback": "keySelect"
+        },
+        "Back":{
+            "menu": "Calibration",
+            "description": "返回/后退.\nGo back.",
+            "callback": "keyBack"
+        },
+        "Menu":{
+            "menu": "Calibration",
+            "description": "菜单键.\nMenu button.",
+            "callback": "keyMenu"
+        },
+        "OSD":{
+            "menu": "Calibration",
+            "description": "切换 OSD 显示.\nToggle OSD overlay.",
+            "callback": "keyOSD"
+        },
+        "Send Input":{
+            "menu": "Calibration",
+            "description": "发送任意动作/按键.\nSend any input action.",
+            "callback": "sendInput",
+            "parameters": {
+                "Action":{
+                    "description": "动作名称.\nAction name.",
+                    "type": "String",
+                    "default": "osd"
+                }
+            }
+        },
         "Reset Calibration":{
             "menu": "Calibration",
-            "description": "重置过扫描校准为默认值.\nReset overscan calibration to defaults.",
+            "description": "重置过扫描校准.\nReset overscan calibration.",
             "callback": "resetCalibration"
         },
         "Region & Language":{
