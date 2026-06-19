@@ -111,7 +111,6 @@ function timeToMs(t) {
     if (t == null) return 0;
     return (t.hours * 3600 + t.minutes * 60 + t.seconds) * 1000 + (t.milliseconds || 0);
 }
-function reloadSyncSettings() {}
 
 // ========== 监听 Values 面板值变化 ==========
 function moduleValueChanged(value) {
@@ -210,6 +209,7 @@ function playIndex(Index) {
         id: "Player.Open.FilePath"
     };
     local.send(JSON.stringify(msg));
+    script.log("Playing Index: " + Index);
 }
 
 // 下一曲
@@ -249,6 +249,7 @@ function playFile(FilePath) {
         id: "Player.Open.FilePath"
     };
     local.send(JSON.stringify(msg));
+    script.log("Playing: " + FilePath);
     // Player.Open 文件会替换播放列表，立即刷新 Items 显示
     playListGetItems();
 }
@@ -370,6 +371,7 @@ function setLoop(Mode) {
     currentLoopMode = Mode;
     var loopParam = local.values.getChild("Info").getChild("isLooped");
     if (loopParam) loopParam.set(Mode !== "off");
+    script.log("Loop: " + Mode);
 
 }
 
@@ -754,6 +756,7 @@ function forceFullscreenAndClean() {
         id: 1
     };
     local.send(JSON.stringify(fsAction));
+    script.log("action fullscreen");
 }
 
 // 3D 模式: 通过 GUI.SetStereoscopicMode(mode) 设置。
@@ -872,7 +875,6 @@ function init() {
         if (osMod && osMod.name !== "OS") osMod.setName("OS");
 
     }
-    reloadSyncSettings();
     syncAll();
     initStep = 1;
     script.setUpdateRate(2);
