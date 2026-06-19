@@ -3,7 +3,7 @@ var videoDirectory = "/storage/videos";
 // 全局变量
 var initStep = 0;
 var currentPlayerId = 1;
-var currentplaylistid = 1;
+var currentplaylistid = 0;
 var kodiPlaylistMap = [];
 var sortedFileList = [];
 var playlistAddIndex = 0;
@@ -46,7 +46,7 @@ function buildPlaylistFromM3U() {
     var msg = {
         jsonrpc: "2.0",
         method: "Playlist.Clear",
-        params: { playlistid: 1 },
+        params: { playlistid: currentplaylistid },
         id: "PlaylistClear"
     };
     local.send(JSON.stringify(msg));
@@ -62,7 +62,7 @@ function addNextPlaylistFile() {
             jsonrpc: "2.0",
             method: "Playlist.Add",
             params: {
-                playlistid: 1,
+                playlistid: currentplaylistid,
                 item: { file: filePath }
             },
             id: "PlaylistAdd"
@@ -81,7 +81,7 @@ function openManagedPlaylist() {
         jsonrpc: "2.0",
         method: "Player.Open",
         params: {
-            item: { playlistid: 1 }
+            item: { playlistid: currentplaylistid }
         },
         id: "init"
     };
@@ -218,6 +218,7 @@ function moduleValueChanged(value) {
 // 跳转到播放列表的指定索引位置
 function playIndex(Index) {
     if (Index == null || Index < 0) Index = 0;
+    script.log("playIndex: " + Index + " (player=" + currentPlayerId + ")");
     var msg = {
         jsonrpc: "2.0",
         method: "Player.GoTo",
@@ -225,10 +226,9 @@ function playIndex(Index) {
             playerid: currentPlayerId,
             to: Index
         },
-        id: "Player.Open.FilePath"
+        id: "Player.GoTo"
     };
     local.send(JSON.stringify(msg));
-    script.log("Playing Index: " + Index);
 }
 
 // 下一曲
@@ -541,15 +541,11 @@ function showInfo(Show) {
     if (Show == null) Show = false;
     var msg = {
         jsonrpc: "2.0",
-        method: "Settings.SetSettingValue",
-        params: {
-            setting: "debug.showloginfo",
-            value: Show
-        },
-        id: "debug.showloginfo"
+        method: "Input.ExecuteAction",
+        params: { action: "info" },
+        id: "Info"
     };
     local.send(JSON.stringify(msg));
-    script.log("Toggle debug info: " + Show);
 }
 
 // 显示通知
