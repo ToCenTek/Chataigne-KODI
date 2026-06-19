@@ -542,9 +542,9 @@
             "callback": "runCoreelecScript",
             "parameters": {
                 "Script File":{
-                    "description": "coreelec.sh 脚本文件路径.\nPath to coreelec.sh script file.",
+                    "description": "核心脚本路径（通常在模块目录下，如 coreelec.sh）.\nPath to the core script (e.g. coreelec.sh).",
                     "type": "File",
-                    "default": "/Users/yhc/Documents/Chataigne/modules/KODI/coreelec.sh"
+                    "default": ""
                 },
                 "Update Playlist":{
                     "description": "true=更新现有列表, false=完整初始化.\ntrue=update existing, false=full init.",

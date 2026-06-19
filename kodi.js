@@ -830,16 +830,13 @@ function runCoreelecScript(ScriptFile, UpdatePlaylist) {
         script.log("Script File not set — please select a script in the command parameters");
         return;
     }
+    var moduleDir = "/Users/yhc/Documents/Chataigne/modules/KODI";
+    if (ScriptFile.charAt(0) !== "/") ScriptFile = moduleDir + "/" + ScriptFile;
     var osMod = root.modules.getItemWithName("OS");
     var osTypeVal = osMod ? osMod.values.getChild("osType") : null;
-    if (osTypeVal) {
-        var raw = osTypeVal.get();
-        script.log("RAW osType=[" + raw + "] eq1=" + (raw == 1) + " eqMac=" + (raw == "MacOS"));
-    }
-    var isMac = osTypeVal && osTypeVal.get() == "MacOS";
+    var isMac = osTypeVal && osTypeVal.get() == 1;
     script.log("isMac=" + isMac + " ScriptFile=" + ScriptFile);
     if (isMac) {
-        // macOS: 写临时 .command，在 Terminal 中执行 ScriptFile
         var tempPath = "/tmp/kodi_" + suffix + ".command";
         var content = "#!/bin/bash\nbash \"" + ScriptFile + "\"" + (suffix === "update" ? " update" : "") + "\nexit\n";
         util.writeFile(tempPath, content, true);
@@ -850,7 +847,6 @@ function runCoreelecScript(ScriptFile, UpdatePlaylist) {
         tempLauncherParam.set(tempPath);
         tempLauncherParam.launchFile("");
     } else {
-        // Linux: 直接运行
         if (osMod && osMod.launchProcess) {
             osMod.launchProcess("/bin/bash " + ScriptFile + (suffix === "update" ? " update" : ""));
         }
