@@ -102,11 +102,6 @@ function playListGetItems() {
     local.send(JSON.stringify(msg));
 }
 
-function syncAll() {
-    local.send(JSON.stringify({jsonrpc:"2.0",method:"Application.GetProperties",params:{properties:["volume","muted"]},id:"GetAllState"}));
-    local.send(JSON.stringify({jsonrpc:"2.0",method:"Player.GetActivePlayers",id:"GetActivePlayers"}));
-}
-
 function timeToMs(t) {
     if (t == null) return 0;
     return (t.hours * 3600 + t.minutes * 60 + t.seconds) * 1000 + (t.milliseconds || 0);
@@ -875,7 +870,6 @@ function init() {
         if (osMod && osMod.name !== "OS") osMod.setName("OS");
 
     }
-    syncAll();
     initStep = 1;
     script.setUpdateRate(2);
     getDirectoryFiles();
@@ -1005,55 +999,6 @@ function wsMessageReceived(message) {
     }
 
     // 完整状态同步响应
-    if (data.id === "GetAllState" && data.result) {
-        if (data.result.volume !== undefined) {
-            var volumeValue = local.values.getChild("Info").getChild("Volume");
-            if (volumeValue) {
-                ignoreNextVolumeChange = true;
-                volumeValue.set(data.result.volume);
-                lastSyncedVolume = data.result.volume;
-            }
-        }
-        if (data.result.muted !== undefined) {
-            var isMutedParam = local.values.getChild("Info").getChild("isMuted");
-            if (isMutedParam) isMutedParam.set(data.result.muted);
-            isMutedFlag = data.result.muted;
-        }
-        return;
-    }
-
-    // 
-    if (data.id === "GetActivePlayers" && data.result) {
-        if (data.result.length > 0) {
-            currentPlayerId = data.result[0].playerid;
-            var getProps = {
-                jsonrpc: "2.0",
-                method: "Player.GetProperties",
-                params: {
-                    playerid: currentPlayerId,
-                    properties: ["speed", "repeat", "shuffled"]
-                },
-                id: "GetPlayerProps"
-            };
-            local.send(JSON.stringify(getProps));
-            var getItem = {
-                jsonrpc: "2.0",
-                method: "Player.GetItem",
-                params: {
-                    playerid: currentPlayerId,
-                    properties: ["file", "title"]
-                },
-                id: "GetPlayerItem"
-            };
-            local.send(JSON.stringify(getItem));
-        } else {
-            var fileValue = local.values.getChild("Info").getChild("File");
-            if (fileValue) fileValue.set("[Stopped]");
-        }
-        return;
-    }
-
-    //
     if (data.id === "GetPlayerProps" && data.result) {
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(data.result.speed === 0);
