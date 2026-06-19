@@ -104,14 +104,12 @@ function update(deltaTime) {
             local.sendTo(allIps[i].split(":")[0], 9527, "POS\n");
         }
     }
-    // Phase 2: 以第一台为基准，计算每台漂移
+    // Phase 2: 以第一台为基准，显示其他各台的差值
     if (driftPhase % 2 === 0 && posReady >= allIps.length) {
         var refMs = posMs[0];
         var parts = [];
-        for (var i = 0; i < allIps.length; i++) {
-            var ip = allIps[i].split(":")[0];
-            var dv = Math.round(posMs[i] - refMs);
-            parts.push(ip + ":" + dv);
+        for (var i = 1; i < allIps.length; i++) {
+            parts.push("" + Math.round(posMs[i] - refMs));
         }
         var dc = local.values.getChild("Status").getChild("Drift");
         if (dc) dc.set(parts.join(", "));
