@@ -1,12 +1,14 @@
 # KODI JSON-RPC API 参考 (v13.5.0)
 
-> 自动从 KODI 21 (Omega) 提取。共 174 个方法。
+> 从当前连接的 KODI 21 (Omega) 自动提取。共 174 个方法。
 
 ---
 
-## Addons
+## Addons — 插件管理
 
 ### Addons.ExecuteAddon
+
+**执行插件**
 
 Executes the given addon with the given parameters (if possible)
 
@@ -16,11 +18,19 @@ Executes the given addon with the given parameters (if possible)
   - `params` (object | array | string, 可选): 
   - `wait` (boolean, 可选): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Addons.ExecuteAddon", "params": {"addonid": "..."}, "id": 1}
+```
+
 **返回:** `string`
 
 ---
 
 ### Addons.GetAddonDetails
+
+**获取插件详情**
 
 Gets the details of a specific addon
 
@@ -29,13 +39,21 @@ Gets the details of a specific addon
   - `addonid` (string, 必需): 
   - `properties` (?, 可选): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Addons.GetAddonDetails", "params": {"addonid": "..."}, "id": 1}
+```
+
 **返回:** object
-  - `addon`: ref:Details
-  - `limits`: ref:LimitsReturned
+  - `addon`: object
+  - `limits`: object
 
 ---
 
 ### Addons.GetAddons
+
+**获取插件列表**
 
 Gets all available addons
 
@@ -43,14 +61,14 @@ Gets all available addons
 
   - `type` (?, 可选): 
   - `content` (?, 可选): Content provided by the addon. Only considered for plugins and scripts.
-  - `enabled` (boolean | string(all), 可选): 
+  - `enabled` (boolean | all, 可选): 
   - `properties` (?, 可选): 
   - `limits` (?, 可选): 
-  - `installed` (boolean | string(all), 可选): 
+  - `installed` (boolean | all, 可选): 
 
 **返回:** object
   - `addons`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
@@ -63,13 +81,21 @@ Enables/Disables a specific addon
   - `addonid` (string, 必需): 
   - `enabled` (?, 必需): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Addons.SetAddonEnabled", "params": {"addonid": "..."}, "id": 1}
+```
+
 **返回:** `string`
 
 ---
 
-## Application
+## Application — 应用程序
 
 ### Application.GetProperties
+
+**获取应用程序属性(音量/静音等)**
 
 Retrieves the values of the given properties
 
@@ -91,6 +117,8 @@ Quit application
 
 ### Application.SetMute
 
+**设置静音**
+
 Toggle mute/unmute
 
 **参数:**
@@ -103,19 +131,29 @@ Toggle mute/unmute
 
 ### Application.SetVolume
 
+**设置音量**
+
 Set the current volume
 
 **参数:**
 
-  - `volume` (integer(范围:0~100) | ref:IncrementDecrement, 必需): 
+  - `volume` (integer(范围:0~100) | increment | decrement, 必需): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Application.SetVolume", "params": {"volume": "increment"}, "id": 1}
+```
 
 **返回:** `integer`
 
 ---
 
-## AudioLibrary
+## AudioLibrary — 音频库
 
 ### AudioLibrary.Clean
+
+**清理音频库**
 
 Cleans the audio library from non-existent items
 
@@ -149,11 +187,13 @@ Retrieve details about a specific album
   - `properties` (?, 可选): 
 
 **返回:** object
-  - `albumdetails`: ref:Album
+  - `albumdetails`: object
 
 ---
 
 ### AudioLibrary.GetAlbums
+
+**获取专辑列表**
 
 Retrieve all albums from specified artist (and role) or that has songs of the specified genre
 
@@ -162,13 +202,13 @@ Retrieve all albums from specified artist (and role) or that has songs of the sp
   - `properties` (?, 可选): 
   - `limits` (?, 可选): 
   - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | object | object | object | ref:Albums, 可选): 
+  - `filter` (object | object | object | object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.Albums'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Albums'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Albums'}], 可选): 
   - `includesingles` (boolean, 可选): 
   - `allroles` (boolean, 可选): Whether or not to include all roles when filtering by artist, rather than the default of excluding other contributions. When true it overrides any role filter value.
 
 **返回:** object
   - `albums`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
@@ -182,11 +222,13 @@ Retrieve details about a specific artist
   - `properties` (?, 可选): 
 
 **返回:** object
-  - `artistdetails`: ref:Artist
+  - `artistdetails`: object
 
 ---
 
 ### AudioLibrary.GetArtists
+
+**获取艺术家列表**
 
 Retrieve all artists. For backward compatibility by default this implicitly does not include those that only contribute other roles, however absolutely all artists can be returned using allroles=true
 
@@ -196,12 +238,12 @@ Retrieve all artists. For backward compatibility by default this implicitly does
   - `properties` (?, 可选): 
   - `limits` (?, 可选): 
   - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | object | object | object | object | object | object | object | object | object | object | ref:Artists, 可选): 
+  - `filter` (object | object | object | object | object | object | object | object | object | object | object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.Artists'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Artists'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Artists'}], 可选): 
   - `allroles` (boolean, 可选): Whether or not to include all artists irrespective of the role they contributed. When true it overrides any role filter value.
 
 **返回:** object
   - `artists`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
@@ -244,7 +286,7 @@ Retrieve all genres
 
 **返回:** object
   - `genres`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
@@ -272,7 +314,7 @@ Retrieve recently added albums
 
 **返回:** object
   - `albums`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
@@ -288,7 +330,7 @@ Retrieve recently added songs
   - `sort` (?, 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `songs`: array
 
 ---
@@ -305,7 +347,7 @@ Retrieve recently played albums
 
 **返回:** object
   - `albums`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
@@ -320,7 +362,7 @@ Retrieve recently played songs
   - `sort` (?, 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `songs`: array
 
 ---
@@ -336,7 +378,7 @@ Retrieve all contributor roles
   - `sort` (?, 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `roles`: array
 
 ---
@@ -351,11 +393,13 @@ Retrieve details about a specific song
   - `properties` (?, 可选): 
 
 **返回:** object
-  - `songdetails`: ref:Song
+  - `songdetails`: object
 
 ---
 
 ### AudioLibrary.GetSongs
+
+**获取歌曲列表**
 
 Retrieve all songs from specified album, artist or genre
 
@@ -364,13 +408,13 @@ Retrieve all songs from specified album, artist or genre
   - `properties` (?, 可选): 
   - `limits` (?, 可选): 
   - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | object | object | object | object | object | ref:Songs, 可选): 
+  - `filter` (object | object | object | object | object | object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.Songs'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Songs'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Songs'}], 可选): 
   - `includesingles` (boolean, 可选): Only songs from albums are returned when false, but overridden when singlesonly parameter is true
   - `allroles` (boolean, 可选): Whether or not to include all roles when filtering by artist, rather than default of excluding other contributors. When true it overrides any role filter value.
   - `singlesonly` (boolean, 可选): Only singles are returned when true, and overrides includesingles parameter
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `songs`: array
 
 ---
@@ -386,12 +430,14 @@ Get all music sources, including unique ID
   - `sort` (?, 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `sources`: array
 
 ---
 
 ### AudioLibrary.Scan
+
+**扫描音频库**
 
 Scans the audio sources for new library items
 
@@ -412,12 +458,12 @@ Update the given album with the given details
 
   - `albumid` (?, 必需): 
   - `title` (?, 可选): 
-  - `artist` (null | ref:String, 可选): 
+  - `artist` (null | array, 可选): 
   - `description` (?, 可选): 
-  - `genre` (null | ref:String, 可选): 
-  - `theme` (null | ref:String, 可选): 
-  - `mood` (null | ref:String, 可选): 
-  - `style` (null | ref:String, 可选): 
+  - `genre` (null | array, 可选): 
+  - `theme` (null | array, 可选): 
+  - `mood` (null | array, 可选): 
+  - `style` (null | array, 可选): 
   - `type` (?, 可选): 
   - `albumlabel` (?, 可选): 
   - `rating` (?, 可选): 
@@ -428,8 +474,8 @@ Update the given album with the given details
   - `musicbrainzreleasegroupid` (?, 可选): 
   - `sortartist` (?, 可选): 
   - `displayartist` (?, 可选): 
-  - `musicbrainzalbumartistid` (null | ref:String, 可选): 
-  - `art` (null | ref:Set, 可选): 
+  - `musicbrainzalbumartistid` (null | array, 可选): 
+  - `art` (null | object, 可选): 
   - `isboxset` (?, 可选): 
   - `releasedate` (?, 可选): 
   - `originaldate` (?, 可选): 
@@ -446,22 +492,22 @@ Update the given artist with the given details
 
   - `artistid` (?, 必需): 
   - `artist` (?, 可选): 
-  - `instrument` (null | ref:String, 可选): 
-  - `style` (null | ref:String, 可选): 
-  - `mood` (null | ref:String, 可选): 
+  - `instrument` (null | array, 可选): 
+  - `style` (null | array, 可选): 
+  - `mood` (null | array, 可选): 
   - `born` (?, 可选): 
   - `formed` (?, 可选): 
   - `description` (?, 可选): 
-  - `genre` (null | ref:String, 可选): 
+  - `genre` (null | array, 可选): 
   - `died` (?, 可选): 
   - `disbanded` (?, 可选): 
-  - `yearsactive` (null | ref:String, 可选): 
+  - `yearsactive` (null | array, 可选): 
   - `musicbrainzartistid` (?, 可选): 
   - `sortname` (?, 可选): 
   - `type` (?, 可选): 
   - `gender` (?, 可选): 
   - `disambiguation` (?, 可选): 
-  - `art` (null | ref:Set, 可选): 
+  - `art` (null | object, 可选): 
 
 **返回:** `string`
 
@@ -475,8 +521,8 @@ Update the given song with the given details
 
   - `songid` (?, 必需): 
   - `title` (?, 可选): 
-  - `artist` (null | ref:String, 可选): 
-  - `genre` (null | ref:String, 可选): 
+  - `artist` (null | array, 可选): 
+  - `genre` (null | array, 可选): 
   - `year` (?, 可选): 
   - `rating` (?, 可选): 
   - `track` (?, 可选): 
@@ -492,7 +538,7 @@ Update the given song with the given details
   - `displayartist` (?, 可选): 
   - `sortartist` (?, 可选): 
   - `mood` (?, 可选): 
-  - `art` (null | ref:Set, 可选): 
+  - `art` (null | object, 可选): 
   - `disctitle` (?, 可选): 
   - `releasedate` (?, 可选): 
   - `originaldate` (?, 可选): 
@@ -503,7 +549,7 @@ Update the given song with the given details
 
 ---
 
-## Favourites
+## Favourites — 收藏夹
 
 ### Favourites.AddFavourite
 
@@ -518,6 +564,12 @@ Add a favourite with the given details
   - `windowparameter` (?, 可选): 
   - `thumbnail` (?, 可选): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Favourites.AddFavourite", "params": {"title": "..."}, "id": 1}
+```
+
 **返回:** `string`
 
 ---
@@ -528,18 +580,20 @@ Retrieve all favourites
 
 **参数:**
 
-  - `type` (null | ref:Type, 可选): 
+  - `type` (null | media | window | script | androidapp | unknown, 可选): 
   - `properties` (?, 可选): 
 
 **返回:** object
   - `favourites`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
-## Files
+## Files — 文件系统
 
 ### Files.GetDirectory
+
+**获取目录文件列表**
 
 Get the directories and files in the given directory
 
@@ -551,13 +605,21 @@ Get the directories and files in the given directory
   - `sort` (?, 可选): 
   - `limits` (?, 可选): Limits are applied after getting the directory content thus retrieval is not faster when they are applied.
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Files.GetDirectory", "params": {"directory": "..."}, "id": 1}
+```
+
 **返回:** object
   - `files`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
 ### Files.GetFileDetails
+
+**获取文件详情**
 
 Get details for a specific file
 
@@ -567,12 +629,20 @@ Get details for a specific file
   - `media` (?, 可选): 
   - `properties` (?, 可选): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Files.GetFileDetails", "params": {"file": "..."}, "id": 1}
+```
+
 **返回:** object
-  - `filedetails`: ref:File
+  - `filedetails`: object
 
 ---
 
 ### Files.GetSources
+
+**获取文件源**
 
 Get the sources of the media windows
 
@@ -583,12 +653,14 @@ Get the sources of the media windows
   - `sort` (?, 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
-  - `sources`: ref:Sources
+  - `limits`: object
+  - `sources`: array
 
 ---
 
 ### Files.PrepareDownload
+
+**准备下载文件**
 
 Provides a way to download a given file (e.g. providing an URL to the real file location)
 
@@ -596,10 +668,16 @@ Provides a way to download a given file (e.g. providing an URL to the real file 
 
   - `path` (string, 必需): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Files.PrepareDownload", "params": {"path": "..."}, "id": 1}
+```
+
 **返回:** object
   - `details`: any
-  - `mode`: string(redirect | direct)
-  - `protocol`: string(http)
+  - `mode`: redirect | direct
+  - `protocol`: http
 
 ---
 
@@ -613,13 +691,19 @@ Update the given specific file with the given details
   - `media` (?, 必需): File type to update correct database. Currently only "video" is supported.
   - `playcount` (?, 可选): 
   - `lastplayed` (?, 可选): Setting a valid lastplayed without a playcount will force playcount to 1.
-  - `resume` (null | ref:Resume, 可选): 
+  - `resume` (null | object, 可选): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Files.SetFileDetails", "params": {"file": "..."}, "id": 1}
+```
 
 **返回:** `string`
 
 ---
 
-## GUI
+## GUI — 图形界面
 
 ### GUI.ActivateScreenSaver
 
@@ -630,6 +714,8 @@ Activates currently used screensaver
 ---
 
 ### GUI.ActivateWindow
+
+**激活指定窗口**
 
 Activates the given window
 
@@ -644,6 +730,8 @@ Activates the given window
 
 ### GUI.GetProperties
 
+**获取 GUI 属性**
+
 Retrieves the values of the given properties
 
 **参数:**
@@ -656,6 +744,8 @@ Retrieves the values of the given properties
 
 ### GUI.GetStereoscopicModes
 
+**获取 3D 模式列表**
+
 Returns the supported stereoscopic modes of the GUI
 
 **返回:** object
@@ -664,6 +754,8 @@ Returns the supported stereoscopic modes of the GUI
 ---
 
 ### GUI.SetFullscreen
+
+**设置全屏**
 
 Toggle fullscreen/GUI
 
@@ -677,11 +769,19 @@ Toggle fullscreen/GUI
 
 ### GUI.SetStereoscopicMode
 
+**设置 3D 模式**
+
 Sets the stereoscopic mode of the GUI to the given mode
 
 **参数:**
 
   - `mode` (string, 必需): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "GUI.SetStereoscopicMode", "params": {"mode": "..."}, "id": 1}
+```
 
 **返回:** `string`
 
@@ -689,22 +789,32 @@ Sets the stereoscopic mode of the GUI to the given mode
 
 ### GUI.ShowNotification
 
+**显示通知弹窗**
+
 Shows a GUI notification
 
 **参数:**
 
   - `title` (string, 必需): 
   - `message` (string, 必需): 
-  - `image` (string(info | warning | error) | string, 可选): 
+  - `image` (info | warning | error | string, 可选): 
   - `displaytime` (integer, 可选): The time in milliseconds the notification will be visible
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "GUI.ShowNotification", "params": {"title": "...", "message": "..."}, "id": 1}
+```
 
 **返回:** `string`
 
 ---
 
-## Input
+## Input — 输入控制
 
 ### Input.Back
+
+**返回键**
 
 Goes back in GUI
 
@@ -722,11 +832,19 @@ Send a button press event
   - `keymap` (string, 必需): Keymap name (KB, XG, R1, or R2)
   - `holdtime` (integer, 可选): Number of milliseconds to simulate button hold.
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Input.ButtonEvent", "params": {"button": "...", "keymap": "..."}, "id": 1}
+```
+
 **返回:** `string`
 
 ---
 
 ### Input.ContextMenu
+
+**上下文菜单键**
 
 Shows the context menu
 
@@ -736,6 +854,8 @@ Shows the context menu
 
 ### Input.Down
 
+**方向键下**
+
 Navigate down in GUI
 
 **返回:** `string`
@@ -743,6 +863,8 @@ Navigate down in GUI
 ---
 
 ### Input.ExecuteAction
+
+**执行指定动作(按键/遥控)**
 
 Execute a specific action
 
@@ -756,6 +878,8 @@ Execute a specific action
 
 ### Input.Home
 
+**Home 键**
+
 Goes to home window in GUI
 
 **返回:** `string`
@@ -763,6 +887,8 @@ Goes to home window in GUI
 ---
 
 ### Input.Info
+
+**信息键**
 
 Shows the information dialog
 
@@ -772,6 +898,8 @@ Shows the information dialog
 
 ### Input.Left
 
+**方向键左**
+
 Navigate left in GUI
 
 **返回:** `string`
@@ -779,6 +907,8 @@ Navigate left in GUI
 ---
 
 ### Input.Right
+
+**方向键右**
 
 Navigate right in GUI
 
@@ -788,6 +918,8 @@ Navigate right in GUI
 
 ### Input.Select
 
+**确认/选择键**
+
 Select current item in GUI
 
 **返回:** `string`
@@ -796,12 +928,20 @@ Select current item in GUI
 
 ### Input.SendText
 
+**发送文本**
+
 Send a generic (unicode) text
 
 **参数:**
 
   - `text` (string, 必需): Unicode text
   - `done` (boolean, 可选): Whether this is the whole input or not (closes an open input dialog if true).
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Input.SendText", "params": {"text": "..."}, "id": 1}
+```
 
 **返回:** `string`
 
@@ -833,15 +973,19 @@ Show player process information of the playing item, like video decoder, pixel f
 
 ### Input.Up
 
+**方向键上**
+
 Navigate up in GUI
 
 **返回:** `string`
 
 ---
 
-## JSONRPC
+## JSONRPC — JSON-RPC 系统
 
 ### JSONRPC.Introspect
+
+**获取 API 自省信息**
 
 Enumerates all actions and descriptions
 
@@ -866,11 +1010,19 @@ Notify all other connected clients
   - `message` (string, 必需): 
   - `data` (any, 可选): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "JSONRPC.NotifyAll", "params": {"sender": "...", "message": "..."}, "id": 1}
+```
+
 **返回:** `any`
 
 ---
 
 ### JSONRPC.Permission
+
+**获取权限**
 
 Retrieve the clients permissions
 
@@ -893,6 +1045,8 @@ Retrieve the clients permissions
 
 ### JSONRPC.Ping
 
+**测试连接(返回 pong)**
+
 Ping responder
 
 **返回:** `string`
@@ -901,6 +1055,8 @@ Ping responder
 
 ### JSONRPC.Version
 
+**获取版本**
+
 Retrieve the JSON-RPC protocol version.
 
 **返回:** object
@@ -908,7 +1064,7 @@ Retrieve the JSON-RPC protocol version.
 
 ---
 
-## PVR
+## PVR — PVR/电视
 
 ### PVR.AddTimer
 
@@ -946,7 +1102,7 @@ Retrieves the details of a specific broadcast
   - `properties` (?, 可选): 
 
 **返回:** object
-  - `broadcastdetails`: ref:Broadcast
+  - `broadcastdetails`: object
 
 ---
 
@@ -974,7 +1130,7 @@ Retrieves the program of a specific channel
 
 **返回:** object
   - `broadcasts`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
@@ -988,7 +1144,7 @@ Retrieves the details of a specific channel
   - `properties` (?, 可选): 
 
 **返回:** object
-  - `channeldetails`: ref:Channel
+  - `channeldetails`: object
 
 ---
 
@@ -1002,7 +1158,7 @@ Retrieves the details of a specific channel group
   - `channels` (object, 可选): 
 
 **返回:** object
-  - `channelgroupdetails`: ref:Extended
+  - `channelgroupdetails`: object
 
 ---
 
@@ -1017,7 +1173,7 @@ Retrieves the channel groups for the specified type
 
 **返回:** object
   - `channelgroups`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
@@ -1034,7 +1190,7 @@ Retrieves the channel list
 
 **返回:** object
   - `channels`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
@@ -1048,7 +1204,7 @@ Retrieves the enabled PVR clients and their capabilities
 
 **返回:** object
   - `clients`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
@@ -1074,7 +1230,7 @@ Retrieves the details of a specific recording
   - `properties` (?, 可选): 
 
 **返回:** object
-  - `recordingdetails`: ref:Recording
+  - `recordingdetails`: object
 
 ---
 
@@ -1089,7 +1245,7 @@ Retrieves the recordings
   - `sort` (?, 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `recordings`: array
 
 ---
@@ -1104,7 +1260,7 @@ Retrieves the details of a specific timer
   - `properties` (?, 可选): 
 
 **返回:** object
-  - `timerdetails`: ref:Timer
+  - `timerdetails`: object
 
 ---
 
@@ -1119,7 +1275,7 @@ Retrieves the timers
   - `sort` (?, 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `timers`: array
 
 ---
@@ -1131,7 +1287,7 @@ Toggle recording of a channel
 **参数:**
 
   - `record` (?, 可选): 
-  - `channel` (string(current) | ref:Id, 可选): 
+  - `channel` (current | integer(默认:-1), 可选): 
 
 **返回:** `string`
 
@@ -1162,7 +1318,7 @@ Creates or deletes a onetime timer or timer rule for a given show. If it exists,
 
 ---
 
-## Player
+## Player — 播放器
 
 ### Player.AddSubtitle
 
@@ -1173,11 +1329,19 @@ Add subtitle to the player
   - `playerid` (?, 必需): 
   - `subtitle` (string, 必需): Local path or remote URL to the subtitle file to load
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Player.AddSubtitle", "params": {"subtitle": "..."}, "id": 1}
+```
+
 **返回:** `string`
 
 ---
 
 ### Player.GetActivePlayers
+
+**获取当前活跃播放器**
 
 Returns all active players
 
@@ -1196,6 +1360,8 @@ Get the audio delay for the current playback
 
 ### Player.GetItem
 
+**获取当前播放项信息**
+
 Retrieves the currently played item
 
 **参数:**
@@ -1204,7 +1370,7 @@ Retrieves the currently played item
   - `properties` (?, 可选): 
 
 **返回:** object
-  - `item`: ref:All
+  - `item`: object
 
 ---
 
@@ -1221,6 +1387,8 @@ Get a list of available players
 ---
 
 ### Player.GetProperties
+
+**获取播放器属性**
 
 Retrieves the values of the given properties
 
@@ -1241,25 +1409,35 @@ Get view mode of video player
   - `nonlinearstretch`: boolean
   - `pixelratio`: number
   - `verticalshift`: number
-  - `viewmode`: ref:ViewMode
+  - `viewmode`: normal | zoom | stretch4x3 | widezoom | stretch16x9 | original | stretch16x9nonlin | zoom120width | zoom110width
   - `zoom`: number
 
 ---
 
 ### Player.GoTo
 
+**跳转到(下一曲/上一曲/指定)**
+
 Go to previous/next/specific item in the playlist
 
 **参数:**
 
   - `playerid` (?, 必需): 
-  - `to` (string(previous | next) | ref:Position, 必需): 
+  - `to` (previous | next | integer(默认:-1), 必需): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Player.GoTo", "params": {"to": "previous"}, "id": 1}
+```
 
 **返回:** `string`
 
 ---
 
 ### Player.Move
+
+**移动播放**
 
 If picture is zoomed move viewport left/right/up/down otherwise skip previous/next
 
@@ -1268,17 +1446,25 @@ If picture is zoomed move viewport left/right/up/down otherwise skip previous/ne
   - `playerid` (?, 必需): 
   - `direction` (string, 必需): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Player.Move", "params": {"direction": "..."}, "id": 1}
+```
+
 **返回:** `string`
 
 ---
 
 ### Player.Open
 
+**打开并播放媒体**
+
 Start playback of either the playlist with the given ID, a slideshow with the pictures from the given directory or a single file or an item from the database.
 
 **参数:**
 
-  - `item` (object | ref:Item | object | object | object | object | object, 可选): 
+  - `item` (object | [{'additionalProperties': False, 'properties': {'file': {'description': 'Path to a file (not a directory) to be added to the playlist', 'required': True, 'type': 'string'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'directory': {'required': True, 'type': 'string'}, 'media': {'$ref': 'Files.Media', 'default': 'files'}, 'recursive': {'default': False, 'type': 'boolean'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'movieid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'episodeid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'musicvideoid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'artistid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'albumid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'songid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'genreid': {'$ref': 'Library.Id', 'description': 'Identification of a genre from the AudioLibrary', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'recordingid': {'$ref': 'Library.Id', 'description': 'Identification of a PVR recording', 'required': True}}, 'type': 'object'}] | object | object | object | object | object, 可选): 
   - `options` (object, 可选): 
 
 **返回:** `string`
@@ -1286,6 +1472,8 @@ Start playback of either the playlist with the given ID, a slideshow with the pi
 ---
 
 ### Player.PlayPause
+
+**播放/暂停**
 
 Pauses or unpause playback and returns the new state
 
@@ -1300,6 +1488,8 @@ Pauses or unpause playback and returns the new state
 
 ### Player.Rotate
 
+**旋转视频**
+
 Rotates current picture
 
 **参数:**
@@ -1313,6 +1503,8 @@ Rotates current picture
 
 ### Player.Seek
 
+**跳转(秒数或百分比)**
+
 Seek through the playing item
 
 **参数:**
@@ -1321,9 +1513,9 @@ Seek through the playing item
   - `value` (object | object | object | object, 必需): 
 
 **返回:** object
-  - `percentage`: ref:Percentage
-  - `time`: ref:Time
-  - `totaltime`: ref:Time
+  - `percentage`: number(范围:0.0~100.0; 默认:0.0)
+  - `time`: object
+  - `totaltime`: object
 
 ---
 
@@ -1334,7 +1526,13 @@ Set the audio delay for the current playback
 **参数:**
 
   - `playerid` (?, 必需): 
-  - `offset` (number | ref:IncrementDecrement, 必需): 
+  - `offset` (number | increment | decrement, 必需): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Player.SetAudioDelay", "params": {"offset": "increment"}, "id": 1}
+```
 
 **返回:** object
   - `offset`: number
@@ -1343,18 +1541,28 @@ Set the audio delay for the current playback
 
 ### Player.SetAudioStream
 
+**切换音频流**
+
 Set the audio stream played by the player
 
 **参数:**
 
   - `playerid` (?, 必需): 
-  - `stream` (string(previous | next) | integer, 必需): 
+  - `stream` (previous | next | integer, 必需): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Player.SetAudioStream", "params": {"stream": "previous"}, "id": 1}
+```
 
 **返回:** `string`
 
 ---
 
 ### Player.SetPartymode
+
+**设置派对模式**
 
 Turn partymode on or off
 
@@ -1369,18 +1577,28 @@ Turn partymode on or off
 
 ### Player.SetRepeat
 
+**设置循环模式**
+
 Set the repeat mode of the player
 
 **参数:**
 
   - `playerid` (?, 必需): 
-  - `repeat` (ref:Repeat | string(cycle), 必需): 
+  - `repeat` (off | one | all | cycle, 必需): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Player.SetRepeat", "params": {"repeat": "off"}, "id": 1}
+```
 
 **返回:** `string`
 
 ---
 
 ### Player.SetShuffle
+
+**设置随机播放**
 
 Shuffle/Unshuffle items in the player
 
@@ -1395,12 +1613,20 @@ Shuffle/Unshuffle items in the player
 
 ### Player.SetSpeed
 
+**设置播放速度**
+
 Set the speed of the current playback
 
 **参数:**
 
   - `playerid` (?, 必需): 
-  - `speed` (integer(-32 | -16 | -8 | -4 | -2 | -1 | 0 | 1 | 2 | 4 | 8 | 16 | 32) | ref:IncrementDecrement, 必需): 
+  - `speed` (-32 | -16 | -8 | -4 | -2 | -1 | 0 | 1 | 2 | 4 | 8 | 16 | 32 | increment | decrement, 必需): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Player.SetSpeed", "params": {"speed": -32}, "id": 1}
+```
 
 **返回:** `?`
 
@@ -1408,13 +1634,21 @@ Set the speed of the current playback
 
 ### Player.SetSubtitle
 
+**切换字幕流**
+
 Set the subtitle displayed by the player
 
 **参数:**
 
   - `playerid` (?, 必需): 
-  - `subtitle` (string(previous | next | off | on) | integer, 必需): 
+  - `subtitle` (previous | next | off | on | integer, 必需): 
   - `enable` (boolean, 可选): Whether to enable subtitles to be displayed after setting the new subtitle
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Player.SetSubtitle", "params": {"subtitle": "previous"}, "id": 1}
+```
 
 **返回:** `string`
 
@@ -1427,7 +1661,13 @@ Set the tempo of the current playback
 **参数:**
 
   - `playerid` (?, 必需): 
-  - `tempo` (number | ref:IncrementDecrement, 必需): 
+  - `tempo` (number | increment | decrement, 必需): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Player.SetTempo", "params": {"tempo": "increment"}, "id": 1}
+```
 
 **返回:** `?`
 
@@ -1440,7 +1680,13 @@ Set the video stream played by the player
 **参数:**
 
   - `playerid` (?, 必需): 
-  - `stream` (string(previous | next) | integer, 必需): 
+  - `stream` (previous | next | integer, 必需): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Player.SetVideoStream", "params": {"stream": "previous"}, "id": 1}
+```
 
 **返回:** `string`
 
@@ -1452,13 +1698,21 @@ Set view mode of video player
 
 **参数:**
 
-  - `viewmode` (ref:CustomViewMode | ref:ViewMode, 必需): 
+  - `viewmode` (object | normal | zoom | stretch4x3 | widezoom | stretch16x9 | original | stretch16x9nonlin | zoom120width | zoom110width, 必需): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Player.SetViewMode", "params": {"viewmode": "normal"}, "id": 1}
+```
 
 **返回:** `string`
 
 ---
 
 ### Player.Stop
+
+**停止播放**
 
 Stops playback
 
@@ -1477,28 +1731,38 @@ Zoom current picture
 **参数:**
 
   - `playerid` (?, 必需): 
-  - `zoom` (string(in | out) | integer(范围:1~10), 必需): 
+  - `zoom` (in | out | integer(范围:1~10), 必需): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Player.Zoom", "params": {"zoom": "in"}, "id": 1}
+```
 
 **返回:** `string`
 
 ---
 
-## Playlist
+## Playlist — 播放列表
 
 ### Playlist.Add
+
+**播放列表添加项**
 
 Add item(s) to playlist
 
 **参数:**
 
   - `playlistid` (?, 必需): 
-  - `item` (ref:Item | array, 必需): 
+  - `item` ([{'additionalProperties': False, 'properties': {'file': {'description': 'Path to a file (not a directory) to be added to the playlist', 'required': True, 'type': 'string'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'directory': {'required': True, 'type': 'string'}, 'media': {'$ref': 'Files.Media', 'default': 'files'}, 'recursive': {'default': False, 'type': 'boolean'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'movieid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'episodeid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'musicvideoid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'artistid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'albumid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'songid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'genreid': {'$ref': 'Library.Id', 'description': 'Identification of a genre from the AudioLibrary', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'recordingid': {'$ref': 'Library.Id', 'description': 'Identification of a PVR recording', 'required': True}}, 'type': 'object'}] | array, 必需): 
 
 **返回:** `string`
 
 ---
 
 ### Playlist.Clear
+
+**清空播放列表**
 
 Clear playlist
 
@@ -1512,6 +1776,8 @@ Clear playlist
 
 ### Playlist.GetItems
 
+**获取播放列表项**
+
 Get all items from playlist
 
 **参数:**
@@ -1523,7 +1789,7 @@ Get all items from playlist
 
 **返回:** object
   - `items`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
@@ -1536,6 +1802,8 @@ Returns all existing playlists
 ---
 
 ### Playlist.GetProperties
+
+**获取播放列表属性**
 
 Retrieves the values of the given properties
 
@@ -1550,19 +1818,23 @@ Retrieves the values of the given properties
 
 ### Playlist.Insert
 
+**插入项**
+
 Insert item(s) into playlist. Does not work for picture playlists (aka slideshows).
 
 **参数:**
 
   - `playlistid` (?, 必需): 
   - `position` (?, 必需): 
-  - `item` (ref:Item | array, 必需): 
+  - `item` ([{'additionalProperties': False, 'properties': {'file': {'description': 'Path to a file (not a directory) to be added to the playlist', 'required': True, 'type': 'string'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'directory': {'required': True, 'type': 'string'}, 'media': {'$ref': 'Files.Media', 'default': 'files'}, 'recursive': {'default': False, 'type': 'boolean'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'movieid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'episodeid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'musicvideoid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'artistid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'albumid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'songid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'genreid': {'$ref': 'Library.Id', 'description': 'Identification of a genre from the AudioLibrary', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'recordingid': {'$ref': 'Library.Id', 'description': 'Identification of a PVR recording', 'required': True}}, 'type': 'object'}] | array, 必需): 
 
 **返回:** `string`
 
 ---
 
 ### Playlist.Remove
+
+**移除项**
 
 Remove item from playlist. Does not work for picture playlists (aka slideshows).
 
@@ -1577,6 +1849,8 @@ Remove item from playlist. Does not work for picture playlists (aka slideshows).
 
 ### Playlist.Swap
 
+**交换项位置**
+
 Swap items in the playlist. Does not work for picture playlists (aka slideshows).
 
 **参数:**
@@ -1589,7 +1863,7 @@ Swap items in the playlist. Does not work for picture playlists (aka slideshows)
 
 ---
 
-## Profiles
+## Profiles — 配置文件
 
 ### Profiles.GetCurrentProfile
 
@@ -1614,7 +1888,7 @@ Retrieve all profiles
   - `sort` (?, 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `profiles`: array
 
 ---
@@ -1629,11 +1903,17 @@ Load the specified profile
   - `prompt` (boolean, 可选): Prompt for password
   - `password` (?, 可选): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Profiles.LoadProfile", "params": {"profile": "..."}, "id": 1}
+```
+
 **返回:** `string`
 
 ---
 
-## Settings
+## Settings — 设置
 
 ### Settings.GetCategories
 
@@ -1666,18 +1946,28 @@ Retrieves all setting sections
 
 ### Settings.GetSettingValue
 
+**获取设置值**
+
 Retrieves the value of a setting
 
 **参数:**
 
   - `setting` (string, 必需): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Settings.GetSettingValue", "params": {"setting": "..."}, "id": 1}
+```
+
 **返回:** object
-  - `value`: ref:Extended
+  - `value`: [{'type': 'boolean'}, {'type': 'integer'}, {'type': 'number'}, {'type': 'string'}, {'$ref': 'Setting.Value.List'}](默认:None)
 
 ---
 
 ### Settings.GetSettings
+
+**获取设置列表**
 
 Retrieves all settings
 
@@ -1699,6 +1989,12 @@ Retrieves the value of the specified skin setting
 
   - `setting` (string, 必需): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Settings.GetSkinSettingValue", "params": {"setting": "..."}, "id": 1}
+```
+
 **返回:** object
   - `value`: [{'type': 'boolean'}, {'type': 'string'}]
 
@@ -1716,11 +2012,19 @@ Retrieves all skin settings of the currently used skin
 
 ### Settings.ResetSettingValue
 
+**重置设置为默认**
+
 Resets the value of a setting
 
 **参数:**
 
   - `setting` (string, 必需): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Settings.ResetSettingValue", "params": {"setting": "..."}, "id": 1}
+```
 
 **返回:** `string`
 
@@ -1728,12 +2032,20 @@ Resets the value of a setting
 
 ### Settings.SetSettingValue
 
+**设置值**
+
 Changes the value of a setting
 
 **参数:**
 
   - `setting` (string, 必需): 
   - `value` (?, 必需): 
+
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Settings.SetSettingValue", "params": {"setting": "..."}, "id": 1}
+```
 
 **返回:** `boolean`
 
@@ -1748,13 +2060,21 @@ Changes the value of the specified skin setting
   - `setting` (string, 必需): 
   - `value` (boolean | string, 必需): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "Settings.SetSkinSettingValue", "params": {"setting": "..."}, "id": 1}
+```
+
 **返回:** `boolean`
 
 ---
 
-## System
+## System — 系统
 
 ### System.EjectOpticalDrive
+
+**弹出光驱**
 
 Ejects or closes the optical disc drive (if available)
 
@@ -1763,6 +2083,8 @@ Ejects or closes the optical disc drive (if available)
 ---
 
 ### System.GetProperties
+
+**获取系统属性**
 
 Retrieves the values of the given properties
 
@@ -1784,6 +2106,8 @@ Puts the system running Kodi into hibernate mode
 
 ### System.Reboot
 
+**重启**
+
 Reboots the system running Kodi
 
 **返回:** `string`
@@ -1800,13 +2124,15 @@ Shuts the system running Kodi down
 
 ### System.Suspend
 
+**待机**
+
 Suspends the system running Kodi
 
 **返回:** `string`
 
 ---
 
-## Textures
+## Textures — 纹理
 
 ### Textures.GetTextures
 
@@ -1834,9 +2160,11 @@ Remove the specified texture
 
 ---
 
-## VideoLibrary
+## VideoLibrary — 视频库
 
 ### VideoLibrary.Clean
+
+**清理视频库**
 
 Cleans the video library for non-existent items
 
@@ -1891,6 +2219,8 @@ Retrieve a list of potential art types for a media item
 
 ### VideoLibrary.GetEpisodeDetails
 
+**获取剧集详情**
+
 Retrieve details about a specific tv show episode
 
 **参数:**
@@ -1899,11 +2229,13 @@ Retrieve details about a specific tv show episode
   - `properties` (?, 可选): 
 
 **返回:** object
-  - `episodedetails`: ref:Episode
+  - `episodedetails`: object
 
 ---
 
 ### VideoLibrary.GetEpisodes
+
+**获取剧集列表**
 
 Retrieve all tv show episodes
 
@@ -1914,11 +2246,11 @@ Retrieve all tv show episodes
   - `properties` (?, 可选): 
   - `limits` (?, 可选): 
   - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | ref:Episodes, 可选): 
+  - `filter` (object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.Episodes'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Episodes'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Episodes'}], 可选): 
 
 **返回:** object
   - `episodes`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
@@ -1933,9 +2265,15 @@ Retrieve all genres
   - `limits` (?, 可选): 
   - `sort` (?, 可选): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetGenres", "params": {"type": "..."}, "id": 1}
+```
+
 **返回:** object
   - `genres`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
@@ -1950,12 +2288,14 @@ Retrieve all in progress tvshows
   - `sort` (?, 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `tvshows`: array
 
 ---
 
 ### VideoLibrary.GetMovieDetails
+
+**获取电影详情**
 
 Retrieve details about a specific movie
 
@@ -1965,7 +2305,7 @@ Retrieve details about a specific movie
   - `properties` (?, 可选): 
 
 **返回:** object
-  - `moviedetails`: ref:Movie
+  - `moviedetails`: object
 
 ---
 
@@ -1980,7 +2320,7 @@ Retrieve details about a specific movie set
   - `movies` (object, 可选): 
 
 **返回:** object
-  - `setdetails`: ref:Extended
+  - `setdetails`: object
 
 ---
 
@@ -1995,12 +2335,14 @@ Retrieve all movie sets
   - `sort` (?, 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `sets`: array
 
 ---
 
 ### VideoLibrary.GetMovies
+
+**获取电影列表**
 
 Retrieve all movies
 
@@ -2009,10 +2351,10 @@ Retrieve all movies
   - `properties` (?, 可选): 
   - `limits` (?, 可选): 
   - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | object | object | object | object | object | ref:Movies, 可选): 
+  - `filter` (object | object | object | object | object | object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.Movies'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Movies'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Movies'}], 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `movies`: array
 
 ---
@@ -2027,7 +2369,7 @@ Retrieve details about a specific music video
   - `properties` (?, 可选): 
 
 **返回:** object
-  - `musicvideodetails`: ref:MusicVideo
+  - `musicvideodetails`: object
 
 ---
 
@@ -2040,15 +2382,17 @@ Retrieve all music videos
   - `properties` (?, 可选): 
   - `limits` (?, 可选): 
   - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | object | object | ref:MusicVideos, 可选): 
+  - `filter` (object | object | object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.MusicVideos'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.MusicVideos'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.MusicVideos'}], 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `musicvideos`: array
 
 ---
 
 ### VideoLibrary.GetRecentlyAddedEpisodes
+
+**获取最近添加剧集**
 
 Retrieve all recently added tv episodes
 
@@ -2060,11 +2404,13 @@ Retrieve all recently added tv episodes
 
 **返回:** object
   - `episodes`: array
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
 
 ---
 
 ### VideoLibrary.GetRecentlyAddedMovies
+
+**获取最近添加电影**
 
 Retrieve all recently added movies
 
@@ -2075,7 +2421,7 @@ Retrieve all recently added movies
   - `sort` (?, 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `movies`: array
 
 ---
@@ -2091,12 +2437,14 @@ Retrieve all recently added music videos
   - `sort` (?, 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `musicvideos`: array
 
 ---
 
 ### VideoLibrary.GetSeasonDetails
+
+**获取季度详情**
 
 Retrieve details about a specific tv show season
 
@@ -2106,11 +2454,13 @@ Retrieve details about a specific tv show season
   - `properties` (?, 可选): 
 
 **返回:** object
-  - `seasondetails`: ref:Season
+  - `seasondetails`: object
 
 ---
 
 ### VideoLibrary.GetSeasons
+
+**获取季度列表**
 
 Retrieve all tv seasons
 
@@ -2122,12 +2472,14 @@ Retrieve all tv seasons
   - `sort` (?, 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `seasons`: array
 
 ---
 
 ### VideoLibrary.GetTVShowDetails
+
+**获取电视剧详情**
 
 Retrieve details about a specific tv show
 
@@ -2137,11 +2489,13 @@ Retrieve details about a specific tv show
   - `properties` (?, 可选): 
 
 **返回:** object
-  - `tvshowdetails`: ref:TVShow
+  - `tvshowdetails`: object
 
 ---
 
 ### VideoLibrary.GetTVShows
+
+**获取电视剧列表**
 
 Retrieve all tv shows
 
@@ -2150,10 +2504,10 @@ Retrieve all tv shows
   - `properties` (?, 可选): 
   - `limits` (?, 可选): 
   - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | object | ref:TVShows, 可选): 
+  - `filter` (object | object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.TVShows'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.TVShows'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.TVShows'}], 可选): 
 
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `tvshows`: array
 
 ---
@@ -2169,8 +2523,14 @@ Retrieve all tags
   - `limits` (?, 可选): 
   - `sort` (?, 可选): 
 
+**示例:**
+
+```json
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetTags", "params": {"type": "..."}, "id": 1}
+```
+
 **返回:** object
-  - `limits`: ref:LimitsReturned
+  - `limits`: object
   - `tags`: array
 
 ---
@@ -2282,6 +2642,8 @@ Removes the given tv show from the library
 
 ### VideoLibrary.Scan
 
+**扫描视频库(新增/更新文件)**
+
 Scans the video sources for new library items
 
 **参数:**
@@ -2303,12 +2665,12 @@ Update the given episode with the given details
   - `title` (?, 可选): 
   - `playcount` (?, 可选): 
   - `runtime` (?, 可选): Runtime in seconds
-  - `director` (null | ref:String, 可选): 
+  - `director` (null | array, 可选): 
   - `plot` (?, 可选): 
   - `rating` (?, 可选): 
   - `votes` (?, 可选): 
   - `lastplayed` (?, 可选): 
-  - `writer` (null | ref:String, 可选): 
+  - `writer` (null | array, 可选): 
   - `firstaired` (?, 可选): 
   - `productioncode` (?, 可选): 
   - `season` (?, 可选): 
@@ -2316,12 +2678,12 @@ Update the given episode with the given details
   - `originaltitle` (?, 可选): 
   - `thumbnail` (?, 可选): 
   - `fanart` (?, 可选): 
-  - `art` (null | ref:Set, 可选): 
-  - `resume` (null | ref:Resume, 可选): 
+  - `art` (null | object, 可选): 
+  - `resume` (null | object, 可选): 
   - `userrating` (?, 可选): 
   - `ratings` (?, 可选): 
   - `dateadded` (?, 可选): 
-  - `uniqueid` (null | ref:Set, 可选): 
+  - `uniqueid` (null | object, 可选): 
 
 **返回:** `string`
 
@@ -2337,11 +2699,11 @@ Update the given movie with the given details
   - `title` (?, 可选): 
   - `playcount` (?, 可选): 
   - `runtime` (?, 可选): Runtime in seconds
-  - `director` (null | ref:String, 可选): 
-  - `studio` (null | ref:String, 可选): 
+  - `director` (null | array, 可选): 
+  - `studio` (null | array, 可选): 
   - `year` (?, 可选): linked with premiered. Overridden by premiered parameter
   - `plot` (?, 可选): 
-  - `genre` (null | ref:String, 可选): 
+  - `genre` (null | array, 可选): 
   - `rating` (?, 可选): 
   - `mpaa` (?, 可选): 
   - `imdbnumber` (?, 可选): 
@@ -2351,22 +2713,22 @@ Update the given movie with the given details
   - `trailer` (?, 可选): 
   - `tagline` (?, 可选): 
   - `plotoutline` (?, 可选): 
-  - `writer` (null | ref:String, 可选): 
-  - `country` (null | ref:String, 可选): 
+  - `writer` (null | array, 可选): 
+  - `country` (null | array, 可选): 
   - `top250` (?, 可选): 
   - `sorttitle` (?, 可选): 
   - `set` (?, 可选): 
-  - `showlink` (null | ref:String, 可选): 
+  - `showlink` (null | array, 可选): 
   - `thumbnail` (?, 可选): 
   - `fanart` (?, 可选): 
-  - `tag` (null | ref:String, 可选): 
-  - `art` (null | ref:Set, 可选): 
-  - `resume` (null | ref:Resume, 可选): 
+  - `tag` (null | array, 可选): 
+  - `art` (null | object, 可选): 
+  - `resume` (null | object, 可选): 
   - `userrating` (?, 可选): 
   - `ratings` (?, 可选): 
   - `dateadded` (?, 可选): 
   - `premiered` (?, 可选): linked with year. Overrides year
-  - `uniqueid` (null | ref:Set, 可选): 
+  - `uniqueid` (null | object, 可选): 
 
 **返回:** `string`
 
@@ -2380,7 +2742,7 @@ Update the given movie set with the given details
 
   - `setid` (?, 必需): 
   - `title` (?, 可选): 
-  - `art` (null | ref:Set, 可选): 
+  - `art` (null | object, 可选): 
   - `plot` (?, 可选): 
 
 **返回:** `string`
@@ -2397,25 +2759,25 @@ Update the given music video with the given details
   - `title` (?, 可选): 
   - `playcount` (?, 可选): 
   - `runtime` (?, 可选): Runtime in seconds
-  - `director` (null | ref:String, 可选): 
-  - `studio` (null | ref:String, 可选): 
+  - `director` (null | array, 可选): 
+  - `studio` (null | array, 可选): 
   - `year` (?, 可选): linked with premiered. Overridden by premiered parameter
   - `plot` (?, 可选): 
   - `album` (?, 可选): 
-  - `artist` (null | ref:String, 可选): 
-  - `genre` (null | ref:String, 可选): 
+  - `artist` (null | array, 可选): 
+  - `genre` (null | array, 可选): 
   - `track` (?, 可选): 
   - `lastplayed` (?, 可选): 
   - `thumbnail` (?, 可选): 
   - `fanart` (?, 可选): 
-  - `tag` (null | ref:String, 可选): 
-  - `art` (null | ref:Set, 可选): 
-  - `resume` (null | ref:Resume, 可选): 
+  - `tag` (null | array, 可选): 
+  - `art` (null | object, 可选): 
+  - `resume` (null | object, 可选): 
   - `rating` (?, 可选): 
   - `userrating` (?, 可选): 
   - `dateadded` (?, 可选): 
   - `premiered` (?, 可选): linked with year. Overrides year
-  - `uniqueid` (null | ref:Set, 可选): 
+  - `uniqueid` (null | object, 可选): 
 
 **返回:** `string`
 
@@ -2428,7 +2790,7 @@ Update the given season with the given details
 **参数:**
 
   - `seasonid` (?, 必需): 
-  - `art` (null | ref:Set, 可选): 
+  - `art` (null | object, 可选): 
   - `userrating` (?, 可选): 
   - `title` (?, 可选): 
 
@@ -2445,9 +2807,9 @@ Update the given tvshow with the given details
   - `tvshowid` (?, 必需): 
   - `title` (?, 可选): 
   - `playcount` (?, 可选): 
-  - `studio` (null | ref:String, 可选): 
+  - `studio` (null | array, 可选): 
   - `plot` (?, 可选): 
-  - `genre` (null | ref:String, 可选): 
+  - `genre` (null | array, 可选): 
   - `rating` (?, 可选): 
   - `mpaa` (?, 可选): 
   - `imdbnumber` (?, 可选): 
@@ -2459,20 +2821,20 @@ Update the given tvshow with the given details
   - `episodeguide` (?, 可选): 
   - `thumbnail` (?, 可选): 
   - `fanart` (?, 可选): 
-  - `tag` (null | ref:String, 可选): 
-  - `art` (null | ref:Set, 可选): 
+  - `tag` (null | array, 可选): 
+  - `art` (null | object, 可选): 
   - `userrating` (?, 可选): 
   - `ratings` (?, 可选): 
   - `dateadded` (?, 可选): 
   - `runtime` (?, 可选): Runtime in seconds
   - `status` (?, 可选): Valid values: 'returning series', 'in production', 'planned', 'cancelled', 'ended'
-  - `uniqueid` (null | ref:Set, 可选): 
+  - `uniqueid` (null | object, 可选): 
 
 **返回:** `string`
 
 ---
 
-## XBMC
+## XBMC — 系统(兼容)
 
 ### XBMC.GetInfoBooleans
 
