@@ -69,6 +69,26 @@ function reloadIps() {
     for (var i = 0; i < secIps.length; i++) allIps.push(secIps[i]);
 }
 
+function reSync() {
+    if (allIps.length < 2) return;
+    var host = allIps[0].split(":")[0];
+    var qJson = '{"jsonrpc":"2.0","method":"Player.GetProperties","params":{"playerid":1,"properties":["time","speed","totaltime"]},"id":"re"}';
+    execShell("/usr/bin/curl -s --max-time 3 -u " + httpUser + ":" + httpPass + " -X POST -H Content-Type:application/json -d " + qJson + " -o /tmp/kodi_re.txt http://" + host + ":8080/jsonrpc");
+    var c = util.readFile("/tmp/kodi_re.txt");
+    if (c && c.charAt(0) === "{") {
+        var d = JSON.parse(c);
+        if (d && d.result && d.result.time && d.result.totaltime && d.result.speed > 0) {
+            var totalMs = timeToMs(d.result.totaltime);
+            if (totalMs > 0) {
+                var pct = (timeToMs(d.result.time) / totalMs) * 100;
+                for (var i = 0; i < allIps.length; i++) {
+                    local.sendTo(allIps[i].split(":")[0], 9527, "SEEK:" + pct + "\n");
+                }
+            }
+        }
+    }
+}
+
 function toggleSync() {
     syncEnabled = !syncEnabled;
     var syncParam = local.parameters.getChild("Sync Enabled");
