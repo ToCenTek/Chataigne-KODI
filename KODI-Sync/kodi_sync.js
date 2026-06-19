@@ -88,13 +88,14 @@ function dataReceived(data) {
             var tag = parts[1];
             var ms = parseFloat(parts[2]);
             if (ms > 0) {
+                var firstMatch = -1;
                 for (var j = 0; j < allIps.length; j++) {
-                    if (allIps[j].split(":")[0] === tag) {
-                        posMs[j] = ms;
-                        posReady++;
-                        break;
+                    if (allIps[j].split(":")[0] === tag && (firstMatch < 0 || posMs[j] == null)) {
+                        if (posMs[j] == null) { firstMatch = j; break; }
+                        if (firstMatch < 0) firstMatch = j;
                     }
                 }
+                if (firstMatch >= 0) { posMs[firstMatch] = ms; posReady++; }
             }
         }
     } else {
