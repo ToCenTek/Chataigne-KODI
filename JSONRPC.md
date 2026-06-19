@@ -1,6 +1,6 @@
 # KODI JSON-RPC API 参考 (v13.5.0)
 
-> 从当前 KODI 21 (Omega) 自动提取，每个方法均含实测请求与响应。
+> 从当前 KODI 21 (Omega) 自动提取，174 个方法均含实测请求与响应。
 
 ---
 
@@ -38,9 +38,9 @@ Executes the given addon with the given parameters (if possible)
 
 **参数:**
 
-  - `addonid` (string, 必需): 
-  - `params` (object | array | string, 可选): 
-  - `wait` (boolean, 可选): 
+  - `addonid`: 插件 ID; 类型: string; 必需
+  - `params`: 类型: array | object | string; 可选
+  - `wait`: 类型: boolean; 可选
 
 **请求:**
 
@@ -61,8 +61,6 @@ Executes the given addon with the given parameters (if possible)
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="addonsgetaddondetails"></a>
@@ -74,8 +72,8 @@ Gets the details of a specific addon
 
 **参数:**
 
-  - `addonid` (string, 必需): 
-  - `properties` (?, 可选): 
+  - `addonid`: 插件 ID; 类型: string; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -96,10 +94,6 @@ Gets the details of a specific addon
 }
 ```
 
-**返回结构:** object
-  - `addon`: object
-  - `limits`: object
-
 ---
 
 <a id="addonsgetaddons"></a>
@@ -111,12 +105,12 @@ Gets all available addons
 
 **参数:**
 
-  - `type` (?, 可选): 
-  - `content` (?, 可选): Content provided by the addon. Only considered for plugins and scripts.
-  - `enabled` (boolean | all, 可选): 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `installed` (boolean | all, 可选): 
+  - `type`: 类型; 类型: ?; 可选
+  - `content`: Content provided by the addon. Only considered for plugins and scripts.; 类型: ?; 可选
+  - `enabled`: 启用状态 (true=启用, false=禁用); 可选值: all; 类型: all | boolean; 可选
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `installed`: 类型: all | boolean; 可选
 
 **请求:**
 
@@ -130,10 +124,6 @@ Gets all available addons
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `addons`: array
-  - `limits`: object
-
 ---
 
 <a id="addonssetaddonenabled"></a>
@@ -145,8 +135,8 @@ Enables/Disables a specific addon
 
 **参数:**
 
-  - `addonid` (string, 必需): 
-  - `enabled` (?, 必需): 
+  - `addonid`: 插件 ID; 类型: string; 必需
+  - `enabled`: 启用状态 (true=启用, false=禁用); 类型: ?; 必需
 
 **请求:**
 
@@ -167,8 +157,6 @@ Enables/Disables a specific addon
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="application"></a>
@@ -183,7 +171,7 @@ Retrieves the values of the given properties
 
 **参数:**
 
-  - `properties` (array, 必需): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: array; 必需
 
 **请求:**
 
@@ -225,8 +213,6 @@ Quit application
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="applicationsetmute"></a>
@@ -238,7 +224,7 @@ Toggle mute/unmute
 
 **参数:**
 
-  - `mute` (?, 必需): 
+  - `mute`: 静音开关 (true=静音, false=取消静音, toggle=切换); 类型: ?; 必需
 
 **请求:**
 
@@ -267,7 +253,7 @@ Set the current volume
 
 **参数:**
 
-  - `volume` (integer(范围:0~100) | increment | decrement, 必需): 
+  - `volume`: 音量值 (0~100, increment=递增, decrement=递减); 可选值: increment, decrement; 类型: increment | decrement | integer(范围:0~100); 必需
 
 **请求:**
 
@@ -299,7 +285,7 @@ Cleans the audio library from non-existent items
 
 **参数:**
 
-  - `showdialogs` (boolean, 可选): Whether or not to show the progress bar or any other GUI dialog
+  - `showdialogs`: Whether or not to show the progress bar or any other GUI dialog; 类型: boolean; 可选
 
 **请求:**
 
@@ -313,8 +299,6 @@ Cleans the audio library from non-existent items
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="audiolibraryexport"></a>
@@ -326,7 +310,7 @@ Exports all items from the audio library
 
 **参数:**
 
-  - `options` (object | object, 可选): 
+  - `options`: 类型: object; 可选
 
 **请求:**
 
@@ -340,8 +324,6 @@ Exports all items from the audio library
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="audiolibrarygetalbumdetails"></a>
@@ -353,8 +335,8 @@ Retrieve details about a specific album
 
 **参数:**
 
-  - `albumid` (?, 必需): 
-  - `properties` (?, 可选): 
+  - `albumid`: 专辑 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -375,9 +357,6 @@ Retrieve details about a specific album
 }
 ```
 
-**返回结构:** object
-  - `albumdetails`: object
-
 ---
 
 <a id="audiolibrarygetalbums"></a>
@@ -389,12 +368,12 @@ Retrieve all albums from specified artist (and role) or that has songs of the sp
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.Albums'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Albums'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Albums'}], 可选): 
-  - `includesingles` (boolean, 可选): 
-  - `allroles` (boolean, 可选): Whether or not to include all roles when filtering by artist, rather than the default of excluding other contributions. When true it overrides any role filter value.
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
+  - `filter`: 类型: [{'properties': {'and': {'items': {'$ref': 'List.Filter.Albums'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Albums'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Albums'}] | object; 可选
+  - `includesingles`: 类型: boolean; 可选
+  - `allroles`: Whether or not to include all roles when filtering by artist, rather than the default of excluding other contributions. When true it overrides any role filter value.; 类型: boolean; 可选
 
 **请求:**
 
@@ -408,10 +387,6 @@ Retrieve all albums from specified artist (and role) or that has songs of the sp
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `albums`: array
-  - `limits`: object
-
 ---
 
 <a id="audiolibrarygetartistdetails"></a>
@@ -423,8 +398,8 @@ Retrieve details about a specific artist
 
 **参数:**
 
-  - `artistid` (?, 必需): 
-  - `properties` (?, 可选): 
+  - `artistid`: 艺术家 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -459,12 +434,12 @@ Retrieve all artists. For backward compatibility by default this implicitly does
 
 **参数:**
 
-  - `albumartistsonly` (?, 可选): Whether or not to only include album artists rather than the artists of only individual songs as well. If the parameter is not passed or is passed as null the GUI setting will be used
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | object | object | object | object | object | object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.Artists'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Artists'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Artists'}], 可选): 
-  - `allroles` (boolean, 可选): Whether or not to include all artists irrespective of the role they contributed. When true it overrides any role filter value.
+  - `albumartistsonly`: Whether or not to only include album artists rather than the artists of only individual songs as well. If the parameter is not passed or is passed as null the GUI setting will be used; 类型: ?; 可选
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
+  - `filter`: 类型: [{'properties': {'and': {'items': {'$ref': 'List.Filter.Artists'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Artists'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Artists'}] | object; 可选
+  - `allroles`: Whether or not to include all artists irrespective of the role they contributed. When true it overrides any role filter value.; 类型: boolean; 可选
 
 **请求:**
 
@@ -478,10 +453,6 @@ Retrieve all artists. For backward compatibility by default this implicitly does
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `artists`: array
-  - `limits`: object
-
 ---
 
 <a id="audiolibrarygetavailableart"></a>
@@ -493,8 +464,8 @@ Retrieve all potential art URLs for a media item by art type
 
 **参数:**
 
-  - `item` (object | object, 必需): 
-  - `arttype` (string, 可选): 
+  - `item`: 要播放/添加的媒体项 (支持 file/playlistid/movieid 等格式); 类型: object; 必需
+  - `arttype`: 类型: string; 可选
 
 **请求:**
 
@@ -523,9 +494,6 @@ Retrieve all potential art URLs for a media item by art type
 }
 ```
 
-**返回结构:** object
-  - `availableart`: array
-
 ---
 
 <a id="audiolibrarygetavailablearttypes"></a>
@@ -537,7 +505,7 @@ Retrieve a list of potential art types for a media item
 
 **参数:**
 
-  - `item` (object | object, 必需): 
+  - `item`: 要播放/添加的媒体项 (支持 file/playlistid/movieid 等格式); 类型: object; 必需
 
 **请求:**
 
@@ -566,9 +534,6 @@ Retrieve a list of potential art types for a media item
 }
 ```
 
-**返回结构:** object
-  - `availablearttypes`: array
-
 ---
 
 <a id="audiolibrarygetgenres"></a>
@@ -580,9 +545,9 @@ Retrieve all genres
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -596,10 +561,6 @@ Retrieve all genres
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `genres`: array
-  - `limits`: object
-
 ---
 
 <a id="audiolibrarygetproperties"></a>
@@ -611,7 +572,7 @@ Retrieves the values of the music library properties
 
 **参数:**
 
-  - `properties` (array, 必需): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: array; 必需
 
 **请求:**
 
@@ -645,8 +606,6 @@ Retrieves the values of the music library properties
 }
 ```
 
-**返回:** `?`
-
 ---
 
 <a id="audiolibrarygetrecentlyaddedalbums"></a>
@@ -658,9 +617,9 @@ Retrieve recently added albums
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -674,10 +633,6 @@ Retrieve recently added albums
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `albums`: array
-  - `limits`: object
-
 ---
 
 <a id="audiolibrarygetrecentlyaddedsongs"></a>
@@ -689,10 +644,10 @@ Retrieve recently added songs
 
 **参数:**
 
-  - `albumlimit` (?, 可选): The amount of recently added albums from which to return the songs
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `albumlimit`: The amount of recently added albums from which to return the songs; 类型: ?; 可选
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -706,10 +661,6 @@ Retrieve recently added songs
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `songs`: array
-
 ---
 
 <a id="audiolibrarygetrecentlyplayedalbums"></a>
@@ -721,9 +672,9 @@ Retrieve recently played albums
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -737,10 +688,6 @@ Retrieve recently played albums
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `albums`: array
-  - `limits`: object
-
 ---
 
 <a id="audiolibrarygetrecentlyplayedsongs"></a>
@@ -752,9 +699,9 @@ Retrieve recently played songs
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -768,10 +715,6 @@ Retrieve recently played songs
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `songs`: array
-
 ---
 
 <a id="audiolibrarygetroles"></a>
@@ -783,9 +726,9 @@ Retrieve all contributor roles
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -799,10 +742,6 @@ Retrieve all contributor roles
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `roles`: array
-
 ---
 
 <a id="audiolibrarygetsongdetails"></a>
@@ -814,8 +753,8 @@ Retrieve details about a specific song
 
 **参数:**
 
-  - `songid` (?, 必需): 
-  - `properties` (?, 可选): 
+  - `songid`: 歌曲 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -836,9 +775,6 @@ Retrieve details about a specific song
 }
 ```
 
-**返回结构:** object
-  - `songdetails`: object
-
 ---
 
 <a id="audiolibrarygetsongs"></a>
@@ -850,13 +786,13 @@ Retrieve all songs from specified album, artist or genre
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.Songs'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Songs'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Songs'}], 可选): 
-  - `includesingles` (boolean, 可选): Only songs from albums are returned when false, but overridden when singlesonly parameter is true
-  - `allroles` (boolean, 可选): Whether or not to include all roles when filtering by artist, rather than default of excluding other contributors. When true it overrides any role filter value.
-  - `singlesonly` (boolean, 可选): Only singles are returned when true, and overrides includesingles parameter
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
+  - `filter`: 类型: [{'properties': {'and': {'items': {'$ref': 'List.Filter.Songs'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Songs'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Songs'}] | object; 可选
+  - `includesingles`: Only songs from albums are returned when false, but overridden when singlesonly parameter is true; 类型: boolean; 可选
+  - `allroles`: Whether or not to include all roles when filtering by artist, rather than default of excluding other contributors. When true it overrides any role filter value.; 类型: boolean; 可选
+  - `singlesonly`: Only singles are returned when true, and overrides includesingles parameter; 类型: boolean; 可选
 
 **请求:**
 
@@ -870,10 +806,6 @@ Retrieve all songs from specified album, artist or genre
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `songs`: array
-
 ---
 
 <a id="audiolibrarygetsources"></a>
@@ -885,9 +817,9 @@ Get all music sources, including unique ID
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -901,10 +833,6 @@ Get all music sources, including unique ID
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `sources`: array
-
 ---
 
 <a id="audiolibraryscan"></a>
@@ -916,8 +844,8 @@ Scans the audio sources for new library items
 
 **参数:**
 
-  - `directory` (string, 可选): 
-  - `showdialogs` (boolean, 可选): Whether or not to show the progress bar or any other GUI dialog
+  - `directory`: 目录路径; 类型: string; 可选
+  - `showdialogs`: Whether or not to show the progress bar or any other GUI dialog; 类型: boolean; 可选
 
 **请求:**
 
@@ -931,8 +859,6 @@ Scans the audio sources for new library items
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="audiolibrarysetalbumdetails"></a>
@@ -944,29 +870,29 @@ Update the given album with the given details
 
 **参数:**
 
-  - `albumid` (?, 必需): 
-  - `title` (?, 可选): 
-  - `artist` (null | array, 可选): 
-  - `description` (?, 可选): 
-  - `genre` (null | array, 可选): 
-  - `theme` (null | array, 可选): 
-  - `mood` (null | array, 可选): 
-  - `style` (null | array, 可选): 
-  - `type` (?, 可选): 
-  - `albumlabel` (?, 可选): 
-  - `rating` (?, 可选): 
-  - `year` (?, 可选): 
-  - `userrating` (?, 可选): 
-  - `votes` (?, 可选): 
-  - `musicbrainzalbumid` (?, 可选): 
-  - `musicbrainzreleasegroupid` (?, 可选): 
-  - `sortartist` (?, 可选): 
-  - `displayartist` (?, 可选): 
-  - `musicbrainzalbumartistid` (null | array, 可选): 
-  - `art` (null | object, 可选): 
-  - `isboxset` (?, 可选): 
-  - `releasedate` (?, 可选): 
-  - `originaldate` (?, 可选): 
+  - `albumid`: 专辑 ID; 类型: ?; 必需
+  - `title`: 标题; 类型: ?; 可选
+  - `artist`: 类型: array | null; 可选
+  - `description`: 类型: ?; 可选
+  - `genre`: 类型: array | null; 可选
+  - `theme`: 类型: array | null; 可选
+  - `mood`: 类型: array | null; 可选
+  - `style`: 类型: array | null; 可选
+  - `type`: 类型; 类型: ?; 可选
+  - `albumlabel`: 类型: ?; 可选
+  - `rating`: 类型: ?; 可选
+  - `year`: 类型: ?; 可选
+  - `userrating`: 类型: ?; 可选
+  - `votes`: 类型: ?; 可选
+  - `musicbrainzalbumid`: 类型: ?; 可选
+  - `musicbrainzreleasegroupid`: 类型: ?; 可选
+  - `sortartist`: 类型: ?; 可选
+  - `displayartist`: 类型: ?; 可选
+  - `musicbrainzalbumartistid`: 类型: array | null; 可选
+  - `art`: 类型: null | object; 可选
+  - `isboxset`: 类型: ?; 可选
+  - `releasedate`: 类型: ?; 可选
+  - `originaldate`: 类型: ?; 可选
 
 **请求:**
 
@@ -987,8 +913,6 @@ Update the given album with the given details
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="audiolibrarysetartistdetails"></a>
@@ -1000,24 +924,24 @@ Update the given artist with the given details
 
 **参数:**
 
-  - `artistid` (?, 必需): 
-  - `artist` (?, 可选): 
-  - `instrument` (null | array, 可选): 
-  - `style` (null | array, 可选): 
-  - `mood` (null | array, 可选): 
-  - `born` (?, 可选): 
-  - `formed` (?, 可选): 
-  - `description` (?, 可选): 
-  - `genre` (null | array, 可选): 
-  - `died` (?, 可选): 
-  - `disbanded` (?, 可选): 
-  - `yearsactive` (null | array, 可选): 
-  - `musicbrainzartistid` (?, 可选): 
-  - `sortname` (?, 可选): 
-  - `type` (?, 可选): 
-  - `gender` (?, 可选): 
-  - `disambiguation` (?, 可选): 
-  - `art` (null | object, 可选): 
+  - `artistid`: 艺术家 ID; 类型: ?; 必需
+  - `artist`: 类型: ?; 可选
+  - `instrument`: 类型: array | null; 可选
+  - `style`: 类型: array | null; 可选
+  - `mood`: 类型: array | null; 可选
+  - `born`: 类型: ?; 可选
+  - `formed`: 类型: ?; 可选
+  - `description`: 类型: ?; 可选
+  - `genre`: 类型: array | null; 可选
+  - `died`: 类型: ?; 可选
+  - `disbanded`: 类型: ?; 可选
+  - `yearsactive`: 类型: array | null; 可选
+  - `musicbrainzartistid`: 类型: ?; 可选
+  - `sortname`: 类型: ?; 可选
+  - `type`: 类型; 类型: ?; 可选
+  - `gender`: 类型: ?; 可选
+  - `disambiguation`: 类型: ?; 可选
+  - `art`: 类型: null | object; 可选
 
 **请求:**
 
@@ -1046,31 +970,31 @@ Update the given song with the given details
 
 **参数:**
 
-  - `songid` (?, 必需): 
-  - `title` (?, 可选): 
-  - `artist` (null | array, 可选): 
-  - `genre` (null | array, 可选): 
-  - `year` (?, 可选): 
-  - `rating` (?, 可选): 
-  - `track` (?, 可选): 
-  - `disc` (?, 可选): 
-  - `duration` (?, 可选): 
-  - `comment` (?, 可选): 
-  - `musicbrainztrackid` (?, 可选): 
-  - `musicbrainzartistid` (?, 可选): 
-  - `playcount` (?, 可选): 
-  - `lastplayed` (?, 可选): 
-  - `userrating` (?, 可选): 
-  - `votes` (?, 可选): 
-  - `displayartist` (?, 可选): 
-  - `sortartist` (?, 可选): 
-  - `mood` (?, 可选): 
-  - `art` (null | object, 可选): 
-  - `disctitle` (?, 可选): 
-  - `releasedate` (?, 可选): 
-  - `originaldate` (?, 可选): 
-  - `bpm` (?, 可选): 
-  - `songvideourl` (?, 可选): 
+  - `songid`: 歌曲 ID; 类型: ?; 必需
+  - `title`: 标题; 类型: ?; 可选
+  - `artist`: 类型: array | null; 可选
+  - `genre`: 类型: array | null; 可选
+  - `year`: 类型: ?; 可选
+  - `rating`: 类型: ?; 可选
+  - `track`: 类型: ?; 可选
+  - `disc`: 类型: ?; 可选
+  - `duration`: 类型: ?; 可选
+  - `comment`: 类型: ?; 可选
+  - `musicbrainztrackid`: 类型: ?; 可选
+  - `musicbrainzartistid`: 类型: ?; 可选
+  - `playcount`: 类型: ?; 可选
+  - `lastplayed`: 类型: ?; 可选
+  - `userrating`: 类型: ?; 可选
+  - `votes`: 类型: ?; 可选
+  - `displayartist`: 类型: ?; 可选
+  - `sortartist`: 类型: ?; 可选
+  - `mood`: 类型: ?; 可选
+  - `art`: 类型: null | object; 可选
+  - `disctitle`: 类型: ?; 可选
+  - `releasedate`: 类型: ?; 可选
+  - `originaldate`: 类型: ?; 可选
+  - `bpm`: 类型: ?; 可选
+  - `songvideourl`: 类型: ?; 可选
 
 **请求:**
 
@@ -1091,8 +1015,6 @@ Update the given song with the given details
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="favourites"></a>
@@ -1107,12 +1029,12 @@ Add a favourite with the given details
 
 **参数:**
 
-  - `title` (string, 必需): 
-  - `type` (?, 必需): 
-  - `path` (?, 可选): Required for media, script and androidapp favourites types
-  - `window` (?, 可选): Required for window favourite type
-  - `windowparameter` (?, 可选): 
-  - `thumbnail` (?, 可选): 
+  - `title`: 标题; 类型: string; 必需
+  - `type`: 类型; 类型: ?; 必需
+  - `path`: 路径; 类型: ?; 可选
+  - `window`: 要激活的窗口名称; 类型: ?; 可选
+  - `windowparameter`: 类型: ?; 可选
+  - `thumbnail`: 类型: ?; 可选
 
 **请求:**
 
@@ -1141,8 +1063,6 @@ Add a favourite with the given details
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="favouritesgetfavourites"></a>
@@ -1154,8 +1074,8 @@ Retrieve all favourites
 
 **参数:**
 
-  - `type` (null | media | window | script | androidapp | unknown, 可选): 
-  - `properties` (?, 可选): 
+  - `type`: 类型; 可选值: media, window, script, androidapp, unknown; 类型: media | window | script | androidapp | unknown | null; 可选
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -1168,10 +1088,6 @@ Retrieve all favourites
 ```
 (no params or skipped)
 ```
-
-**返回结构:** object
-  - `favourites`: array
-  - `limits`: object
 
 ---
 
@@ -1187,11 +1103,11 @@ Get the directories and files in the given directory
 
 **参数:**
 
-  - `directory` (string, 必需): 
-  - `media` (?, 可选): 
-  - `properties` (?, 可选): 
-  - `sort` (?, 可选): 
-  - `limits` (?, 可选): Limits are applied after getting the directory content thus retrieval is not faster when they are applied.
+  - `directory`: 目录路径; 类型: string; 必需
+  - `media`: 媒体类型 (video=视频, music=音乐, pictures=图片, files=文件, programs=程序); 类型: ?; 可选
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
 
 **请求:**
 
@@ -1240,9 +1156,9 @@ Get details for a specific file
 
 **参数:**
 
-  - `file` (string, 必需): Full path to the file
-  - `media` (?, 可选): 
-  - `properties` (?, 可选): 
+  - `file`: 文件路径; 类型: string; 必需
+  - `media`: 媒体类型 (video=视频, music=音乐, pictures=图片, files=文件, programs=程序); 类型: ?; 可选
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -1276,9 +1192,9 @@ Get the sources of the media windows
 
 **参数:**
 
-  - `media` (?, 必需): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `media`: 媒体类型 (video=视频, music=音乐, pictures=图片, files=文件, programs=程序); 类型: ?; 必需
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -1323,7 +1239,7 @@ Provides a way to download a given file (e.g. providing an URL to the real file 
 
 **参数:**
 
-  - `path` (string, 必需): 
+  - `path`: 路径; 类型: string; 必需
 
 **请求:**
 
@@ -1358,11 +1274,11 @@ Update the given specific file with the given details
 
 **参数:**
 
-  - `file` (string, 必需): Full path to the file
-  - `media` (?, 必需): File type to update correct database. Currently only "video" is supported.
-  - `playcount` (?, 可选): 
-  - `lastplayed` (?, 可选): Setting a valid lastplayed without a playcount will force playcount to 1.
-  - `resume` (null | object, 可选): 
+  - `file`: 文件路径; 类型: string; 必需
+  - `media`: 媒体类型 (video=视频, music=音乐, pictures=图片, files=文件, programs=程序); 类型: ?; 必需
+  - `playcount`: 类型: ?; 可选
+  - `lastplayed`: Setting a valid lastplayed without a playcount will force playcount to 1.; 类型: ?; 可选
+  - `resume`: 类型: null | object; 可选
 
 **请求:**
 
@@ -1404,8 +1320,6 @@ Activates currently used screensaver
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="guiactivatewindow"></a>
@@ -1417,8 +1331,8 @@ Activates the given window
 
 **参数:**
 
-  - `window` (?, 必需): 
-  - `parameters` (array, 可选): 
+  - `window`: 要激活的窗口名称; 类型: ?; 必需
+  - `parameters`: 类型: array; 可选
 
 **请求:**
 
@@ -1447,7 +1361,7 @@ Retrieves the values of the given properties
 
 **参数:**
 
-  - `properties` (array, 必需): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: array; 必需
 
 **请求:**
 
@@ -1492,9 +1406,6 @@ Returns the supported stereoscopic modes of the GUI
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `stereoscopicmodes`: array
-
 ---
 
 <a id="guisetfullscreen"></a>
@@ -1506,7 +1417,7 @@ Toggle fullscreen/GUI
 
 **参数:**
 
-  - `fullscreen` (?, 必需): 
+  - `fullscreen`: 全屏 (true=全屏, false=窗口); 类型: ?; 必需
 
 **请求:**
 
@@ -1535,7 +1446,7 @@ Sets the stereoscopic mode of the GUI to the given mode
 
 **参数:**
 
-  - `mode` (string, 必需): 
+  - `mode`: 模式; 类型: string; 必需
 
 **请求:**
 
@@ -1564,10 +1475,10 @@ Shows a GUI notification
 
 **参数:**
 
-  - `title` (string, 必需): 
-  - `message` (string, 必需): 
-  - `image` (info | warning | error | string, 可选): 
-  - `displaytime` (integer, 可选): The time in milliseconds the notification will be visible
+  - `title`: 标题; 类型: string; 必需
+  - `message`: 消息内容; 类型: string; 必需
+  - `image`: 图片路径; 可选值: info, warning, error; 类型: info | warning | error | string; 可选
+  - `displaytime`: 显示时间 (毫秒); 类型: integer; 可选
 
 **请求:**
 
@@ -1609,8 +1520,6 @@ Goes back in GUI
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="inputbuttonevent"></a>
@@ -1622,9 +1531,9 @@ Send a button press event
 
 **参数:**
 
-  - `button` (string, 必需): Button name
-  - `keymap` (string, 必需): Keymap name (KB, XG, R1, or R2)
-  - `holdtime` (integer, 可选): Number of milliseconds to simulate button hold.
+  - `button`: 按钮代码; 类型: string; 必需
+  - `keymap`: 按键映射 (KB=键盘, GAME=游戏手柄); 类型: string; 必需
+  - `holdtime`: Number of milliseconds to simulate button hold.; 类型: integer; 可选
 
 **请求:**
 
@@ -1663,8 +1572,6 @@ Shows the context menu
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="inputdown"></a>
@@ -1686,8 +1593,6 @@ Navigate down in GUI
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="inputexecuteaction"></a>
@@ -1699,7 +1604,7 @@ Execute a specific action
 
 **参数:**
 
-  - `action` (?, 必需): 
+  - `action`: 要执行的动作名称; 类型: ?; 必需
 
 **请求:**
 
@@ -1738,8 +1643,6 @@ Goes to home window in GUI
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="inputinfo"></a>
@@ -1760,8 +1663,6 @@ Shows the information dialog
 ```
 (no params or skipped)
 ```
-
-**返回:** `string`
 
 ---
 
@@ -1784,8 +1685,6 @@ Navigate left in GUI
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="inputright"></a>
@@ -1806,8 +1705,6 @@ Navigate right in GUI
 ```
 (no params or skipped)
 ```
-
-**返回:** `string`
 
 ---
 
@@ -1830,8 +1727,6 @@ Select current item in GUI
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="inputsendtext"></a>
@@ -1843,8 +1738,8 @@ Send a generic (unicode) text
 
 **参数:**
 
-  - `text` (string, 必需): Unicode text
-  - `done` (boolean, 可选): Whether this is the whole input or not (closes an open input dialog if true).
+  - `text`: 要发送的文本; 类型: string; 必需
+  - `done`: Whether this is the whole input or not (closes an open input dialog if true).; 类型: boolean; 可选
 
 **请求:**
 
@@ -1883,8 +1778,6 @@ Show codec information of the playing item
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="inputshowosd"></a>
@@ -1905,8 +1798,6 @@ Show the on-screen display for the current player
 ```
 (no params or skipped)
 ```
-
-**返回:** `string`
 
 ---
 
@@ -1929,8 +1820,6 @@ Show player process information of the playing item, like video decoder, pixel f
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="inputup"></a>
@@ -1952,8 +1841,6 @@ Navigate up in GUI
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="jsonrpc"></a>
@@ -1968,10 +1855,10 @@ Enumerates all actions and descriptions
 
 **参数:**
 
-  - `getdescriptions` (boolean, 可选): 
-  - `getmetadata` (boolean, 可选): 
-  - `filterbytransport` (boolean, 可选): 
-  - `filter` (object, 可选): 
+  - `getdescriptions`: 类型: boolean; 可选
+  - `getmetadata`: 类型: boolean; 可选
+  - `filterbytransport`: 类型: boolean; 可选
+  - `filter`: 类型: object; 可选
 
 **请求:**
 
@@ -1985,8 +1872,6 @@ Enumerates all actions and descriptions
 (no params or skipped)
 ```
 
-**返回:** `object`
-
 ---
 
 <a id="jsonrpcnotifyall"></a>
@@ -1998,9 +1883,9 @@ Notify all other connected clients
 
 **参数:**
 
-  - `sender` (string, 必需): 
-  - `message` (string, 必需): 
-  - `data` (any, 可选): 
+  - `sender`: 类型: string; 必需
+  - `message`: 消息内容; 类型: string; 必需
+  - `data`: 类型: any; 可选
 
 **请求:**
 
@@ -2013,8 +1898,6 @@ Notify all other connected clients
 ```
 (no params or skipped)
 ```
-
-**返回:** `any`
 
 ---
 
@@ -2037,21 +1920,6 @@ Retrieve the clients permissions
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `controlgui`: boolean
-  - `controlnotify`: boolean
-  - `controlplayback`: boolean
-  - `controlpower`: boolean
-  - `controlpvr`: boolean
-  - `controlsystem`: boolean
-  - `executeaddon`: boolean
-  - `manageaddon`: boolean
-  - `navigate`: boolean
-  - `readdata`: boolean
-  - `removedata`: boolean
-  - `updatedata`: boolean
-  - `writefile`: boolean
-
 ---
 
 <a id="jsonrpcping"></a>
@@ -2072,8 +1940,6 @@ Ping responder
 ```
 (no params or skipped)
 ```
-
-**返回:** `string`
 
 ---
 
@@ -2096,9 +1962,6 @@ Retrieve the JSON-RPC protocol version.
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `version`: object
-
 ---
 
 <a id="pvr"></a>
@@ -2113,9 +1976,9 @@ Adds a timer to record the given show one times or a timer rule to record all sh
 
 **参数:**
 
-  - `broadcastid` (?, 必需): the broadcast id of the item to record
-  - `timerrule` (boolean, 可选): controls whether to create a timer rule or a onetime timer
-  - `reminder` (boolean, 可选): controls whether to create a reminder timer or a recording timer
+  - `broadcastid`: 广播 ID; 类型: ?; 必需
+  - `timerrule`: controls whether to create a timer rule or a onetime timer; 类型: boolean; 可选
+  - `reminder`: controls whether to create a reminder timer or a recording timer; 类型: boolean; 可选
 
 **请求:**
 
@@ -2136,8 +1999,6 @@ Adds a timer to record the given show one times or a timer rule to record all sh
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="pvrdeletetimer"></a>
@@ -2149,7 +2010,7 @@ Deletes a onetime timer or a timer rule
 
 **参数:**
 
-  - `timerid` (?, 必需): the id of the onetime timer or timer rule to delete
+  - `timerid`: 定时器 ID; 类型: ?; 必需
 
 **请求:**
 
@@ -2170,8 +2031,6 @@ Deletes a onetime timer or a timer rule
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="pvrgetbroadcastdetails"></a>
@@ -2183,8 +2042,8 @@ Retrieves the details of a specific broadcast
 
 **参数:**
 
-  - `broadcastid` (?, 必需): 
-  - `properties` (?, 可选): 
+  - `broadcastid`: 广播 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -2205,9 +2064,6 @@ Retrieves the details of a specific broadcast
 }
 ```
 
-**返回结构:** object
-  - `broadcastdetails`: object
-
 ---
 
 <a id="pvrgetbroadcastisplayable"></a>
@@ -2219,7 +2075,7 @@ Retrieves whether or not a broadcast is playable
 
 **参数:**
 
-  - `broadcastid` (?, 必需): the id of the broadcast to check for playability
+  - `broadcastid`: 广播 ID; 类型: ?; 必需
 
 **请求:**
 
@@ -2240,8 +2096,6 @@ Retrieves whether or not a broadcast is playable
 }
 ```
 
-**返回:** `boolean`
-
 ---
 
 <a id="pvrgetbroadcasts"></a>
@@ -2253,9 +2107,9 @@ Retrieves the program of a specific channel
 
 **参数:**
 
-  - `channelid` (?, 必需): 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
+  - `channelid`: 频道 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
 
 **请求:**
 
@@ -2276,10 +2130,6 @@ Retrieves the program of a specific channel
 }
 ```
 
-**返回结构:** object
-  - `broadcasts`: array
-  - `limits`: object
-
 ---
 
 <a id="pvrgetchanneldetails"></a>
@@ -2291,8 +2141,8 @@ Retrieves the details of a specific channel
 
 **参数:**
 
-  - `channelid` (?, 必需): 
-  - `properties` (?, 可选): 
+  - `channelid`: 频道 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -2313,9 +2163,6 @@ Retrieves the details of a specific channel
 }
 ```
 
-**返回结构:** object
-  - `channeldetails`: object
-
 ---
 
 <a id="pvrgetchannelgroupdetails"></a>
@@ -2327,8 +2174,8 @@ Retrieves the details of a specific channel group
 
 **参数:**
 
-  - `channelgroupid` (?, 必需): 
-  - `channels` (object, 可选): 
+  - `channelgroupid`: 频道组 (alltv=所有电视, allradio=所有广播, 或自定义组名); 类型: ?; 必需
+  - `channels`: 类型: object; 可选
 
 **请求:**
 
@@ -2349,9 +2196,6 @@ Retrieves the details of a specific channel group
 }
 ```
 
-**返回结构:** object
-  - `channelgroupdetails`: object
-
 ---
 
 <a id="pvrgetchannelgroups"></a>
@@ -2363,8 +2207,8 @@ Retrieves the channel groups for the specified type
 
 **参数:**
 
-  - `channeltype` (?, 必需): 
-  - `limits` (?, 可选): 
+  - `channeltype`: 频道类型 (tv=电视, radio=广播); 类型: ?; 必需
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
 
 **请求:**
 
@@ -2385,10 +2229,6 @@ Retrieves the channel groups for the specified type
 }
 ```
 
-**返回结构:** object
-  - `channelgroups`: array
-  - `limits`: object
-
 ---
 
 <a id="pvrgetchannels"></a>
@@ -2400,10 +2240,10 @@ Retrieves the channel list
 
 **参数:**
 
-  - `channelgroupid` (?, 必需): 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `channelgroupid`: 频道组 (alltv=所有电视, allradio=所有广播, 或自定义组名); 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -2424,10 +2264,6 @@ Retrieves the channel list
 }
 ```
 
-**返回结构:** object
-  - `channels`: array
-  - `limits`: object
-
 ---
 
 <a id="pvrgetclients"></a>
@@ -2439,7 +2275,7 @@ Retrieves the enabled PVR clients and their capabilities
 
 **参数:**
 
-  - `limits` (?, 可选): 
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
 
 **请求:**
 
@@ -2453,10 +2289,6 @@ Retrieves the enabled PVR clients and their capabilities
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `clients`: array
-  - `limits`: object
-
 ---
 
 <a id="pvrgetproperties"></a>
@@ -2468,7 +2300,7 @@ Retrieves the values of the given properties
 
 **参数:**
 
-  - `properties` (array, 必需): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: array; 必需
 
 **请求:**
 
@@ -2489,8 +2321,6 @@ Retrieves the values of the given properties
 }
 ```
 
-**返回:** `?`
-
 ---
 
 <a id="pvrgetrecordingdetails"></a>
@@ -2502,8 +2332,8 @@ Retrieves the details of a specific recording
 
 **参数:**
 
-  - `recordingid` (?, 必需): 
-  - `properties` (?, 可选): 
+  - `recordingid`: 录制 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -2524,9 +2354,6 @@ Retrieves the details of a specific recording
 }
 ```
 
-**返回结构:** object
-  - `recordingdetails`: object
-
 ---
 
 <a id="pvrgetrecordings"></a>
@@ -2538,9 +2365,9 @@ Retrieves the recordings
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -2554,10 +2381,6 @@ Retrieves the recordings
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `recordings`: array
-
 ---
 
 <a id="pvrgettimerdetails"></a>
@@ -2569,8 +2392,8 @@ Retrieves the details of a specific timer
 
 **参数:**
 
-  - `timerid` (?, 必需): 
-  - `properties` (?, 可选): 
+  - `timerid`: 定时器 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -2591,9 +2414,6 @@ Retrieves the details of a specific timer
 }
 ```
 
-**返回结构:** object
-  - `timerdetails`: object
-
 ---
 
 <a id="pvrgettimers"></a>
@@ -2605,9 +2425,9 @@ Retrieves the timers
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -2621,10 +2441,6 @@ Retrieves the timers
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `timers`: array
-
 ---
 
 <a id="pvrrecord"></a>
@@ -2636,8 +2452,8 @@ Toggle recording of a channel
 
 **参数:**
 
-  - `record` (?, 可选): 
-  - `channel` (current | integer(默认:-1), 可选): 
+  - `record`: 类型: ?; 可选
+  - `channel`: 类型: current | integer(默认:-1); 可选
 
 **请求:**
 
@@ -2651,8 +2467,6 @@ Toggle recording of a channel
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="pvrscan"></a>
@@ -2664,7 +2478,7 @@ Starts a channel scan
 
 **参数:**
 
-  - `clientid` (?, 可选): Specify a PVR client id to avoid UI dialog, optional in kodi 19, required in kodi 20
+  - `clientid`: Specify a PVR client id to avoid UI dialog, optional in kodi 19, required in kodi 20; 类型: ?; 可选
 
 **请求:**
 
@@ -2678,8 +2492,6 @@ Starts a channel scan
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="pvrtoggletimer"></a>
@@ -2691,8 +2503,8 @@ Creates or deletes a onetime timer or timer rule for a given show. If it exists,
 
 **参数:**
 
-  - `broadcastid` (?, 必需): the broadcast id of the item to toggle a onetime timer or time rule for
-  - `timerrule` (boolean, 可选): controls whether to create / delete a timer rule or a onetime timer
+  - `broadcastid`: 广播 ID; 类型: ?; 必需
+  - `timerrule`: controls whether to create / delete a timer rule or a onetime timer; 类型: boolean; 可选
 
 **请求:**
 
@@ -2713,8 +2525,6 @@ Creates or deletes a onetime timer or timer rule for a given show. If it exists,
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="player"></a>
@@ -2729,8 +2539,8 @@ Add subtitle to the player
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `subtitle` (string, 必需): Local path or remote URL to the subtitle file to load
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `subtitle`: 字幕流 ID; 类型: string; 必需
 
 **请求:**
 
@@ -2769,8 +2579,6 @@ Returns all active players
 (no params or skipped)
 ```
 
-**返回:** `array`
-
 ---
 
 <a id="playergetaudiodelay"></a>
@@ -2792,9 +2600,6 @@ Get the audio delay for the current playback
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `offset`: number
-
 ---
 
 <a id="playergetitem"></a>
@@ -2806,8 +2611,8 @@ Retrieves the currently played item
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `properties` (?, 可选): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -2841,7 +2646,7 @@ Get a list of available players
 
 **参数:**
 
-  - `media` (string, 可选): 
+  - `media`: 媒体类型 (video=视频, music=音乐, pictures=图片, files=文件, programs=程序); 类型: string; 可选
 
 **请求:**
 
@@ -2855,8 +2660,6 @@ Get a list of available players
 (no params or skipped)
 ```
 
-**返回:** `array`
-
 ---
 
 <a id="playergetproperties"></a>
@@ -2868,8 +2671,8 @@ Retrieves the values of the given properties
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `properties` (array, 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: array; 必需
 
 **请求:**
 
@@ -2912,13 +2715,6 @@ Get view mode of video player
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `nonlinearstretch`: boolean
-  - `pixelratio`: number
-  - `verticalshift`: number
-  - `viewmode`: normal | zoom | stretch4x3 | widezoom | stretch16x9 | original | stretch16x9nonlin | zoom120width | zoom110width
-  - `zoom`: number
-
 ---
 
 <a id="playergoto"></a>
@@ -2930,8 +2726,8 @@ Go to previous/next/specific item in the playlist
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `to` (previous | next | integer(默认:-1), 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `to`: 跳转目标 (previous=上一曲, next=下一曲, first=第一首, last=最后一首); 可选值: previous, next; 类型: integer(默认:-1) | previous | next; 必需
 
 **请求:**
 
@@ -2960,8 +2756,8 @@ If picture is zoomed move viewport left/right/up/down otherwise skip previous/ne
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `direction` (string, 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `direction`: 方向 (left=左, right=右, up=上, down=下); 类型: string; 必需
 
 **请求:**
 
@@ -2990,8 +2786,8 @@ Start playback of either the playlist with the given ID, a slideshow with the pi
 
 **参数:**
 
-  - `item` (object | [{'additionalProperties': False, 'properties': {'file': {'description': 'Path to a file (not a directory) to be added to the playlist', 'required': True, 'type': 'string'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'directory': {'required': True, 'type': 'string'}, 'media': {'$ref': 'Files.Media', 'default': 'files'}, 'recursive': {'default': False, 'type': 'boolean'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'movieid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'episodeid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'musicvideoid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'artistid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'albumid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'songid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'genreid': {'$ref': 'Library.Id', 'description': 'Identification of a genre from the AudioLibrary', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'recordingid': {'$ref': 'Library.Id', 'description': 'Identification of a PVR recording', 'required': True}}, 'type': 'object'}] | object | object | object | object | object, 可选): 
-  - `options` (object, 可选): 
+  - `item`: 要播放/添加的媒体项 (支持 file/playlistid/movieid 等格式); 类型: [{'additionalProperties': False, 'properties': {'file': {'description': 'Path to a file (not a directory) to be added to the playlist', 'required': True, 'type': 'string'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'directory': {'required': True, 'type': 'string'}, 'media': {'$ref': 'Files.Media', 'default': 'files'}, 'recursive': {'default': False, 'type': 'boolean'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'movieid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'episodeid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'musicvideoid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'artistid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'albumid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'songid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'genreid': {'$ref': 'Library.Id', 'description': 'Identification of a genre from the AudioLibrary', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'recordingid': {'$ref': 'Library.Id', 'description': 'Identification of a PVR recording', 'required': True}}, 'type': 'object'}] | object; 可选
+  - `options`: 类型: object; 可选
 
 **请求:**
 
@@ -3005,8 +2801,6 @@ Start playback of either the playlist with the given ID, a slideshow with the pi
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="playerplaypause"></a>
@@ -3018,8 +2812,8 @@ Pauses or unpause playback and returns the new state
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `play` (?, 可选): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `play`: 类型: ?; 可选
 
 **请求:**
 
@@ -3050,8 +2844,8 @@ Rotates current picture
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `value` (string, 可选): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `value`: 设置值; 类型: string; 可选
 
 **请求:**
 
@@ -3072,8 +2866,6 @@ Rotates current picture
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="playerseek"></a>
@@ -3085,8 +2877,8 @@ Seek through the playing item
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `value` (object | object | object | object, 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `value`: 设置值; 类型: object; 必需
 
 **请求:**
 
@@ -3129,8 +2921,8 @@ Set the audio delay for the current playback
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `offset` (number | increment | decrement, 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `offset`: 类型: increment | decrement | number; 必需
 
 **请求:**
 
@@ -3161,8 +2953,8 @@ Set the audio stream played by the player
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `stream` (previous | next | integer, 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `stream`: 类型: integer | previous | next; 必需
 
 **请求:**
 
@@ -3191,8 +2983,8 @@ Turn partymode on or off
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `partymode` (?, 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `partymode`: 派对模式 (toggle=切换, true=开启, false=关闭); 类型: ?; 必需
 
 **请求:**
 
@@ -3221,8 +3013,8 @@ Set the repeat mode of the player
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `repeat` (off | one | all | cycle, 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `repeat`: 循环模式 (one=单曲, all=全部, off=关闭); 可选值: off, one, all; 类型: cycle | off | one | all; 必需
 
 **请求:**
 
@@ -3251,8 +3043,8 @@ Shuffle/Unshuffle items in the player
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `shuffle` (?, 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `shuffle`: 类型: ?; 必需
 
 **请求:**
 
@@ -3281,8 +3073,8 @@ Set the speed of the current playback
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `speed` (-32 | -16 | -8 | -4 | -2 | -1 | 0 | 1 | 2 | 4 | 8 | 16 | 32 | increment | decrement, 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `speed`: 速度 (increment=加速, decrement=减速); 可选值: -32, -16, -8, -4, -2, -1, 0, 1, 2, 4, 8, 16, 32; 类型: -32 | -16 | -8 | -4 | -2 | -1 | 0 | 1 | 2 | 4 | 8 | 16 | 32 | increment | decrement; 必需
 
 **请求:**
 
@@ -3313,9 +3105,9 @@ Set the subtitle displayed by the player
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `subtitle` (previous | next | off | on | integer, 必需): 
-  - `enable` (boolean, 可选): Whether to enable subtitles to be displayed after setting the new subtitle
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `subtitle`: 字幕流 ID; 可选值: previous, next, off, on; 类型: integer | previous | next | off | on; 必需
+  - `enable`: Whether to enable subtitles to be displayed after setting the new subtitle; 类型: boolean; 可选
 
 **请求:**
 
@@ -3344,8 +3136,8 @@ Set the tempo of the current playback
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `tempo` (number | increment | decrement, 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `tempo`: 播放速率 (increment=加快, decrement=减慢); 可选值: increment, decrement; 类型: increment | decrement | number; 必需
 
 **请求:**
 
@@ -3366,8 +3158,6 @@ Set the tempo of the current playback
 }
 ```
 
-**返回:** `?`
-
 ---
 
 <a id="playersetvideostream"></a>
@@ -3379,8 +3169,8 @@ Set the video stream played by the player
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `stream` (previous | next | integer, 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `stream`: 类型: integer | previous | next; 必需
 
 **请求:**
 
@@ -3409,7 +3199,7 @@ Set view mode of video player
 
 **参数:**
 
-  - `viewmode` (object | normal | zoom | stretch4x3 | widezoom | stretch16x9 | original | stretch16x9nonlin | zoom120width | zoom110width, 必需): 
+  - `viewmode`: 类型: normal | zoom | stretch4x3 | widezoom | stretch16x9 | original | stretch16x9nonlin | zoom120width | zoom110width | object; 必需
 
 **请求:**
 
@@ -3438,7 +3228,7 @@ Stops playback
 
 **参数:**
 
-  - `playerid` (?, 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
 
 **请求:**
 
@@ -3467,8 +3257,8 @@ Zoom current picture
 
 **参数:**
 
-  - `playerid` (?, 必需): 
-  - `zoom` (in | out | integer(范围:1~10), 必需): 
+  - `playerid`: 播放器 ID (1=视频播放器); 类型: ?; 必需
+  - `zoom`: 缩放 (in=放大, out=缩小, level1~9=级别, normal=正常); 可选值: in, out; 类型: in | out | integer(范围:1~10); 必需
 
 **请求:**
 
@@ -3489,8 +3279,6 @@ Zoom current picture
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="playlist"></a>
@@ -3505,8 +3293,8 @@ Add item(s) to playlist
 
 **参数:**
 
-  - `playlistid` (?, 必需): 
-  - `item` ([{'additionalProperties': False, 'properties': {'file': {'description': 'Path to a file (not a directory) to be added to the playlist', 'required': True, 'type': 'string'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'directory': {'required': True, 'type': 'string'}, 'media': {'$ref': 'Files.Media', 'default': 'files'}, 'recursive': {'default': False, 'type': 'boolean'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'movieid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'episodeid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'musicvideoid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'artistid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'albumid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'songid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'genreid': {'$ref': 'Library.Id', 'description': 'Identification of a genre from the AudioLibrary', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'recordingid': {'$ref': 'Library.Id', 'description': 'Identification of a PVR recording', 'required': True}}, 'type': 'object'}] | array, 必需): 
+  - `playlistid`: 播放列表 ID (0=当前视频播放列表); 类型: ?; 必需
+  - `item`: 要播放/添加的媒体项 (支持 file/playlistid/movieid 等格式); 类型: [{'additionalProperties': False, 'properties': {'file': {'description': 'Path to a file (not a directory) to be added to the playlist', 'required': True, 'type': 'string'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'directory': {'required': True, 'type': 'string'}, 'media': {'$ref': 'Files.Media', 'default': 'files'}, 'recursive': {'default': False, 'type': 'boolean'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'movieid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'episodeid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'musicvideoid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'artistid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'albumid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'songid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'genreid': {'$ref': 'Library.Id', 'description': 'Identification of a genre from the AudioLibrary', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'recordingid': {'$ref': 'Library.Id', 'description': 'Identification of a PVR recording', 'required': True}}, 'type': 'object'}] | array; 必需
 
 **请求:**
 
@@ -3535,7 +3323,7 @@ Clear playlist
 
 **参数:**
 
-  - `playlistid` (?, 必需): 
+  - `playlistid`: 播放列表 ID (0=当前视频播放列表); 类型: ?; 必需
 
 **请求:**
 
@@ -3564,10 +3352,10 @@ Get all items from playlist
 
 **参数:**
 
-  - `playlistid` (?, 必需): 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `playlistid`: 播放列表 ID (0=当前视频播放列表); 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -3613,8 +3401,6 @@ Returns all existing playlists
 (no params or skipped)
 ```
 
-**返回:** `array`
-
 ---
 
 <a id="playlistgetproperties"></a>
@@ -3626,8 +3412,8 @@ Retrieves the values of the given properties
 
 **参数:**
 
-  - `playlistid` (?, 必需): 
-  - `properties` (array, 必需): 
+  - `playlistid`: 播放列表 ID (0=当前视频播放列表); 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: array; 必需
 
 **请求:**
 
@@ -3659,9 +3445,9 @@ Insert item(s) into playlist. Does not work for picture playlists (aka slideshow
 
 **参数:**
 
-  - `playlistid` (?, 必需): 
-  - `position` (?, 必需): 
-  - `item` ([{'additionalProperties': False, 'properties': {'file': {'description': 'Path to a file (not a directory) to be added to the playlist', 'required': True, 'type': 'string'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'directory': {'required': True, 'type': 'string'}, 'media': {'$ref': 'Files.Media', 'default': 'files'}, 'recursive': {'default': False, 'type': 'boolean'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'movieid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'episodeid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'musicvideoid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'artistid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'albumid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'songid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'genreid': {'$ref': 'Library.Id', 'description': 'Identification of a genre from the AudioLibrary', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'recordingid': {'$ref': 'Library.Id', 'description': 'Identification of a PVR recording', 'required': True}}, 'type': 'object'}] | array, 必需): 
+  - `playlistid`: 播放列表 ID (0=当前视频播放列表); 类型: ?; 必需
+  - `position`: 位置索引 (从 0 开始); 类型: ?; 必需
+  - `item`: 要播放/添加的媒体项 (支持 file/playlistid/movieid 等格式); 类型: [{'additionalProperties': False, 'properties': {'file': {'description': 'Path to a file (not a directory) to be added to the playlist', 'required': True, 'type': 'string'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'directory': {'required': True, 'type': 'string'}, 'media': {'$ref': 'Files.Media', 'default': 'files'}, 'recursive': {'default': False, 'type': 'boolean'}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'movieid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'episodeid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'musicvideoid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'artistid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'albumid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'songid': {'$ref': 'Library.Id', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'genreid': {'$ref': 'Library.Id', 'description': 'Identification of a genre from the AudioLibrary', 'required': True}}, 'type': 'object'}, {'additionalProperties': False, 'properties': {'recordingid': {'$ref': 'Library.Id', 'description': 'Identification of a PVR recording', 'required': True}}, 'type': 'object'}] | array; 必需
 
 **请求:**
 
@@ -3690,8 +3476,8 @@ Remove item from playlist. Does not work for picture playlists (aka slideshows).
 
 **参数:**
 
-  - `playlistid` (?, 必需): 
-  - `position` (?, 必需): 
+  - `playlistid`: 播放列表 ID (0=当前视频播放列表); 类型: ?; 必需
+  - `position`: 位置索引 (从 0 开始); 类型: ?; 必需
 
 **请求:**
 
@@ -3720,9 +3506,9 @@ Swap items in the playlist. Does not work for picture playlists (aka slideshows)
 
 **参数:**
 
-  - `playlistid` (?, 必需): 
-  - `position1` (?, 必需): 
-  - `position2` (?, 必需): 
+  - `playlistid`: 播放列表 ID (0=当前视频播放列表); 类型: ?; 必需
+  - `position1`: 第一个交换项的位置; 类型: ?; 必需
+  - `position2`: 第二个交换项的位置; 类型: ?; 必需
 
 **请求:**
 
@@ -3754,7 +3540,7 @@ Retrieve the current profile
 
 **参数:**
 
-  - `properties` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -3768,8 +3554,6 @@ Retrieve the current profile
 (no params or skipped)
 ```
 
-**返回:** `?`
-
 ---
 
 <a id="profilesgetprofiles"></a>
@@ -3781,9 +3565,9 @@ Retrieve all profiles
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -3797,10 +3581,6 @@ Retrieve all profiles
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `profiles`: array
-
 ---
 
 <a id="profilesloadprofile"></a>
@@ -3812,9 +3592,9 @@ Load the specified profile
 
 **参数:**
 
-  - `profile` (string, 必需): Profile name
-  - `prompt` (boolean, 可选): Prompt for password
-  - `password` (?, 可选): 
+  - `profile`: 配置名称; 类型: string; 必需
+  - `prompt`: Prompt for password; 类型: boolean; 可选
+  - `password`: 类型: ?; 可选
 
 **请求:**
 
@@ -3835,8 +3615,6 @@ Load the specified profile
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="settings"></a>
@@ -3851,9 +3629,9 @@ Retrieves all setting categories
 
 **参数:**
 
-  - `level` (?, 可选): 
-  - `section` (string, 可选): 
-  - `properties` (?, 可选): 
+  - `level`: 级别 (basic=基本, advanced=高级, expert=专家); 类型: ?; 可选
+  - `section`: 类型: string; 可选
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -3867,9 +3645,6 @@ Retrieves all setting categories
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `categories`: array
-
 ---
 
 <a id="settingsgetsections"></a>
@@ -3881,8 +3656,8 @@ Retrieves all setting sections
 
 **参数:**
 
-  - `level` (?, 可选): 
-  - `properties` (?, 可选): 
+  - `level`: 级别 (basic=基本, advanced=高级, expert=专家); 类型: ?; 可选
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -3896,9 +3671,6 @@ Retrieves all setting sections
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `sections`: array
-
 ---
 
 <a id="settingsgetsettingvalue"></a>
@@ -3910,7 +3682,7 @@ Retrieves the value of a setting
 
 **参数:**
 
-  - `setting` (string, 必需): 
+  - `setting`: 设置项 ID; 类型: string; 必需
 
 **请求:**
 
@@ -3941,8 +3713,8 @@ Retrieves all settings
 
 **参数:**
 
-  - `level` (?, 可选): 
-  - `filter` (object, 可选): 
+  - `level`: 级别 (basic=基本, advanced=高级, expert=专家); 类型: ?; 可选
+  - `filter`: 类型: object; 可选
 
 **请求:**
 
@@ -3956,9 +3728,6 @@ Retrieves all settings
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `settings`: array
-
 ---
 
 <a id="settingsgetskinsettingvalue"></a>
@@ -3970,7 +3739,7 @@ Retrieves the value of the specified skin setting
 
 **参数:**
 
-  - `setting` (string, 必需): 
+  - `setting`: 设置项 ID; 类型: string; 必需
 
 **请求:**
 
@@ -3990,9 +3759,6 @@ Retrieves the value of the specified skin setting
   "jsonrpc": "2.0"
 }
 ```
-
-**返回结构:** object
-  - `value`: [{'type': 'boolean'}, {'type': 'string'}]
 
 ---
 
@@ -4015,10 +3781,6 @@ Retrieves all skin settings of the currently used skin
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `settings`: array
-  - `skin`: string
-
 ---
 
 <a id="settingsresetsettingvalue"></a>
@@ -4030,7 +3792,7 @@ Resets the value of a setting
 
 **参数:**
 
-  - `setting` (string, 必需): 
+  - `setting`: 设置项 ID; 类型: string; 必需
 
 **请求:**
 
@@ -4059,8 +3821,8 @@ Changes the value of a setting
 
 **参数:**
 
-  - `setting` (string, 必需): 
-  - `value` (?, 必需): 
+  - `setting`: 设置项 ID; 类型: string; 必需
+  - `value`: 设置值; 类型: ?; 必需
 
 **请求:**
 
@@ -4089,8 +3851,8 @@ Changes the value of the specified skin setting
 
 **参数:**
 
-  - `setting` (string, 必需): 
-  - `value` (boolean | string, 必需): 
+  - `setting`: 设置项 ID; 类型: string; 必需
+  - `value`: 设置值; 类型: boolean | string; 必需
 
 **请求:**
 
@@ -4110,8 +3872,6 @@ Changes the value of the specified skin setting
   "jsonrpc": "2.0"
 }
 ```
-
-**返回:** `boolean`
 
 ---
 
@@ -4137,8 +3897,6 @@ Ejects or closes the optical disc drive (if available)
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="systemgetproperties"></a>
@@ -4150,7 +3908,7 @@ Retrieves the values of the given properties
 
 **参数:**
 
-  - `properties` (array, 必需): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: array; 必需
 
 **请求:**
 
@@ -4184,8 +3942,6 @@ Retrieves the values of the given properties
 }
 ```
 
-**返回:** `?`
-
 ---
 
 <a id="systemhibernate"></a>
@@ -4206,8 +3962,6 @@ Puts the system running Kodi into hibernate mode
 ```
 (no params or skipped)
 ```
-
-**返回:** `string`
 
 ---
 
@@ -4230,8 +3984,6 @@ Reboots the system running Kodi
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="systemshutdown"></a>
@@ -4252,8 +4004,6 @@ Shuts the system running Kodi down
 ```
 (no params or skipped)
 ```
-
-**返回:** `string`
 
 ---
 
@@ -4276,8 +4026,6 @@ Suspends the system running Kodi
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="textures"></a>
@@ -4292,8 +4040,8 @@ Retrieve all textures
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `filter` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `filter`: 类型: ?; 可选
 
 **请求:**
 
@@ -4307,9 +4055,6 @@ Retrieve all textures
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `textures`: array
-
 ---
 
 <a id="texturesremovetexture"></a>
@@ -4321,7 +4066,7 @@ Remove the specified texture
 
 **参数:**
 
-  - `textureid` (?, 必需): Texture database identifier
+  - `textureid`: 纹理 ID; 类型: ?; 必需
 
 **请求:**
 
@@ -4350,8 +4095,6 @@ Remove the specified texture
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="videolibrary"></a>
@@ -4366,9 +4109,9 @@ Cleans the video library for non-existent items
 
 **参数:**
 
-  - `showdialogs` (boolean, 可选): Whether or not to show the progress bar or any other GUI dialog
-  - `content` (string, 可选): Content type to clean for
-  - `directory` (string, 可选): Path to the directory to clean up; performs a global cleanup if not specified
+  - `showdialogs`: Whether or not to show the progress bar or any other GUI dialog; 类型: boolean; 可选
+  - `content`: Content type to clean for; 类型: string; 可选
+  - `directory`: 目录路径; 类型: string; 可选
 
 **请求:**
 
@@ -4382,8 +4125,6 @@ Cleans the video library for non-existent items
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="videolibraryexport"></a>
@@ -4395,7 +4136,7 @@ Exports all items from the video library
 
 **参数:**
 
-  - `options` (object | object, 可选): 
+  - `options`: 类型: object; 可选
 
 **请求:**
 
@@ -4409,8 +4150,6 @@ Exports all items from the video library
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="videolibrarygetavailableart"></a>
@@ -4422,8 +4161,8 @@ Retrieve all potential art URLs for a media item by art type
 
 **参数:**
 
-  - `item` (object | object | object | object | object | object, 必需): 
-  - `arttype` (string, 可选): 
+  - `item`: 要播放/添加的媒体项 (支持 file/playlistid/movieid 等格式); 类型: object; 必需
+  - `arttype`: 类型: string; 可选
 
 **请求:**
 
@@ -4454,7 +4193,7 @@ Retrieve a list of potential art types for a media item
 
 **参数:**
 
-  - `item` (object | object | object | object | object | object, 必需): 
+  - `item`: 要播放/添加的媒体项 (支持 file/playlistid/movieid 等格式); 类型: object; 必需
 
 **请求:**
 
@@ -4485,8 +4224,8 @@ Retrieve details about a specific tv show episode
 
 **参数:**
 
-  - `episodeid` (?, 必需): 
-  - `properties` (?, 可选): 
+  - `episodeid`: 剧集 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -4507,9 +4246,6 @@ Retrieve details about a specific tv show episode
 }
 ```
 
-**返回结构:** object
-  - `episodedetails`: object
-
 ---
 
 <a id="videolibrarygetepisodes"></a>
@@ -4521,12 +4257,12 @@ Retrieve all tv show episodes
 
 **参数:**
 
-  - `tvshowid` (?, 可选): 
-  - `season` (integer, 可选): 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.Episodes'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Episodes'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Episodes'}], 可选): 
+  - `tvshowid`: 电视剧 ID; 类型: ?; 可选
+  - `season`: 类型: integer; 可选
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
+  - `filter`: 类型: [{'properties': {'and': {'items': {'$ref': 'List.Filter.Episodes'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Episodes'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Episodes'}] | object; 可选
 
 **请求:**
 
@@ -4540,10 +4276,6 @@ Retrieve all tv show episodes
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `episodes`: array
-  - `limits`: object
-
 ---
 
 <a id="videolibrarygetgenres"></a>
@@ -4555,10 +4287,10 @@ Retrieve all genres
 
 **参数:**
 
-  - `type` (string, 必需): 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `type`: 类型; 类型: string; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -4594,9 +4326,9 @@ Retrieve all in progress tvshows
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -4610,10 +4342,6 @@ Retrieve all in progress tvshows
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `tvshows`: array
-
 ---
 
 <a id="videolibrarygetmoviedetails"></a>
@@ -4625,8 +4353,8 @@ Retrieve details about a specific movie
 
 **参数:**
 
-  - `movieid` (?, 必需): 
-  - `properties` (?, 可选): 
+  - `movieid`: 电影 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -4647,9 +4375,6 @@ Retrieve details about a specific movie
 }
 ```
 
-**返回结构:** object
-  - `moviedetails`: object
-
 ---
 
 <a id="videolibrarygetmoviesetdetails"></a>
@@ -4661,9 +4386,9 @@ Retrieve details about a specific movie set
 
 **参数:**
 
-  - `setid` (?, 必需): 
-  - `properties` (?, 可选): 
-  - `movies` (object, 可选): 
+  - `setid`: 合集 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `movies`: 类型: object; 可选
 
 **请求:**
 
@@ -4684,9 +4409,6 @@ Retrieve details about a specific movie set
 }
 ```
 
-**返回结构:** object
-  - `setdetails`: object
-
 ---
 
 <a id="videolibrarygetmoviesets"></a>
@@ -4698,9 +4420,9 @@ Retrieve all movie sets
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -4714,10 +4436,6 @@ Retrieve all movie sets
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `sets`: array
-
 ---
 
 <a id="videolibrarygetmovies"></a>
@@ -4729,10 +4447,10 @@ Retrieve all movies
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.Movies'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Movies'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Movies'}], 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
+  - `filter`: 类型: [{'properties': {'and': {'items': {'$ref': 'List.Filter.Movies'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.Movies'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.Movies'}] | object; 可选
 
 **请求:**
 
@@ -4746,10 +4464,6 @@ Retrieve all movies
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `movies`: array
-
 ---
 
 <a id="videolibrarygetmusicvideodetails"></a>
@@ -4761,8 +4475,8 @@ Retrieve details about a specific music video
 
 **参数:**
 
-  - `musicvideoid` (?, 必需): 
-  - `properties` (?, 可选): 
+  - `musicvideoid`: 音乐视频 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -4783,9 +4497,6 @@ Retrieve details about a specific music video
 }
 ```
 
-**返回结构:** object
-  - `musicvideodetails`: object
-
 ---
 
 <a id="videolibrarygetmusicvideos"></a>
@@ -4797,10 +4508,10 @@ Retrieve all music videos
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.MusicVideos'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.MusicVideos'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.MusicVideos'}], 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
+  - `filter`: 类型: [{'properties': {'and': {'items': {'$ref': 'List.Filter.MusicVideos'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.MusicVideos'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.MusicVideos'}] | object; 可选
 
 **请求:**
 
@@ -4836,9 +4547,9 @@ Retrieve all recently added tv episodes
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -4852,10 +4563,6 @@ Retrieve all recently added tv episodes
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `episodes`: array
-  - `limits`: object
-
 ---
 
 <a id="videolibrarygetrecentlyaddedmovies"></a>
@@ -4867,9 +4574,9 @@ Retrieve all recently added movies
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -4883,10 +4590,6 @@ Retrieve all recently added movies
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `movies`: array
-
 ---
 
 <a id="videolibrarygetrecentlyaddedmusicvideos"></a>
@@ -4898,9 +4601,9 @@ Retrieve all recently added music videos
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -4936,8 +4639,8 @@ Retrieve details about a specific tv show season
 
 **参数:**
 
-  - `seasonid` (?, 必需): 
-  - `properties` (?, 可选): 
+  - `seasonid`: 季度 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -4958,9 +4661,6 @@ Retrieve details about a specific tv show season
 }
 ```
 
-**返回结构:** object
-  - `seasondetails`: object
-
 ---
 
 <a id="videolibrarygetseasons"></a>
@@ -4972,10 +4672,10 @@ Retrieve all tv seasons
 
 **参数:**
 
-  - `tvshowid` (?, 可选): 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `tvshowid`: 电视剧 ID; 类型: ?; 可选
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -4989,10 +4689,6 @@ Retrieve all tv seasons
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `seasons`: array
-
 ---
 
 <a id="videolibrarygettvshowdetails"></a>
@@ -5004,8 +4700,8 @@ Retrieve details about a specific tv show
 
 **参数:**
 
-  - `tvshowid` (?, 必需): 
-  - `properties` (?, 可选): 
+  - `tvshowid`: 电视剧 ID; 类型: ?; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
 
 **请求:**
 
@@ -5026,9 +4722,6 @@ Retrieve details about a specific tv show
 }
 ```
 
-**返回结构:** object
-  - `tvshowdetails`: object
-
 ---
 
 <a id="videolibrarygettvshows"></a>
@@ -5040,10 +4733,10 @@ Retrieve all tv shows
 
 **参数:**
 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
-  - `filter` (object | object | object | object | object | object | [{'properties': {'and': {'items': {'$ref': 'List.Filter.TVShows'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.TVShows'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.TVShows'}], 可选): 
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
+  - `filter`: 类型: [{'properties': {'and': {'items': {'$ref': 'List.Filter.TVShows'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'properties': {'or': {'items': {'$ref': 'List.Filter.TVShows'}, 'minItems': 1, 'required': True, 'type': 'array'}}, 'type': 'object'}, {'$ref': 'List.Filter.Rule.TVShows'}] | object; 可选
 
 **请求:**
 
@@ -5057,10 +4750,6 @@ Retrieve all tv shows
 (no params or skipped)
 ```
 
-**返回结构:** object
-  - `limits`: object
-  - `tvshows`: array
-
 ---
 
 <a id="videolibrarygettags"></a>
@@ -5072,10 +4761,10 @@ Retrieve all tags
 
 **参数:**
 
-  - `type` (string, 必需): 
-  - `properties` (?, 可选): 
-  - `limits` (?, 可选): 
-  - `sort` (?, 可选): 
+  - `type`: 类型; 类型: string; 必需
+  - `properties`: 要获取的属性列表, 可选值取决于具体方法; 类型: ?; 可选
+  - `limits`: 分页限制 {start, end}; 类型: ?; 可选
+  - `sort`: 类型: ?; 可选
 
 **请求:**
 
@@ -5111,9 +4800,9 @@ Refresh the given episode in the library
 
 **参数:**
 
-  - `episodeid` (?, 必需): 
-  - `ignorenfo` (boolean, 可选): Whether or not to ignore a local NFO if present.
-  - `title` (string, 可选): Title to use for searching (instead of determining it from the item's filename/path).
+  - `episodeid`: 剧集 ID; 类型: ?; 必需
+  - `ignorenfo`: Whether or not to ignore a local NFO if present.; 类型: boolean; 可选
+  - `title`: 标题; 类型: string; 可选
 
 **请求:**
 
@@ -5134,8 +4823,6 @@ Refresh the given episode in the library
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="videolibraryrefreshmovie"></a>
@@ -5147,9 +4834,9 @@ Refresh the given movie in the library
 
 **参数:**
 
-  - `movieid` (?, 必需): 
-  - `ignorenfo` (boolean, 可选): Whether or not to ignore a local NFO if present.
-  - `title` (string, 可选): Title to use for searching (instead of determining it from the item's filename/path).
+  - `movieid`: 电影 ID; 类型: ?; 必需
+  - `ignorenfo`: Whether or not to ignore a local NFO if present.; 类型: boolean; 可选
+  - `title`: 标题; 类型: string; 可选
 
 **请求:**
 
@@ -5170,8 +4857,6 @@ Refresh the given movie in the library
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="videolibraryrefreshmusicvideo"></a>
@@ -5183,9 +4868,9 @@ Refresh the given music video in the library
 
 **参数:**
 
-  - `musicvideoid` (?, 必需): 
-  - `ignorenfo` (boolean, 可选): Whether or not to ignore a local NFO if present.
-  - `title` (string, 可选): Title to use for searching (instead of determining it from the item's filename/path).
+  - `musicvideoid`: 音乐视频 ID; 类型: ?; 必需
+  - `ignorenfo`: Whether or not to ignore a local NFO if present.; 类型: boolean; 可选
+  - `title`: 标题; 类型: string; 可选
 
 **请求:**
 
@@ -5206,8 +4891,6 @@ Refresh the given music video in the library
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="videolibraryrefreshtvshow"></a>
@@ -5219,10 +4902,10 @@ Refresh the given tv show in the library
 
 **参数:**
 
-  - `tvshowid` (?, 必需): 
-  - `ignorenfo` (boolean, 可选): Whether or not to ignore a local NFO if present.
-  - `refreshepisodes` (boolean, 可选): Whether or not to refresh all episodes belonging to the TV show.
-  - `title` (string, 可选): Title to use for searching (instead of determining it from the item's filename/path).
+  - `tvshowid`: 电视剧 ID; 类型: ?; 必需
+  - `ignorenfo`: Whether or not to ignore a local NFO if present.; 类型: boolean; 可选
+  - `refreshepisodes`: Whether or not to refresh all episodes belonging to the TV show.; 类型: boolean; 可选
+  - `title`: 标题; 类型: string; 可选
 
 **请求:**
 
@@ -5243,8 +4926,6 @@ Refresh the given tv show in the library
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="videolibraryremoveepisode"></a>
@@ -5256,7 +4937,7 @@ Removes the given episode from the library
 
 **参数:**
 
-  - `episodeid` (?, 必需): 
+  - `episodeid`: 剧集 ID; 类型: ?; 必需
 
 **请求:**
 
@@ -5285,7 +4966,7 @@ Removes the given movie from the library
 
 **参数:**
 
-  - `movieid` (?, 必需): 
+  - `movieid`: 电影 ID; 类型: ?; 必需
 
 **请求:**
 
@@ -5314,7 +4995,7 @@ Removes the given music video from the library
 
 **参数:**
 
-  - `musicvideoid` (?, 必需): 
+  - `musicvideoid`: 音乐视频 ID; 类型: ?; 必需
 
 **请求:**
 
@@ -5343,7 +5024,7 @@ Removes the given tv show from the library
 
 **参数:**
 
-  - `tvshowid` (?, 必需): 
+  - `tvshowid`: 电视剧 ID; 类型: ?; 必需
 
 **请求:**
 
@@ -5372,8 +5053,8 @@ Scans the video sources for new library items
 
 **参数:**
 
-  - `directory` (string, 可选): 
-  - `showdialogs` (boolean, 可选): Whether or not to show the progress bar or any other GUI dialog
+  - `directory`: 目录路径; 类型: string; 可选
+  - `showdialogs`: Whether or not to show the progress bar or any other GUI dialog; 类型: boolean; 可选
 
 **请求:**
 
@@ -5387,8 +5068,6 @@ Scans the video sources for new library items
 (no params or skipped)
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="videolibrarysetepisodedetails"></a>
@@ -5400,29 +5079,29 @@ Update the given episode with the given details
 
 **参数:**
 
-  - `episodeid` (?, 必需): 
-  - `title` (?, 可选): 
-  - `playcount` (?, 可选): 
-  - `runtime` (?, 可选): Runtime in seconds
-  - `director` (null | array, 可选): 
-  - `plot` (?, 可选): 
-  - `rating` (?, 可选): 
-  - `votes` (?, 可选): 
-  - `lastplayed` (?, 可选): 
-  - `writer` (null | array, 可选): 
-  - `firstaired` (?, 可选): 
-  - `productioncode` (?, 可选): 
-  - `season` (?, 可选): 
-  - `episode` (?, 可选): 
-  - `originaltitle` (?, 可选): 
-  - `thumbnail` (?, 可选): 
-  - `fanart` (?, 可选): 
-  - `art` (null | object, 可选): 
-  - `resume` (null | object, 可选): 
-  - `userrating` (?, 可选): 
-  - `ratings` (?, 可选): 
-  - `dateadded` (?, 可选): 
-  - `uniqueid` (null | object, 可选): 
+  - `episodeid`: 剧集 ID; 类型: ?; 必需
+  - `title`: 标题; 类型: ?; 可选
+  - `playcount`: 类型: ?; 可选
+  - `runtime`: Runtime in seconds; 类型: ?; 可选
+  - `director`: 类型: array | null; 可选
+  - `plot`: 类型: ?; 可选
+  - `rating`: 类型: ?; 可选
+  - `votes`: 类型: ?; 可选
+  - `lastplayed`: 类型: ?; 可选
+  - `writer`: 类型: array | null; 可选
+  - `firstaired`: 类型: ?; 可选
+  - `productioncode`: 类型: ?; 可选
+  - `season`: 类型: ?; 可选
+  - `episode`: 类型: ?; 可选
+  - `originaltitle`: 类型: ?; 可选
+  - `thumbnail`: 类型: ?; 可选
+  - `fanart`: 类型: ?; 可选
+  - `art`: 类型: null | object; 可选
+  - `resume`: 类型: null | object; 可选
+  - `userrating`: 类型: ?; 可选
+  - `ratings`: 类型: ?; 可选
+  - `dateadded`: 类型: ?; 可选
+  - `uniqueid`: 类型: null | object; 可选
 
 **请求:**
 
@@ -5443,8 +5122,6 @@ Update the given episode with the given details
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="videolibrarysetmoviedetails"></a>
@@ -5456,40 +5133,40 @@ Update the given movie with the given details
 
 **参数:**
 
-  - `movieid` (?, 必需): 
-  - `title` (?, 可选): 
-  - `playcount` (?, 可选): 
-  - `runtime` (?, 可选): Runtime in seconds
-  - `director` (null | array, 可选): 
-  - `studio` (null | array, 可选): 
-  - `year` (?, 可选): linked with premiered. Overridden by premiered parameter
-  - `plot` (?, 可选): 
-  - `genre` (null | array, 可选): 
-  - `rating` (?, 可选): 
-  - `mpaa` (?, 可选): 
-  - `imdbnumber` (?, 可选): 
-  - `votes` (?, 可选): 
-  - `lastplayed` (?, 可选): 
-  - `originaltitle` (?, 可选): 
-  - `trailer` (?, 可选): 
-  - `tagline` (?, 可选): 
-  - `plotoutline` (?, 可选): 
-  - `writer` (null | array, 可选): 
-  - `country` (null | array, 可选): 
-  - `top250` (?, 可选): 
-  - `sorttitle` (?, 可选): 
-  - `set` (?, 可选): 
-  - `showlink` (null | array, 可选): 
-  - `thumbnail` (?, 可选): 
-  - `fanart` (?, 可选): 
-  - `tag` (null | array, 可选): 
-  - `art` (null | object, 可选): 
-  - `resume` (null | object, 可选): 
-  - `userrating` (?, 可选): 
-  - `ratings` (?, 可选): 
-  - `dateadded` (?, 可选): 
-  - `premiered` (?, 可选): linked with year. Overrides year
-  - `uniqueid` (null | object, 可选): 
+  - `movieid`: 电影 ID; 类型: ?; 必需
+  - `title`: 标题; 类型: ?; 可选
+  - `playcount`: 类型: ?; 可选
+  - `runtime`: Runtime in seconds; 类型: ?; 可选
+  - `director`: 类型: array | null; 可选
+  - `studio`: 类型: array | null; 可选
+  - `year`: linked with premiered. Overridden by premiered parameter; 类型: ?; 可选
+  - `plot`: 类型: ?; 可选
+  - `genre`: 类型: array | null; 可选
+  - `rating`: 类型: ?; 可选
+  - `mpaa`: 类型: ?; 可选
+  - `imdbnumber`: 类型: ?; 可选
+  - `votes`: 类型: ?; 可选
+  - `lastplayed`: 类型: ?; 可选
+  - `originaltitle`: 类型: ?; 可选
+  - `trailer`: 类型: ?; 可选
+  - `tagline`: 类型: ?; 可选
+  - `plotoutline`: 类型: ?; 可选
+  - `writer`: 类型: array | null; 可选
+  - `country`: 类型: array | null; 可选
+  - `top250`: 类型: ?; 可选
+  - `sorttitle`: 类型: ?; 可选
+  - `set`: 类型: ?; 可选
+  - `showlink`: 类型: array | null; 可选
+  - `thumbnail`: 类型: ?; 可选
+  - `fanart`: 类型: ?; 可选
+  - `tag`: 类型: array | null; 可选
+  - `art`: 类型: null | object; 可选
+  - `resume`: 类型: null | object; 可选
+  - `userrating`: 类型: ?; 可选
+  - `ratings`: 类型: ?; 可选
+  - `dateadded`: 类型: ?; 可选
+  - `premiered`: linked with year. Overrides year; 类型: ?; 可选
+  - `uniqueid`: 类型: null | object; 可选
 
 **请求:**
 
@@ -5510,8 +5187,6 @@ Update the given movie with the given details
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="videolibrarysetmoviesetdetails"></a>
@@ -5523,10 +5198,10 @@ Update the given movie set with the given details
 
 **参数:**
 
-  - `setid` (?, 必需): 
-  - `title` (?, 可选): 
-  - `art` (null | object, 可选): 
-  - `plot` (?, 可选): 
+  - `setid`: 合集 ID; 类型: ?; 必需
+  - `title`: 标题; 类型: ?; 可选
+  - `art`: 类型: null | object; 可选
+  - `plot`: 类型: ?; 可选
 
 **请求:**
 
@@ -5547,8 +5222,6 @@ Update the given movie set with the given details
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="videolibrarysetmusicvideodetails"></a>
@@ -5560,29 +5233,29 @@ Update the given music video with the given details
 
 **参数:**
 
-  - `musicvideoid` (?, 必需): 
-  - `title` (?, 可选): 
-  - `playcount` (?, 可选): 
-  - `runtime` (?, 可选): Runtime in seconds
-  - `director` (null | array, 可选): 
-  - `studio` (null | array, 可选): 
-  - `year` (?, 可选): linked with premiered. Overridden by premiered parameter
-  - `plot` (?, 可选): 
-  - `album` (?, 可选): 
-  - `artist` (null | array, 可选): 
-  - `genre` (null | array, 可选): 
-  - `track` (?, 可选): 
-  - `lastplayed` (?, 可选): 
-  - `thumbnail` (?, 可选): 
-  - `fanart` (?, 可选): 
-  - `tag` (null | array, 可选): 
-  - `art` (null | object, 可选): 
-  - `resume` (null | object, 可选): 
-  - `rating` (?, 可选): 
-  - `userrating` (?, 可选): 
-  - `dateadded` (?, 可选): 
-  - `premiered` (?, 可选): linked with year. Overrides year
-  - `uniqueid` (null | object, 可选): 
+  - `musicvideoid`: 音乐视频 ID; 类型: ?; 必需
+  - `title`: 标题; 类型: ?; 可选
+  - `playcount`: 类型: ?; 可选
+  - `runtime`: Runtime in seconds; 类型: ?; 可选
+  - `director`: 类型: array | null; 可选
+  - `studio`: 类型: array | null; 可选
+  - `year`: linked with premiered. Overridden by premiered parameter; 类型: ?; 可选
+  - `plot`: 类型: ?; 可选
+  - `album`: 类型: ?; 可选
+  - `artist`: 类型: array | null; 可选
+  - `genre`: 类型: array | null; 可选
+  - `track`: 类型: ?; 可选
+  - `lastplayed`: 类型: ?; 可选
+  - `thumbnail`: 类型: ?; 可选
+  - `fanart`: 类型: ?; 可选
+  - `tag`: 类型: array | null; 可选
+  - `art`: 类型: null | object; 可选
+  - `resume`: 类型: null | object; 可选
+  - `rating`: 类型: ?; 可选
+  - `userrating`: 类型: ?; 可选
+  - `dateadded`: 类型: ?; 可选
+  - `premiered`: linked with year. Overrides year; 类型: ?; 可选
+  - `uniqueid`: 类型: null | object; 可选
 
 **请求:**
 
@@ -5603,8 +5276,6 @@ Update the given music video with the given details
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="videolibrarysetseasondetails"></a>
@@ -5616,10 +5287,10 @@ Update the given season with the given details
 
 **参数:**
 
-  - `seasonid` (?, 必需): 
-  - `art` (null | object, 可选): 
-  - `userrating` (?, 可选): 
-  - `title` (?, 可选): 
+  - `seasonid`: 季度 ID; 类型: ?; 必需
+  - `art`: 类型: null | object; 可选
+  - `userrating`: 类型: ?; 可选
+  - `title`: 标题; 类型: ?; 可选
 
 **请求:**
 
@@ -5640,8 +5311,6 @@ Update the given season with the given details
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="videolibrarysettvshowdetails"></a>
@@ -5653,31 +5322,31 @@ Update the given tvshow with the given details
 
 **参数:**
 
-  - `tvshowid` (?, 必需): 
-  - `title` (?, 可选): 
-  - `playcount` (?, 可选): 
-  - `studio` (null | array, 可选): 
-  - `plot` (?, 可选): 
-  - `genre` (null | array, 可选): 
-  - `rating` (?, 可选): 
-  - `mpaa` (?, 可选): 
-  - `imdbnumber` (?, 可选): 
-  - `premiered` (?, 可选): 
-  - `votes` (?, 可选): 
-  - `lastplayed` (?, 可选): 
-  - `originaltitle` (?, 可选): 
-  - `sorttitle` (?, 可选): 
-  - `episodeguide` (?, 可选): 
-  - `thumbnail` (?, 可选): 
-  - `fanart` (?, 可选): 
-  - `tag` (null | array, 可选): 
-  - `art` (null | object, 可选): 
-  - `userrating` (?, 可选): 
-  - `ratings` (?, 可选): 
-  - `dateadded` (?, 可选): 
-  - `runtime` (?, 可选): Runtime in seconds
-  - `status` (?, 可选): Valid values: 'returning series', 'in production', 'planned', 'cancelled', 'ended'
-  - `uniqueid` (null | object, 可选): 
+  - `tvshowid`: 电视剧 ID; 类型: ?; 必需
+  - `title`: 标题; 类型: ?; 可选
+  - `playcount`: 类型: ?; 可选
+  - `studio`: 类型: array | null; 可选
+  - `plot`: 类型: ?; 可选
+  - `genre`: 类型: array | null; 可选
+  - `rating`: 类型: ?; 可选
+  - `mpaa`: 类型: ?; 可选
+  - `imdbnumber`: 类型: ?; 可选
+  - `premiered`: 类型: ?; 可选
+  - `votes`: 类型: ?; 可选
+  - `lastplayed`: 类型: ?; 可选
+  - `originaltitle`: 类型: ?; 可选
+  - `sorttitle`: 类型: ?; 可选
+  - `episodeguide`: 类型: ?; 可选
+  - `thumbnail`: 类型: ?; 可选
+  - `fanart`: 类型: ?; 可选
+  - `tag`: 类型: array | null; 可选
+  - `art`: 类型: null | object; 可选
+  - `userrating`: 类型: ?; 可选
+  - `ratings`: 类型: ?; 可选
+  - `dateadded`: 类型: ?; 可选
+  - `runtime`: Runtime in seconds; 类型: ?; 可选
+  - `status`: Valid values: 'returning series', 'in production', 'planned', 'cancelled', 'ended'; 类型: ?; 可选
+  - `uniqueid`: 类型: null | object; 可选
 
 **请求:**
 
@@ -5698,8 +5367,6 @@ Update the given tvshow with the given details
 }
 ```
 
-**返回:** `string`
-
 ---
 
 <a id="xbmc"></a>
@@ -5714,7 +5381,7 @@ Retrieve info booleans about Kodi and the system
 
 **参数:**
 
-  - `booleans` (array, 必需): 
+  - `booleans`: 要查询的布尔信息项; 类型: array; 必需
 
 **请求:**
 
@@ -5743,8 +5410,6 @@ Retrieve info booleans about Kodi and the system
 }
 ```
 
-**返回:** `object`
-
 ---
 
 <a id="xbmcgetinfolabels"></a>
@@ -5756,7 +5421,7 @@ Retrieve info labels about Kodi and the system
 
 **参数:**
 
-  - `labels` (array, 必需): See http://kodi.wiki/view/InfoLabels for a list of possible info labels
+  - `labels`: 要查询的标签项; 类型: array; 必需
 
 **请求:**
 
@@ -5785,22 +5450,20 @@ Retrieve info labels about Kodi and the system
 }
 ```
 
-**返回:** `object`
-
 ---
 
 ## 错误码附录
 
-| 错误码 | 说明 | 触发此错误的方法 | 如何避免 |
-|--------|------|------------------|----------|
-| `-32700` | Parse error — JSON 格式错误 | （未触发） | 预防性注意 |
-| `-32603` | Internal error — KODI 内部错误 | （未触发） | 预防性注意 |
-| `-32602` | Invalid params — 参数类型或值不合法 | `Addons.ExecuteAddon`, `Addons.GetAddonDetails`, `Addons.SetAddonEnabled`, `AudioLibrary.GetAlbumDetails`, `AudioLibrary.GetAvailableArt`, `AudioLibrary.GetAvailableArtTypes`, `AudioLibrary.GetProperties`, `AudioLibrary.GetSongDetails`, `AudioLibrary.SetAlbumDetails`, `AudioLibrary.SetSongDetails`, `Favourites.AddFavourite`, `Profiles.LoadProfile`, `Settings.GetSkinSettingValue`, `Settings.SetSkinSettingValue`, `System.GetProperties`, `Textures.RemoveTexture`, `VideoLibrary.GetEpisodeDetails`, `VideoLibrary.GetMovieDetails`, `VideoLibrary.GetMovieSetDetails`, `VideoLibrary.GetMusicVideoDetails`, `VideoLibrary.GetSeasonDetails`, `VideoLibrary.GetTVShowDetails`, `VideoLibrary.RefreshEpisode`, `VideoLibrary.RefreshMovie`, `VideoLibrary.RefreshMusicVideo`, `VideoLibrary.RefreshTVShow`, `VideoLibrary.SetEpisodeDetails`, `VideoLibrary.SetMovieDetails`, `VideoLibrary.SetMovieSetDetails`, `VideoLibrary.SetMusicVideoDetails`, `VideoLibrary.SetSeasonDetails`, `VideoLibrary.SetTVShowDetails`, `XBMC.GetInfoBooleans`, `XBMC.GetInfoLabels` | 确保参数类型/枚举值合法；确保当前状态支持此操作 |
-| `-32601` | Method not found — 方法名不存在 | （未触发） | 预防性注意 |
-| `-32600` | Invalid Request — 请求不是合法 JSON-RPC | （未触发） | 预防性注意 |
-| `-32100` | Failed to execute method — 当前状态不支持 | `PVR.AddTimer`, `PVR.DeleteTimer`, `PVR.GetBroadcastDetails`, `PVR.GetBroadcastIsPlayable`, `PVR.GetBroadcasts`, `PVR.GetChannelDetails`, `PVR.GetChannelGroupDetails`, `PVR.GetChannelGroups`, `PVR.GetChannels`, `PVR.GetProperties`, `PVR.GetRecordingDetails`, `PVR.GetTimerDetails`, `PVR.ToggleTimer`, `Player.Rotate`, `Player.SetTempo`, `Player.Zoom` | 确保参数类型/枚举值合法；确保当前状态支持此操作 |
-| `-32000` | Result too large — 返回结果过大 | （未触发） | 预防性注意 |
+| 错误码 | 说明 | 触发方法 | 如何避免 |
+|--------|------|----------|----------|
+| `-32700` | JSON 格式错误 | （未触发） | 预防性注意 |
+| `-32603` | KODI 内部错误 | （未触发） | 预防性注意 |
+| `-32602` | 参数不合法 | `Addons.ExecuteAddon`, `Addons.GetAddonDetails`, `Addons.SetAddonEnabled`, `AudioLibrary.GetAlbumDetails`, `AudioLibrary.GetAvailableArt`, `AudioLibrary.GetAvailableArtTypes`, `AudioLibrary.GetProperties`, `AudioLibrary.GetSongDetails`, `AudioLibrary.SetAlbumDetails`, `AudioLibrary.SetSongDetails`, `Favourites.AddFavourite`, `Profiles.LoadProfile`, `Settings.GetSkinSettingValue`, `Settings.SetSkinSettingValue`, `System.GetProperties`, `Textures.RemoveTexture`, `VideoLibrary.GetEpisodeDetails`, `VideoLibrary.GetMovieDetails`, `VideoLibrary.GetMovieSetDetails`, `VideoLibrary.GetMusicVideoDetails`, `VideoLibrary.GetSeasonDetails`, `VideoLibrary.GetTVShowDetails`, `VideoLibrary.RefreshEpisode`, `VideoLibrary.RefreshMovie`, `VideoLibrary.RefreshMusicVideo`, `VideoLibrary.RefreshTVShow`, `VideoLibrary.SetEpisodeDetails`, `VideoLibrary.SetMovieDetails`, `VideoLibrary.SetMovieSetDetails`, `VideoLibrary.SetMusicVideoDetails`, `VideoLibrary.SetSeasonDetails`, `VideoLibrary.SetTVShowDetails`, `XBMC.GetInfoBooleans`, `XBMC.GetInfoLabels` | 确保参数合法；确认当前状态支持 |
+| `-32601` | 方法不存在 | （未触发） | 预防性注意 |
+| `-32600` | 非法请求 | （未触发） | 预防性注意 |
+| `-32100` | 当前状态不支持 | `PVR.AddTimer`, `PVR.DeleteTimer`, `PVR.GetBroadcastDetails`, `PVR.GetBroadcastIsPlayable`, `PVR.GetBroadcasts`, `PVR.GetChannelDetails`, `PVR.GetChannelGroupDetails`, `PVR.GetChannelGroups`, `PVR.GetChannels`, `PVR.GetProperties`, `PVR.GetRecordingDetails`, `PVR.GetTimerDetails`, `PVR.ToggleTimer`, `Player.Rotate`, `Player.SetTempo`, `Player.Zoom` | 确保参数合法；确认当前状态支持 |
+| `-32000` | 返回结果过大 | （未触发） | 预防性注意 |
 
 ---
 
-*文档自动生成于 KODI 21 (Omega)*
+*文档自动生成*
