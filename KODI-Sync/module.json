@@ -11,7 +11,8 @@
         "localPort": 9527,
         "remoteHost": "10.0.0.255",
         "remotePort": 9527,
-        "broadcast": false
+        "broadcast": false,
+        "autoAdd": false
     },
 	"hideDefaultParameters": true,
     "hideDefaultCommands": true,
