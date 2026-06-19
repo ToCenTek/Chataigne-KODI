@@ -718,9 +718,6 @@ function setNonlinearStretch(Stretch) {
     script.log("NLStretch: " + Stretch);
 }
 
-function testLaunch() { script.log("TestLaunch: use KODI Sync module"); }
-function debugPositions() { script.log("DebugPositions: use KODI Sync module"); }
-
 // 强制全屏
 function forceFullscreenAndClean() {
     var fsAction = {
@@ -814,13 +811,6 @@ function setAspectRatio(Count) {
     }
     script.log("Aspect: cycled " + Count + " time(s)");
 }
-
-// 设置指定副 KODI 的宽高比（移步 KODI Sync 模块）
-function setAspectSecondaries(Count, hostsStr) {
-    script.log("SetAspectSecondaries: moved to KODI Sync module");
-}
-
-// KODI Sync module has been removed
 
 var progTick = 0;
 

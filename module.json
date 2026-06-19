@@ -484,36 +484,6 @@
                 }
             }
         },
-        "Set Aspect Secondaries":{
-            "menu": "Aspect",
-            "description": "循环切换指定副 KODI 的宽高比。\nCycle aspect ratio for specific secondary KODIs.",
-            "callback": "setAspectSecondaries",
-            "parameters": {
-                "Count":{
-                    "description": "循环次数（每个循环切换一个模式）。\nNumber of cycles (each cycle advances one mode).",
-                    "type": "Integer",
-                    "default": 1,
-                    "min": 1,
-                    "max": 10
-                },
-                "Hosts":{
-                    "description": "目标副 KODI 的 IP:port，每行一个。\nTarget secondary KODI IP:port, one per line.",
-                    "type": "String",
-                    "multiline": true,
-                    "default": ""
-                }
-            }
-        },
-        "Test Launch":{
-            "menu": "",
-            "description": "测试 launchProcess 是否能执行命令。\nTest if launchProcess can execute commands.",
-            "callback": "testLaunch"
-        },
-        "Debug Positions":{
-            "menu": "",
-            "description": "显示主副 KODI 的播放位置和漂移。\nShow primary & secondary KODI playback positions and drift.",
-            "callback": "debugPositions"
-        },
         "Region & Language":{
             "menu": "System",
             "description": "批量设置语言、时区、时间格式.\nBatch set language, timezone, time format. Current KODI only.",
