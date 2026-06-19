@@ -486,26 +486,17 @@
         },
         "Video Calibration":{
             "menu": "Calibration",
-            "description": "打开播放中视频设置（内含过扫描校准）.\nOpen video settings during playback (includes overscan calibration).",
+            "description": "打开播放中视频菜单（内含过扫描校准）.\nOpen video menu during playback (includes overscan calibration).",
             "callback": "openVideoSettings"
         },
-        "Set Overscan Zoom":{
+        "Adjust Calibration":{
             "menu": "Calibration",
-            "description": "设置界面缩放补偿过扫描（0=关闭，负值=缩小，正值=放大）.\nSet UI zoom for overscan compensation.",
-            "callback": "setOverscanZoom",
-            "parameters": {
-                "Zoom":{
-                    "description": "缩放值（范围 -20 ~ 20）.\nZoom value (range -20 ~ 20).",
-                    "type": "Integer",
-                    "default": 0,
-                    "min": -20,
-                    "max": 20
-                }
-            }
+            "description": "校准界面中切换到下一方向（左→右→上→下）.\nCycle to next calibration direction (L→R→T→B).",
+            "callback": "nextCalibration"
         },
         "Reset Calibration":{
             "menu": "Calibration",
-            "description": "重置过扫描补偿为默认值.\nReset overscan compensation to default.",
+            "description": "重置过扫描校准为默认值.\nReset overscan calibration to defaults.",
             "callback": "resetCalibration"
         },
         "Region & Language":{

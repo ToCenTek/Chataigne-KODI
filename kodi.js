@@ -720,30 +720,35 @@ function setNonlinearStretch(Stretch) {
 
 // ========== 视频校准 ==========
 function openVideoSettings() {
-    var msg = {
+    var action = {
         jsonrpc: "2.0",
-        method: "GUI.ActivateWindow",
-        params: { window: "settings", parameters: ["videosettings"] },
-        id: "VidSet"
+        method: "Input.ExecuteAction",
+        params: { action: "showvideomenu" },
+        id: "VidMenu"
     };
-    local.send(JSON.stringify(msg));
-    script.log("Video settings opened (navigate to Video Calibration)");
+    local.send(JSON.stringify(action));
+    script.log("Video menu opened (navigate to Calibration)");
 }
 
-function setOverscanZoom(Zoom) {
-    if (Zoom == null) Zoom = 0;
-    var msg = {
+function nextCalibration() {
+    var action = {
         jsonrpc: "2.0",
-        method: "Settings.SetSettingValue",
-        params: { setting: "lookandfeel.skinzoom", value: Zoom },
-        id: "SkinZoom"
+        method: "Input.ExecuteAction",
+        params: { action: "nextcalibration" },
+        id: "NextCal"
     };
-    local.send(JSON.stringify(msg));
-    script.log("Overscan zoom set to " + Zoom);
+    local.send(JSON.stringify(action));
+    script.log("Next calibration direction");
 }
 
 function resetCalibration() {
-    setOverscanZoom(0);
+    var action = {
+        jsonrpc: "2.0",
+        method: "Input.ExecuteAction",
+        params: { action: "resetcalibration" },
+        id: "ResetCal"
+    };
+    local.send(JSON.stringify(action));
     script.log("Calibration reset");
 }
 
