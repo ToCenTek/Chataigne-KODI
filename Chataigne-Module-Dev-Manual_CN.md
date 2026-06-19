@@ -719,7 +719,7 @@ param.get()
 //   Integer   → number (int)
 //   Float     → number (double)
 //   String    → string
-//   Enum      → string（选项值，不是标签）
+//   Enum      → number（选项对应的值，不是标签名。例如 OS 模块中 osType: 0=Win, 1=MacOS, 2=Linux）
 //   Color     → [R, G, B, A] 浮点数组 0–1
 //   Target    → target 对象（或 null）
 //   File      → string（文件路径）
@@ -886,7 +886,7 @@ util.getFilePath(relativePath)
 
 util.getDocumentsDirectory()     // ~/Documents
 util.getDesktopDirectory()       // ~/Desktop
-util.getCurrentFileDirectory()   // .noisette 项目文件的目录
+util.getCurrentFileDirectory()   // 当前脚本文件所在目录（模块脚本中即为模块目录）
 util.getCurrentFilePath()        // .noisette 项目文件的完整路径
 util.getParentDirectory(path)    // 给定路径的父目录
 
