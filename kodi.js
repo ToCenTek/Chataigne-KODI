@@ -131,7 +131,7 @@ function moduleValueChanged(value) {
                     params: { mute: false },
                     id: "Application.SetMute"
                 };
-                sendAll(unmuteMsg);
+                local.send(JSON.stringify(unmuteMsg));
                 isMutedParam.set(false);
                 isMutedFlag = false;
                 volumeBeforeMute = intVol;
@@ -142,7 +142,7 @@ function moduleValueChanged(value) {
                         params: { volume: intVol },
                         id: "SetVolume"
                     };
-                    sendAll(volMsg);
+                    local.send(JSON.stringify(volMsg));
                     lastSyncedVolume = intVol;
                 }
                 script.log("Unmuted and set volume to: " + intVol);
@@ -154,7 +154,7 @@ function moduleValueChanged(value) {
                         params: { volume: intVol },
                         id: "SetVolume"
                     };
-                    sendAll(volMsg);
+                    local.send(JSON.stringify(volMsg));
                     lastSyncedVolume = intVol;
                     script.log("Sent SetVolume command: " + intVol);
                 } else {
@@ -461,9 +461,8 @@ function mute(Mute) {
             params: { volume: Math.round(restoreVol) },
             id: "SetVolume"
         };
-        sendAll(volMsg);
+        local.send(JSON.stringify(volMsg));
         lastSyncedVolume = Math.round(restoreVol);
-        script.log("Mute off, restored volume: " + restoreVol);
         volumeBeforeMute = -1;
     }
     script.log("Mute: " + Mute);
@@ -577,9 +576,8 @@ function sendJSON(jsonText) {
         script.log("Warning: JSON string is empty.");
         return;
     }
-    var parsed = JSON.parse(jsonText);
-    sendAll(parsed);
-    script.log("sendJSON: " + jsonText);
+    JSON.parse(jsonText);
+    local.send(jsonText);
 }
 
 // 批量设置语言、时区、时间格式（仅当前连接的 KODI）
@@ -809,8 +807,7 @@ function setStereoMode(Mode, Swap) {
         },
         id: "SetStereoInvert"
     };
-    sendAll(swapMsg);
-    script.log("Swap=" + Swap + ": trying video.stereoscopicinvert=" + invertVal + " (may fail on KODI 20)");
+    local.send(JSON.stringify(swapMsg));
 }
 
 // ========== 宽高比（通过 Input.ExecuteAction 模拟遥控器按键） ==========
