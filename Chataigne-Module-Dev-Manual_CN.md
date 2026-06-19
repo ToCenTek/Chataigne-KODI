@@ -2078,13 +2078,26 @@ var now = util.getTimestamp();        // Unix 时间戳（秒）
 
 ### 安全访问模式
 
+`getChild("name")` 在子项不存在时返回 `null`，直接调用 `.get()` 会报错。以下两个工具函数避免空值崩溃:
+
 ```javascript
+// sv = safe value（安全取值）
+// 如果 param 对象存在，返回其当前值；否则返回 fallback 默认值
 function sv(param, fallback) {
     return param ? param.get() : fallback;
 }
+// 示例: var vol = sv(local.values.getChild("Volume"), 0);
+//       如果 Volume 值不存在，vol = 0，不会报错
+
+// sg = safe get（安全获取子项）
+// 如果 container 对象存在，返回名为 name 的子项；否则返回 null
 function sg(container, name) {
     return container ? container.getChild(name) : null;
 }
+// 示例: var vol = sg(local.parameters, "Volume");
+//       如果 local.parameters 本身为 null，不会报错
+//       如果 Volume 参数不存在，返回 null
+//       然后用 sv 取值: var val = sv(vol, 0);
 ```
 
 ---
