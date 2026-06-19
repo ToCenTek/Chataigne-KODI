@@ -16,6 +16,7 @@ var syncPhase = 0;
 var syncRefPct = 0;
 var syncTries = 0;
 var syncMinPct = 0;
+var syncWait = 0;
 
 function execShell(cmd) {
     var helper = root.modules.getChild("OS");
@@ -140,54 +141,63 @@ function update(deltaTime) {
     }
     // ── ReSync 状态机（暂停→校准→恢复）──
     if (syncPhase === 1) {
-        syncPhase = 2; posMs = []; posReady = 0;
+        syncPhase = 2; syncWait = 0; posMs = []; posReady = 0;
         for (var i = 0; i < allIps.length; i++) {
             local.sendTo(allIps[i].split(":")[0], 9527, "POS:" + allIps[i].split(":")[0] + "\n");
         }
         return;
     }
-    if (syncPhase === 2 && posReady >= allIps.length) {
-        syncRefPct = posMs[0]; syncMinPct = posMs[0];
-        for (var i = 1; i < allIps.length; i++) {
-            if (posMs[i] < syncMinPct) syncMinPct = posMs[i];
-        }
-        syncPhase = 3; syncTries = 0;
-        for (var i = 0; i < allIps.length; i++) {
-            local.sendTo(allIps[i].split(":")[0], 9527, "SEEK:" + syncMinPct + "\n");
+    if (syncPhase === 2) {
+        syncWait++;
+        if (posReady >= allIps.length) {
+            syncRefPct = posMs[0]; syncMinPct = posMs[0];
+            for (var i = 1; i < allIps.length; i++) {
+                if (posMs[i] < syncMinPct) syncMinPct = posMs[i];
+            }
+            syncPhase = 3; syncTries = 0;
+            for (var i = 0; i < allIps.length; i++) {
+                local.sendTo(allIps[i].split(":")[0], 9527, "SEEK:" + syncMinPct + "\n");
+            }
+        } else if (syncWait > 6) {
+            // 超时恢复
+            for (var i = 0; i < allIps.length; i++) { local.sendTo(allIps[i].split(":")[0], 9527, "PLAY\n"); }
+            syncPhase = 0; updateSyncStatus("Timeout");
         }
         return;
     }
     if (syncPhase === 3) {
-        syncPhase = 4; posMs = []; posReady = 0;
+        syncPhase = 4; syncWait = 0; posMs = []; posReady = 0;
         for (var i = 0; i < allIps.length; i++) {
             local.sendTo(allIps[i].split(":")[0], 9527, "POS:" + allIps[i].split(":")[0] + "\n");
         }
         return;
     }
-    if (syncPhase === 4 && posReady >= allIps.length) {
-        var minP = posMs[0], maxP = posMs[0];
-        for (var i = 1; i < allIps.length; i++) {
-            if (posMs[i] < minP) minP = posMs[i];
-            if (posMs[i] > maxP) maxP = posMs[i];
-        }
-        if (maxP - minP < 100) { // 100ms 以内算成功
-            for (var i = 0; i < allIps.length; i++) {
-                local.sendTo(allIps[i].split(":")[0], 9527, "PLAY\n");
+    if (syncPhase === 4) {
+        syncWait++;
+        if (posReady >= allIps.length) {
+            var minP = posMs[0], maxP = posMs[0];
+            for (var i = 1; i < allIps.length; i++) {
+                if (posMs[i] < minP) minP = posMs[i];
+                if (posMs[i] > maxP) maxP = posMs[i];
             }
-            syncPhase = 0; updateSyncStatus("Synced");
-        } else {
-            syncTries++;
-            if (syncTries < 3) {
-                syncPhase = 3;
-                for (var i = 0; i < allIps.length; i++) {
-                    local.sendTo(allIps[i].split(":")[0], 9527, "SEEK:" + syncRefPct + "\n");
-                }
+            if (maxP - minP < 100) {
+                for (var i = 0; i < allIps.length; i++) { local.sendTo(allIps[i].split(":")[0], 9527, "PLAY\n"); }
+                syncPhase = 0; updateSyncStatus("Synced");
             } else {
-                for (var i = 0; i < allIps.length; i++) {
-                    local.sendTo(allIps[i].split(":")[0], 9527, "PLAY\n");
+                syncTries++;
+                if (syncTries < 3) {
+                    syncPhase = 3; syncWait = 0; posMs = []; posReady = 0;
+                    for (var i = 0; i < allIps.length; i++) {
+                        local.sendTo(allIps[i].split(":")[0], 9527, "SEEK:" + syncRefPct + "\n");
+                    }
+                } else {
+                    for (var i = 0; i < allIps.length; i++) { local.sendTo(allIps[i].split(":")[0], 9527, "PLAY\n"); }
+                    syncPhase = 0; updateSyncStatus("Sync failed");
                 }
-                syncPhase = 0; updateSyncStatus("Sync failed");
             }
+        } else if (syncWait > 6) {
+            for (var i = 0; i < allIps.length; i++) { local.sendTo(allIps[i].split(":")[0], 9527, "PLAY\n"); }
+            syncPhase = 0; updateSyncStatus("Timeout");
         }
         return;
     }
