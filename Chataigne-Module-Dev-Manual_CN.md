@@ -1560,13 +1560,30 @@ automation.getKeysBetween(start, end)
 
 ## 15. 映射过滤器脚本
 
-过滤器脚本在映射的过滤器链中运行，可对输入值进行数学转换或高级逻辑处理。
+过滤器脚本是独立的 `.js` 文件，在映射的过滤器链中作为过滤器使用。通过映射编辑器的过滤器选项卡添加（选择 Script 类型）。适用于数学运算或自定义逻辑处理。
 
 ### 15.1 filter() 回调
 
-有两个版本的 `filter` 回调:
+映射每次经过过滤器链时都会调用 `filter()` 函数，**必须返回一个值（或值数组）**。
 
-**新版 (支持多路复用/多输入):**
+#### 原始签名（单输入）
+
+最初只有一个输入值:
+
+```javascript
+function filter(inputValue, min, max) {
+    // inputValue: 来自输入或前一个过滤器的值
+    // min, max: inputValue 的范围，用于归一化或防止超限
+    // 必须返回一个值
+    return inputValue;
+}
+```
+
+[动图: 在映射过滤器选项卡中添加 Script 过滤器]
+
+#### 当前签名（多路复用/多输入）
+
+> ⚠ 原版签名已不再更新，过滤器现在原生支持多路复用和多输入。
 
 ```javascript
 function filter(inputs, minValues, maxValues, multiplexIndex) {
@@ -1577,52 +1594,41 @@ function filter(inputs, minValues, maxValues, multiplexIndex) {
     // 必须返回与 inputs 长度相同的输出值数组
     var result = [];
     for (var i = 0; i < inputs.length; i++) {
-        result[i] = inputs[i];  // 直通
+        result[i] = inputs[i];  // 直通（什么也不做）
     }
     return result;
 }
 ```
-
-**旧版 (单输入):**
-
-```javascript
-function filter(inputValue, min, max) {
-    // inputValue:  来自输入或前一个过滤器的值
-    // min, max:    inputValue 的范围
-    // 必须返回一个值
-    return inputValue;
-}
-```
-
-> ⚠ 新版推荐: 旧版签名已不再更新，过滤器现在原生支持多路复用和多输入。
 
 ### 15.2 脚本参数
 
-过滤器脚本中可用 `script.add*()` 添加参数，参数出现在过滤器参数面板中:
+过滤器脚本中可用 `script.add*()` 添加参数，参数会出现在过滤器的参数面板中:
 
 ```javascript
 var multiplier = script.addFloatParameter("Multiplier", "乘数", 2, 0, 10);
 ```
 
-### 15.3 完整示例
+### 15.3 完整示例：MultiplyByMasterVolume
 
-[动图: 创建一个映射 → 添加 Script 过滤器 → 配置参数]
+**场景:** 有一段循环播放的音频，用一个 `masterVolume` 自定义变量控制音量。同时有一组序列做淡入淡出，它们通过映射输出 [0; 1] 的范围。为了让淡入淡出在 `masterVolume` 范围内生效（即从 0 淡入到当前主音量），需要将序列输出从 [0; 1] 重新映射到 [0; masterVolume]。
 
-以下示例从自定义变量读取 `masterVolume`，将淡入淡出序列的输出从 [0;1] 重新映射到 [0; masterVolume]:
+**做法:** 创建一个过滤器脚本，将输入值乘以 `masterVolume` 的当前值，然后把这个脚本挂到淡入淡出序列的映射过滤器链上:
 
 ```javascript
-var multiplier = script.addFloatParameter("Multiplier", "乘数", 2, 0, 10);
-
 function filter(inputs, minValues, maxValues, multiplexIndex) {
+    // 通过脚本控制地址读取自定义变量 masterVolume 的当前值
+    var masterVol = root.customVariables.getChild("masterVolume").get();
     var result = [];
     for (var i = 0; i < inputs.length; i++) {
-        result[i] = inputs[i] * multiplier.get();
+        result[i] = inputs[i] * masterVol;
     }
     return result;
 }
 ```
 
-> 💡 提示: 在 Chataigne 中右键参数 → **Copy Script Control Address** 可快速获取脚本地址，然后用 `.get()` 读取当前值。
+> 💡 **获取脚本控制地址:** 在 Chataigne 中右键任意参数 → **Copy Script Control Address**，粘贴到脚本中后用 `.get()` 读取当前值。如上例中 `masterVolume` 的地址就是 `root.customVariables.getChild("masterVolume")`。
+
+[动图: 右键参数 → Copy Script Control Address → 粘贴到过滤器脚本]
 
 ---
 
