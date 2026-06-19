@@ -873,7 +873,7 @@ function init() {
     if (osMod == null) {
         osMod = root.modules.addItem("OS");
         if (osMod && osMod.name !== "OS") osMod.setName("OS");
-        if (osMod) script.log("OS module auto-loaded");
+
     }
     reloadSyncSettings();
     syncAll();
@@ -1014,13 +1014,11 @@ function wsMessageReceived(message) {
                 volumeValue.set(data.result.volume);
                 lastSyncedVolume = data.result.volume;
             }
-            script.log("Volume synced: " + data.result.volume);
         }
         if (data.result.muted !== undefined) {
             var isMutedParam = local.values.getChild("Info").getChild("isMuted");
             if (isMutedParam) isMutedParam.set(data.result.muted);
             isMutedFlag = data.result.muted;
-            script.log("Mute synced: " + data.result.muted);
         }
         return;
     }
@@ -1075,7 +1073,7 @@ function wsMessageReceived(message) {
         if (filePath == null || filePath === "") filePath = data.result.item.title;
             var fileValue = local.values.getChild("Info").getChild("File");
             if (fileValue) fileValue.set(filePath);
-            script.log("Now playing synced: " + filePath);
+
         return;
     }
 
@@ -1138,7 +1136,7 @@ function wsMessageReceived(message) {
     if (data.method === "Player.OnResume") {
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(false);
-        script.log("Kodi state: Resumed");
+
     }
     //
     if (data.method === "Player.OnStop") {
