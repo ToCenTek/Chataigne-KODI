@@ -484,6 +484,44 @@
                 }
             }
         },
+        "Video Calibration":{
+            "menu": "Calibration",
+            "description": "打开视频校准 GUI（手动调整过扫描/偏移）.\nOpen video calibration GUI (manual overscan/offset adjustment).",
+            "callback": "openCalibration"
+        },
+        "Set Subtitle Height":{
+            "menu": "Calibration",
+            "description": "设置字幕纵向位置（负值=下移，正值=上移）.\nSet subtitle vertical position (negative=down, positive=up).",
+            "callback": "setSubtitleHeight",
+            "parameters": {
+                "Height":{
+                    "description": "字幕位置偏移量（默认 4.95，范围建议 -50 ~ 50）.\nSubtitle position offset (default 4.95, range -50 ~ 50).",
+                    "type": "Float",
+                    "default": 0,
+                    "min": -50,
+                    "max": 50
+                }
+            }
+        },
+        "Set Skin Zoom":{
+            "menu": "Calibration",
+            "description": "设置皮肤缩放（用于过扫描补偿，0=关闭）.\nSet skin zoom (overscan compensation, 0=off).",
+            "callback": "setSkinZoom",
+            "parameters": {
+                "Zoom":{
+                    "description": "缩放值（默认 0，范围建议 -20 ~ 20）.\nZoom value (default 0, range -20 ~ 20).",
+                    "type": "Integer",
+                    "default": 0,
+                    "min": -20,
+                    "max": 20
+                }
+            }
+        },
+        "Reset Calibration":{
+            "menu": "Calibration",
+            "description": "重置视频校准为默认值.\nReset video calibration to defaults.",
+            "callback": "resetCalibration"
+        },
         "Region & Language":{
             "menu": "System",
             "description": "批量设置语言、时区、时间格式.\nBatch set language, timezone, time format. Current KODI only.",

@@ -138,6 +138,15 @@
 |--------|------|------|------|
 | `Region & Language` | `setRegionLanguage` | `Chinese Language`, `Chinese Timezone`, `24H Format` | 批量设置语言/时区/时间格式 |
 
+### 视频校准 (Calibration)
+
+| 命令名 | 回调 | 参数 | 说明 |
+|--------|------|------|------|
+| `Video Calibration` | `openCalibration` | 无 | 打开 KODI 视频校准 GUI（手动调整过扫描/偏移） |
+| `Set Subtitle Height` | `setSubtitleHeight` | `Height`: Float (-50~50) | 设置字幕纵向位置 |
+| `Set Skin Zoom` | `setSkinZoom` | `Zoom`: Integer (-20~20) | 设置皮肤缩放（过扫描补偿） |
+| `Reset Calibration` | `resetCalibration` | 无 | 重置校准为默认值 |
+
 ---
 
 ## 使用流程

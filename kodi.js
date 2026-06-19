@@ -718,6 +718,48 @@ function setNonlinearStretch(Stretch) {
     script.log("NLStretch: " + Stretch);
 }
 
+// ========== 视频校准 ==========
+function openCalibration() {
+    var msg = {
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: { setting: "videoscreen.guicalibration", value: true },
+        id: "Calib"
+    };
+    local.send(JSON.stringify(msg));
+    script.log("Video calibration GUI triggered");
+}
+
+function setSubtitleHeight(Height) {
+    if (Height == null) Height = 0;
+    var msg = {
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: { setting: "subtitles.marginvertical", value: Height },
+        id: "SubtitleH"
+    };
+    local.send(JSON.stringify(msg));
+    script.log("Subtitle height set to " + Height);
+}
+
+function setSkinZoom(Zoom) {
+    if (Zoom == null) Zoom = 0;
+    var msg = {
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: { setting: "lookandfeel.skinzoom", value: Zoom },
+        id: "SkinZoom"
+    };
+    local.send(JSON.stringify(msg));
+    script.log("Skin zoom set to " + Zoom);
+}
+
+function resetCalibration() {
+    setSkinZoom(0);
+    setSubtitleHeight(4.95);
+    script.log("Calibration reset");
+}
+
 // 强制全屏
 function forceFullscreenAndClean() {
     var fsAction = {
