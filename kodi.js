@@ -828,8 +828,10 @@ function runCoreelecScript(ScriptFile, UpdatePlaylist) {
     var moduleDir = "/Users/yhc/Documents/Chataigne/modules/KODI";
     var suffix = UpdatePlaylist ? "update" : "init";
     var osMod = root.modules.getItemWithName("OS");
-    var isMac = (typeof launchFile !== "undefined");
-    script.log("isMac=" + isMac + " osMod=" + (osMod != null));
+    // osType 是 EnumParameter，.get() 返回索引: 0=Windows, 1=MacOS, 2=Linux
+    var osTypeVal = osMod ? osMod.values.getChild("osType") : null;
+    var isMac = osTypeVal && osTypeVal.get() === 1;
+    script.log("osType=" + (osTypeVal ? osTypeVal.get() : "N/A") + " isMac=" + isMac);
     if (ScriptFile == null || ScriptFile.length === 0) ScriptFile = moduleDir + "/kodi_" + suffix + (isMac ? ".command" : ".sh");
     if (isMac) {
         // macOS: 用 launchFile 打开 .command
