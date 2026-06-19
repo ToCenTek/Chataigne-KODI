@@ -4,6 +4,26 @@
 
 ---
 
+## 自省查询（JSONRPC.Introspect）
+
+通过 `Send Raw JSON` 命令粘贴以下 JSON 可直接查询 KODI API 定义。
+
+| 用途 | JSON 命令 |
+|------|-----------|
+| 查单个方法 | `{"jsonrpc":"2.0","method":"JSONRPC.Introspect","params":{"filter":{"id":"方法名","type":"method"},"getdescriptions":true},"id":1}` |
+| 查枚举类型 | `{"jsonrpc":"2.0","method":"JSONRPC.Introspect","params":{"filter":{"id":"类型名","type":"type"},"getdescriptions":true},"id":1}` |
+| 查命名空间 | `{"jsonrpc":"2.0","method":"JSONRPC.Introspect","params":{"filter":{"id":"命名空间","type":"namespace"},"getdescriptions":true},"id":1}` |
+| 查全部 API | `{"jsonrpc":"2.0","method":"JSONRPC.Introspect","id":1}` |
+
+**示例:**
+
+- `"id":"Input.ExecuteAction","type":"method"` — 查方法参数
+- `"id":"Input.Action","type":"type"` — 查全部 215 个可用动作名
+- `"id":"Player","type":"namespace"` — 查 Player 下所有方法
+- `"id":"Settings.Setting","type":"type"` — 查设置项类型定义
+
+---
+
 ## 目录
 
 - [Addons — 插件管理](#addons)
