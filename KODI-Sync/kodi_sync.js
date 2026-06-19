@@ -7,6 +7,7 @@ var sysHelperName = "OS";
 var allIps = [];
 var ackCount = 0;
 var posMs = [];
+var localPort = 9528;
 
 var lastFile = "/storage/videos/4K_29.97-Chimei-inn-RoastDuck.mp4";
 var driftPhase = 0;
@@ -118,6 +119,10 @@ function update(deltaTime) {
 function init() {
     script.log("KODI Sync init");
     reloadIps();
+    // 通知插件模块的接收端口
+    for (var i = 0; i < allIps.length; i++) {
+        local.sendTo(allIps[i].split(":")[0], 9527, "PORT:" + localPort + "\n");
+    }
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
 }

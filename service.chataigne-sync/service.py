@@ -102,7 +102,8 @@ class SyncThread(threading.Thread):
                     tt = d['result'].get('totaltime',{})
                     ms = t.get('hours',0)*3600000+t.get('minutes',0)*60000+t.get('seconds',0)*1000+t.get('milliseconds',0)
                     tms = tt.get('hours',0)*3600000+tt.get('minutes',0)*60000+tt.get('seconds',0)*1000+tt.get('milliseconds',0)
-                    self.sock.sendto(("POS:" + str(ms) + ":" + str(tms) + "\n").encode(), addr)
+                    target = (addr[0], ACK_PORT) if ACK_PORT > 0 else addr
+                    self.sock.sendto(("POS:" + str(ms) + ":" + str(tms) + "\n").encode(), target)
             except:
                 pass
 
