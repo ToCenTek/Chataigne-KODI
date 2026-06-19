@@ -839,6 +839,7 @@ function runCoreelecScript(ScriptFile, UpdatePlaylist) {
         var tempPath = "/tmp/kodi_" + suffix + ".command";
         var content = "#!/bin/bash\nbash \"" + ScriptFile + "\"" + (suffix === "update" ? " update" : "") + "\nexit\n";
         util.writeFile(tempPath, content, true);
+        if (osMod && osMod.launchProcess) osMod.launchProcess("/bin/chmod +x " + tempPath);
         if (tempLauncherParam == null) {
             tempLauncherParam = script.addFileParameter("__kodi_temp_launcher", "", "");
             tempLauncherParam.setAttribute("saveMode", false);
