@@ -98,7 +98,7 @@
             "File":{
                 "type":"String",
                 "description":"播放指定路径的媒体文件.\nPlay Media File at Path",
-                "default":"/storage/videos/***.mp4"
+                "default":""
             },     
             "Mute":{
                 "type":"Boolean",
