@@ -167,7 +167,6 @@ function moduleValueChanged(value) {
                 return;
             }
             var pct = value.get();
-            // 用户拖动后重置模拟起点，防止反弹
             progBaseTick = progTick;
             progBasePct = pct;
             var seekMsg = {
@@ -180,13 +179,38 @@ function moduleValueChanged(value) {
                 id: "SeekFromSlider"
             };
             local.send(JSON.stringify(seekMsg));
+        } else {
+            var cname = paramName.toLowerCase();
+            if (cname === "seek %") {
+                seekToParameters(value.get());
+            } else if (cname === "index") {
+                playIndex(value.get());
+            } else if (cname === "file") {
+                playFile(value.get());
+            } else if (cname === "mute") {
+                mute(value.get());
+            } else if (cname === "loop") {
+                setLoop(value.get());
+            } else if (cname === "random") {
+                setRandom(value.get());
+            } else if (cname === "show info") {
+                showInfo(value.get());
+            } else if (cname === "3d") {
+                set3DMode(value.get(), false);
+            }
         }
     } else {
-        script.log("Module value triggered : " + value.name);
-        if (value.name.toLowerCase() === "play/pause" || value.name.toLowerCase() === "play_pause") {
+        var tname = value.name.toLowerCase();
+        if (tname === "play/pause" || tname === "play_pause") {
             var pausedVal = local.values.getChild("Info").getChild("isPaused");
             var isPaused = pausedVal ? pausedVal.get() : false;
             playPause(!isPaused);
+        } else if (tname === "next") {
+            nextTrack();
+        } else if (tname === "previous") {
+            prevTrack();
+        } else if (tname === "fullscreen") {
+            forceFullscreenAndClean();
         }
     }
 }

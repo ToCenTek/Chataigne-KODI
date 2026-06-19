@@ -12,7 +12,7 @@
     "defaults": {
         "Protocol": "Lines",
         "autoAdd": false,
-        "serverPath": "10.0.0.41:9090"
+        "serverPath": "10.0.0.53:9090"
     },
     "parameters": {
         "Initialization": {
@@ -72,6 +72,72 @@
             "isMuted":{
                 "type": "Boolean",
                 "readOnly": true
+            }
+        },
+        "commands":{
+            "type": "Container",
+            "collapsed": true,
+            "Next":{
+                "type":"Trigger",
+                "description": "下一曲.\nNext track."
+            },
+            "Previous":{
+                "type":"Trigger",
+                "description": "上一曲.\nPrevious track."
+            },
+            "Seek %":{
+                "description":"要跳转到的百分比.\nSeek to percentage.",
+                "type": "Integer"
+            },
+            "Index":{
+                "type":"Integer",
+                "description": "播放指定索引的媒体项.\nPlay Media Item at Index",
+                "default": 0,
+                "min": 0
+            },
+            "File":{
+                "type":"String",
+                "description":"播放指定路径的媒体文件.\nPlay Media File at Path",
+                "default":"/storage/videos/***.mp4"
+            },     
+            "Mute":{
+                "type":"Boolean",
+                "description":"静音\nMute"
+            },
+            "Loop":{
+                "type": "Enum",
+                "description": "循环模式.\nLoop Mode.",
+                "options": {
+                    "All": "all",
+                    "One": "one",
+                    "Off": "off"
+                }
+            },
+            "Random":{
+                "description":"随机播放.\nShuffle",
+                "type":"Boolean",
+                "default":false
+            },
+            "Show Info":{
+                "description":"show debug info",
+                "type":"Boolean"
+            },
+            "Fullscreen":{
+                "description":"使视频播放界面前置",
+                "type":"Trigger"
+            },
+            "3D":{
+                "description":"切换3D模式.\nswitch 3D mode.",
+                "type":"Enum",
+                "options":{
+                    "Off": "off",
+                    "Side-by-Side": "sbs",
+                    "Top-and-Bottom": "tab",
+                    "Red/Cyan": "anaglyph_cyan_red",
+                    "Green/Magenta": "anaglyph_green_magenta",
+                    "Yellow/Blue": "anaglyph_yellow_blue",
+                    "Monoscopic": "monoscopic"
+                }
             }
         }
     },
@@ -532,25 +598,6 @@
                         "Custom...": "osd"
                     },
                     "default": "osd"
-                }
-            }
-        },
-        "Navigate Calibration":{
-            "menu": "Calibration",
-            "description": "导航到视频校准（按当前皮肤调整步骤序列）.\nNavigate to video calibration (adjust steps for your skin).",
-            "callback": "navigateCalibration",
-            "parameters": {
-                "Steps":{
-                    "description": "动作序列，逗号分隔.\nAction steps, comma-separated.",
-                    "type": "String",
-                    "default": "osd,left,left,left,select,select,up,select"
-                },
-                "Delay":{
-                    "description": "每步间隔毫秒.\nDelay between steps in ms.",
-                    "type": "Integer",
-                    "default": 300,
-                    "min": 50,
-                    "max": 2000
                 }
             }
         },
