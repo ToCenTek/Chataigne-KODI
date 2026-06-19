@@ -117,9 +117,6 @@ function reloadSyncSettings() {}
 function moduleValueChanged(value) {
     if (value.isParameter()) {
         var paramName = value.name;
-        if (paramName.toLowerCase() !== "playing") {
-            script.log("moduleValueChanged: " + paramName + " > " + value.get());
-        }
         if (paramName.toLowerCase() === "volume") {
             if (ignoreNextVolumeChange) {
                 ignoreNextVolumeChange = false;
@@ -373,7 +370,7 @@ function setLoop(Mode) {
     currentLoopMode = Mode;
     var loopParam = local.values.getChild("Info").getChild("isLooped");
     if (loopParam) loopParam.set(Mode !== "off");
-    script.log("Setup Loop Mode: " + Mode);
+
 }
 
 // 随机播放开关
@@ -992,7 +989,7 @@ function wsMessageReceived(message) {
         }
         var itemsValue = local.values.getChild("Info").getChild("Items");
         if (itemsValue) itemsValue.set(output);
-        script.log("Playlist: " + (items.length > 0 ? items.length + " items" : "(empty)"));
+
         kodiPlaylistMap = [];
         for (var i = 0; i < items.length; i++) {
             kodiPlaylistMap.push({
@@ -1063,7 +1060,7 @@ function wsMessageReceived(message) {
         currentLoopMode = data.result.repeat;
         var randValue = local.values.getChild("Info").getChild("Random");
         if (randValue) randValue.set(data.result.shuffled);
-        script.log("Player state synced: repeat=" + data.result.repeat + " shuffled=" + data.result.shuffled);
+
         return;
     }
 
