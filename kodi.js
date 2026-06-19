@@ -822,18 +822,17 @@ function setAspectSecondaries(Count, hostsStr) {
     script.log("SetAspectSecondaries: moved to KODI Sync module");
 }
 
-function scanMedia(ScanType) {
-    if (ScanType == null) ScanType = "rescan";
-    script.log("ScanMedia: " + ScanType);
-    if (ScanType === "rescan") {
-        local.send(JSON.stringify({ jsonrpc: "2.0", method: "VideoLibrary.Scan", id: "scan" }));
-        local.send(JSON.stringify({ jsonrpc: "2.0", method: "AudioLibrary.Scan", id: "scan" }));
-        script.log("VideoLibrary.Scan + AudioLibrary.Scan sent");
-    } else if (ScanType === "clean") {
+function scanMedia(UpdateOnly) {
+    if (UpdateOnly == null) UpdateOnly = true;
+    script.log("ScanMedia: UpdateOnly=" + UpdateOnly);
+    if (!UpdateOnly) {
         local.send(JSON.stringify({ jsonrpc: "2.0", method: "VideoLibrary.Clean", id: "clean" }));
         local.send(JSON.stringify({ jsonrpc: "2.0", method: "AudioLibrary.Clean", id: "clean" }));
         script.log("VideoLibrary.Clean + AudioLibrary.Clean sent");
     }
+    local.send(JSON.stringify({ jsonrpc: "2.0", method: "VideoLibrary.Scan", id: "scan" }));
+    local.send(JSON.stringify({ jsonrpc: "2.0", method: "AudioLibrary.Scan", id: "scan" }));
+    script.log("VideoLibrary.Scan + AudioLibrary.Scan sent");
 }
 
 // KODI Sync module has been removed
