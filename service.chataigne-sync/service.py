@@ -56,15 +56,15 @@ class SyncThread(threading.Thread):
             cmd = parts[0].upper()
             val = parts[1]
         xbmc.log("ChataigneSync: " + cmd + " " + (val or ""), xbmc.LOGINFO)
-        self.exec_cmd(cmd, val)
+        self.exec_cmd(cmd, val, addr)
         ack(self.sock, addr, cmd)
 
     def handle_simple(self, cmd, val, addr):
         xbmc.log("ChataigneSync: " + cmd + " " + str(val or ""), xbmc.LOGINFO)
-        self.exec_cmd(cmd, val)
+        self.exec_cmd(cmd, val, addr)
         ack(self.sock, addr, cmd)
 
-    def exec_cmd(self, cmd, val):
+    def exec_cmd(self, cmd, val, addr=None):
         if cmd == "PORT":
             global ACK_PORT
             ACK_PORT = int(val) if val else 0
@@ -97,13 +97,12 @@ class SyncThread(threading.Thread):
             r = xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Player.GetProperties","params":{"playerid":1,"properties":["time","speed","totaltime"]},"id":"cs"}')
             try:
                 d = json.loads(r)
-                if d.get('result'):
+                if d.get('result') and addr:
                     t = d['result'].get('time',{})
                     tt = d['result'].get('totaltime',{})
                     ms = t.get('hours',0)*3600000+t.get('minutes',0)*60000+t.get('seconds',0)*1000+t.get('milliseconds',0)
                     tms = tt.get('hours',0)*3600000+tt.get('minutes',0)*60000+tt.get('seconds',0)*1000+tt.get('milliseconds',0)
-                    target = ('255.255.255.255', ACK_PORT) if ACK_PORT > 0 else ('255.255.255.255', UDP_PORT)
-                    self.sock.sendto(("POS:" + str(ms) + ":" + str(tms) + "\n").encode(), target)
+                    self.sock.sendto(("POS:" + str(ms) + ":" + str(tms) + "\n").encode(), addr)
             except:
                 pass
 

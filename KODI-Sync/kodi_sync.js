@@ -5,7 +5,6 @@ var syncEnabled = true;
 var syncStatusValue = null;
 var sysHelperName = "OS";
 var allIps = [];
-var rcvPort = 9528;
 var ackCount = 0;
 
 var lastFile = "/storage/videos/4K_29.97-Chimei-inn-RoastDuck.mp4";
@@ -29,11 +28,6 @@ function udpSend(cmd, val) {
 function playAll() {
     udpSend("OPEN", lastFile);
     udpSend("PLAY");
-}
-
-function sendPort() {
-    udpSend("PORT", rcvPort);
-    script.log("PORT sent: " + rcvPort);
 }
 
 function pauseAll() { udpSend("PAUSE"); }
@@ -122,18 +116,12 @@ function update(deltaTime) {
 
 function init() {
     script.log("KODI Sync init");
-    var rp = local.parameters.getChild("Receive Port");
-    if (rp) rcvPort = rp.get();
     reloadIps();
-    sendPort();
     updateSyncStatus(syncEnabled ? "Ready" : "Disabled");
     script.setUpdateRate(2);
 }
 
 function moduleValueChanged(value) {
     var n = value.name.toLowerCase();
-    if (n === "receive port") {
-        rcvPort = value.get();
-        sendPort();
-    } else if (n === "secondaries" || n === "httpuser" || n === "httppass") reloadIps();
+    if (n === "secondaries" || n === "httpuser" || n === "httppass") reloadIps();
 }
