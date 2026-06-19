@@ -954,7 +954,6 @@ function wsMessageReceived(message) {
         }
         else if (initStep === 3) {
             initStep = 0;
-            commandsReady = true;
             script.log("Initialization complete.");
         }
         return;
@@ -1016,7 +1015,7 @@ function wsMessageReceived(message) {
                 realIndex: i
             });
         }
-        if (initStep === 3) initStep = 0;
+        if (initStep === 3) { initStep = 0; commandsReady = true; }
         return;
     }
 
