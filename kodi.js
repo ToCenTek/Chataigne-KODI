@@ -719,26 +719,35 @@ function setNonlinearStretch(Stretch) {
 }
 
 // ========== 视频校准 ==========
-function openVideoSettings() {
-    var action = {
+function sendInput(Action) {
+    if (Action == null || Action.length === 0) Action = "osd";
+    var msg = {
         jsonrpc: "2.0",
         method: "Input.ExecuteAction",
-        params: { action: "showvideomenu" },
-        id: "VidMenu"
+        params: { action: Action },
+        id: "Input"
     };
-    local.send(JSON.stringify(action));
-    script.log("Video menu opened (navigate to Calibration)");
+    local.send(JSON.stringify(msg));
+    script.log("Input: " + Action);
 }
 
-function nextCalibration() {
-    var action = {
-        jsonrpc: "2.0",
-        method: "Input.ExecuteAction",
-        params: { action: "nextcalibration" },
-        id: "NextCal"
-    };
-    local.send(JSON.stringify(action));
-    script.log("Next calibration direction");
+function navigateCalibration(Steps, Delay) {
+    if (Steps == null || Steps.length === 0) Steps = "osd,select,down,select,down,select";
+    if (Delay == null || Delay < 50) Delay = 300;
+    var actions = Steps.split(",");
+    script.log("Navigate " + actions.length + " steps...");
+    for (var ni = 0; ni < actions.length; ni++) {
+        var a = actions[ni];
+        if (a.length === 0) continue;
+        local.send(JSON.stringify({
+            jsonrpc: "2.0",
+            method: "Input.ExecuteAction",
+            params: { action: a },
+            id: "Nav" + ni
+        }));
+        util.delayThreadMS(Delay);
+    }
+    script.log("Navigation complete");
 }
 
 function resetCalibration() {

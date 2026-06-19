@@ -484,15 +484,36 @@
                 }
             }
         },
-        "Video Calibration":{
+        "Send Input":{
             "menu": "Calibration",
-            "description": "打开播放中视频菜单（内含过扫描校准）.\nOpen video menu during playback (includes overscan calibration).",
-            "callback": "openVideoSettings"
+            "description": "发送按键/动作到 KODI（用于导航到视频校准等）.\nSend input action to KODI (navigate to video calibration etc.).",
+            "callback": "sendInput",
+            "parameters": {
+                "Action":{
+                    "description": "动作名称，如 osd/up/down/left/right/select/contextmenu.\nAction name, e.g. osd/up/down/left/right/select/contextmenu.",
+                    "type": "String",
+                    "default": "osd"
+                }
+            }
         },
-        "Adjust Calibration":{
+        "Navigate Calibration":{
             "menu": "Calibration",
-            "description": "校准界面中切换到下一方向（左→右→上→下）.\nCycle to next calibration direction (L→R→T→B).",
-            "callback": "nextCalibration"
+            "description": "依次发送动作序列到达视频校准（逗号分隔）。\nSend action sequence to reach video calibration (comma-separated).",
+            "callback": "navigateCalibration",
+            "parameters": {
+                "Steps":{
+                    "description": "动作序列，逗号分隔，默认打开OSD→进入视频设置→选择校准.\nAction steps, comma-separated.",
+                    "type": "String",
+                    "default": "osd,select,down,select,down,select"
+                },
+                "Delay":{
+                    "description": "每步间隔毫秒.\nDelay between steps in ms.",
+                    "type": "Integer",
+                    "default": 300,
+                    "min": 50,
+                    "max": 2000
+                }
+            }
         },
         "Reset Calibration":{
             "menu": "Calibration",
