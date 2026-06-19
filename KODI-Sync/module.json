@@ -8,7 +8,7 @@
 	"hasOutput": true,
     "hideDefaultParameters": false,
     "defaults": {
-        "localPort": 9528,
+        "localPort": 9527,
         "remoteHost": "10.0.0.255",
         "remotePort": 9527,
         "broadcast": false

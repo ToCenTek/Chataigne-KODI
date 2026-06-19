@@ -7,7 +7,7 @@ var sysHelperName = "OS";
 var allIps = [];
 var ackCount = 0;
 var posMs = [];
-var localPort = 9528;
+var localPort = 9527;
 
 var lastFile = "/storage/videos/4K_29.97-Chimei-inn-RoastDuck.mp4";
 var driftPhase = 0;
