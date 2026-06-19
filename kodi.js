@@ -827,6 +827,7 @@ function runCoreelecScript(ScriptFile, UpdatePlaylist) {
     if (UpdatePlaylist == null) UpdatePlaylist = true;
     var moduleDir = "/Users/yhc/Documents/Chataigne/modules/KODI";
     var suffix = UpdatePlaylist ? "update" : "init";
+    if (ScriptFile == null || ScriptFile.length === 0) ScriptFile = moduleDir + "/coreelec.sh";
     // 读取 OS 模块确定系统类型
     var osMod = root.modules.getItemWithName("OS");
     var osType = "";

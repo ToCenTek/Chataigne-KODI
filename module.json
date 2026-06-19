@@ -544,7 +544,7 @@
                 "Script File":{
                     "description": "coreelec.sh 脚本文件路径.\nPath to coreelec.sh script file.",
                     "type": "File",
-                    "default": ""
+                    "default": "/Users/yhc/Documents/Chataigne/modules/KODI/coreelec.sh"
                 },
                 "Update Playlist":{
                     "description": "true=更新现有列表, false=完整初始化.\ntrue=update existing, false=full init.",
