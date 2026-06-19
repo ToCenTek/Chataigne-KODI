@@ -830,8 +830,7 @@ function runCoreelecScript(ScriptFile, UpdatePlaylist) {
         script.log("Script File not set — please select a script in the command parameters");
         return;
     }
-    var moduleDir = "/Users/yhc/Documents/Chataigne/modules/KODI";
-    if (ScriptFile.charAt(0) !== "/") ScriptFile = moduleDir + "/" + ScriptFile;
+    if (ScriptFile.charAt(0) !== "/") ScriptFile = util.getCurrentFileDirectory() + "/" + ScriptFile;
     var osMod = root.modules.getItemWithName("OS");
     var osTypeVal = osMod ? osMod.values.getChild("osType") : null;
     var isMac = osTypeVal && osTypeVal.get() == 1;
