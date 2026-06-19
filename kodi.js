@@ -50,7 +50,7 @@ function buildPlaylistFromM3U() {
         id: "PlaylistClear"
     };
     local.send(JSON.stringify(msg));
-    script.log("Building playlist: clearing...");
+
 }
 
 // 递推添加下一文件到播放列表；全部添加完后调用 openManagedPlaylist()
@@ -71,7 +71,7 @@ function addNextPlaylistFile() {
     } else {
         playlistStep = 0;
         openManagedPlaylist();
-        script.log("All files added to playlist, starting playback...");
+
     }
 }
 
@@ -877,7 +877,7 @@ function init() {
     initStep = 1;
     script.setUpdateRate(2);
     getDirectoryFiles();
-    script.log("Step 1: Getting directory files for display...");
+
 }
 
 // ========== WebSocket 消息接收：处理 KODI 返回的 JSON-RPC 响应和事件通知 ==========
@@ -933,7 +933,7 @@ function wsMessageReceived(message) {
             initStep = 3;
             setLoop("all");
             playListGetItems();
-            script.log("Step 3: Setting loop and getting playlist items...");
+
         }
         else if (initStep === 3) {
             initStep = 0;
@@ -967,11 +967,11 @@ function wsMessageReceived(message) {
         }
         var itemsValue = local.values.getChild("Info").getChild("Items");
         if (itemsValue) itemsValue.set(output);
-        script.log("Files: " + output.split("\n").length + " items");
+
 
         initStep = 2;
         buildPlaylistFromM3U();
-        script.log("Step 2: Building playlist...");
+
         return;
     }
 
@@ -1178,7 +1178,7 @@ function moduleParameterChanged(param) {
     var paramName = param.name;
     script.log("moduleParameterChanged: " + paramName);
     if (paramName.toLowerCase() === "initialization") {
-        script.log("Initialization button pressed, starting initialization...");
+
         var infoContainer = local.values.getChild("Info");
         if (infoContainer) infoContainer.setCollapsed(false);
         init();
