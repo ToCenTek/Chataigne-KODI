@@ -180,13 +180,13 @@ function moduleValueChanged(value) {
             };
             local.send(JSON.stringify(seekMsg));
         } else {
-            if (!commandsReady) return;
             var cname = paramName.toLowerCase();
             if (cname === "seek %") {
                 seekToParameters(value.get());
             } else if (cname === "index") {
                 playIndex(value.get());
             } else if (cname === "file" && value.getParent && value.getParent().name === "commands") {
+                if (value.get() === "") return;
                 playFile(value.get());
             } else if (cname === "mute") {
                 mute(value.get());
@@ -202,7 +202,6 @@ function moduleValueChanged(value) {
         }
     } else {
         var tname = value.name.toLowerCase();
-        if (!commandsReady && tname !== "play/pause" && tname !== "play_pause") return;
         if (tname === "play/pause" || tname === "play_pause") {
             var pausedVal = local.values.getChild("Info").getChild("isPaused");
             var isPaused = pausedVal ? pausedVal.get() : false;
@@ -857,7 +856,6 @@ function setAspectRatio(Count) {
 }
 
 var progTick = 0;
-var commandsReady = false;
 
 function update(deltaTime) {
     progTick++;
@@ -882,7 +880,6 @@ function update(deltaTime) {
 // ========== 模块初始化：加载设置、同步状态、获取文件列表 ==========
 function init() {
     initStep = 0;
-    commandsReady = false;
     sortedFileList = [];
     kodiPlaylistMap = [];
     var osMod = root.modules.getItemWithName("OS");
@@ -1015,7 +1012,7 @@ function wsMessageReceived(message) {
                 realIndex: i
             });
         }
-        if (initStep === 3) { initStep = 0; commandsReady = true; }
+        if (initStep === 3) initStep = 0;
         return;
     }
 
