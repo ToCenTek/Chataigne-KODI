@@ -86,7 +86,7 @@ function dataReceived(data) {
         var parts = data.split(":");
         if (parts.length >= 3) {
             var ms = parseFloat(parts[1]);
-            if (ms > 0) posMs.push(ms);
+            if (ms > 0) { posMs[posReady] = ms; posReady++; }
         }
     } else {
         ackCount++;
@@ -99,13 +99,13 @@ function update(deltaTime) {
     if (allIps.length < 2) return;
     // Phase 1: UDP POS 查询所有 KODI 位置
     if (driftPhase % 2 === 1) {
-        posMs = [];
+        posMs = []; posReady = 0;
         for (var i = 0; i < allIps.length; i++) {
             local.sendTo(allIps[i].split(":")[0], 9527, "POS\n");
         }
     }
     // Phase 2: 计算漂移（dataReceived 已收集 POS 响应）
-    if (driftPhase % 2 === 0 && posMs.length >= 2) {
+    if (driftPhase % 2 === 0 && posReady >= allIps.length) {
         var minMs = posMs[0], maxMs = posMs[0];
         for (var i = 1; i < posMs.length; i++) {
             if (posMs[i] < minMs) minMs = posMs[i];
