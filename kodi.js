@@ -871,6 +871,13 @@ function init() {
     initStep = 0;
     sortedFileList = [];
     kodiPlaylistMap = [];
+    // 自动加载 OS 模块（供 runCoreelecScript 使用）
+    var osMod = root.modules.getItemWithName("OS");
+    if (osMod == null) {
+        osMod = root.modules.addItem("OS");
+        if (osMod && osMod.name !== "OS") osMod.setName("OS");
+        if (osMod) script.log("OS module auto-loaded");
+    }
     reloadSyncSettings();
     syncAll();
     initStep = 1;
