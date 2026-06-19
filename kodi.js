@@ -3,7 +3,7 @@ var videoDirectory = "/storage/videos";
 // 全局变量
 var initStep = 0;
 var currentPlayerId = 1;
-var currentplaylistid = 0;
+var currentplaylistid = 1;
 var kodiPlaylistMap = [];
 var sortedFileList = [];
 var playlistAddIndex = 0;
@@ -201,6 +201,7 @@ function moduleValueChanged(value) {
         }
     } else {
         var tname = value.name.toLowerCase();
+        script.log("Value trigger: name=" + value.name + " lower=" + tname);
         if (tname === "play/pause" || tname === "play_pause") {
             var pausedVal = local.values.getChild("Info").getChild("isPaused");
             var isPaused = pausedVal ? pausedVal.get() : false;
