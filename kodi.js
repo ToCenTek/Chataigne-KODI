@@ -823,23 +823,26 @@ function setAspectSecondaries(Count, hostsStr) {
 }
 
 var launcherFileParam = null;
-
-var launcherFileParam = null;
 function runCoreelecScript(ScriptFile, UpdatePlaylist) {
     if (UpdatePlaylist == null) UpdatePlaylist = true;
     var moduleDir = "/Users/yhc/Documents/Chataigne/modules/KODI";
     var suffix = UpdatePlaylist ? "update" : "init";
+    // macOS: 用 launchFile 打开 .command
     if (launcherFileParam == null) {
         launcherFileParam = script.addFileParameter("__coreelec_launcher", "", "");
         launcherFileParam.setAttribute("saveMode", false);
     }
     launcherFileParam.set(moduleDir + "/kodi_" + suffix + ".command");
     launcherFileParam.launchFile("");
+    // Linux: 用终端运行 .sh
+    var osHelper = root.modules.getChild("OS");
+    if (osHelper && osHelper.launchProcess) {
+        osHelper.launchProcess("x-terminal-emulator -e /bin/bash " + moduleDir + "/kodi_" + suffix + ".sh");
+    }
     script.log("Running CoreELEC script (update=" + UpdatePlaylist + ")");
 }
 
-function toggleSync() { script.log("ToggleSync: moved to KODI Sync module"); }
-function reSync() { script.log("ReSync: moved to KODI Sync module"); }
+// KODI Sync module has been removed
 
 var progTick = 0;
 
