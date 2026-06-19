@@ -834,10 +834,10 @@ function runCoreelecScript(ScriptFile, UpdatePlaylist) {
     }
     launcherFileParam.set(moduleDir + "/kodi_" + suffix + ".command");
     launcherFileParam.launchFile("");
-    // Linux: 用终端运行 .sh
+    // Linux: 直接运行脚本（无桌面环境，Wayland/树莓派通用）
     var osHelper = root.modules.getChild("OS");
     if (osHelper && osHelper.launchProcess) {
-        osHelper.launchProcess("x-terminal-emulator -e /bin/bash " + moduleDir + "/kodi_" + suffix + ".sh");
+        osHelper.launchProcess("/bin/bash " + moduleDir + "/kodi_" + suffix + ".sh");
     }
     script.log("Running CoreELEC script (update=" + UpdatePlaylist + ")");
 }
