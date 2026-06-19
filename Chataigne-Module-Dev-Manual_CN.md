@@ -527,52 +527,47 @@ var ts = util.getTimestamp();  // Unix 秒
 
 ### 4.1 模块级回调
 
+| 方法 | 描述 |
+|------|------|
+| `init()` | 脚本加载完成后调用一次，用于初始化变量、日志记录 |
+| `update(deltaTime)` | 按设置频率周期调用（`script.setUpdateRate(hz)`），`deltaTime` 为秒 |
+| `moduleParameterChanged(param)` | Parameters 面板中参数/触发器变化时调用 |
+| `moduleValueChanged(value)` | Values 面板中值变化时调用 |
+| `scriptParameterChanged(param)` | `script.add*()` 创建的本地方参数变化时调用 |
+
 ```javascript
-// ========== 模块初始化时调用一次 ==========
 function init() {
-    // 脚本已加载完毕
-    // module.json 中定义的所有参数/值已创建
-    // 当前项目状态已加载
-    // 适合在此处:
-    //   - 读取初始设置
-    //   - 初始化数据结构
-    //   - 开始连接初始化
+    // 脚本已加载完毕，module.json 参数已创建，项目状态已就绪
+    // 适合在此处初始化数据、读取设置、启动连接
+    script.log("Script loaded successfully");
 }
 
-// ========== 按脚本更新频率周期调用 ==========
 function update(deltaTime) {
-    // deltaTime: 浮点数，距上次调用的秒数
-    // 更新频率由 script.setUpdateRate(hz) 设置
-    // 默认: 0（禁用，不会调用 update()）
-    // 建议避免: 轮询模式——改用事件驱动
+    // deltaTime: 距上次调用的秒数（浮点数）
+    // 更新频率由 script.setUpdateRate(hz) 设置，0 为禁用
+    script.log("Delta time : " + deltaTime);
 }
 
-// ========== 用户修改模块 PARAMETER 时调用 ==========
 function moduleParameterChanged(param) {
-    // param: 被修改的参数/触发器对象
-    // 对于 Trigger：按钮被点击时
-    // 对于复选框/输入框：值变化时
-    // 检查 param.name 来识别是哪个参数
-    var name = param.name;
-    if (name === "MyButton") {
+    // param: 被修改的 Parameters 面板中的参数/触发器对象
+    script.log("Param changed : " + param.name);
+    if (param.name === "MyButton") {
         // 按钮被点击
-    } else if (name === "MySetting") {
-        var val = param.get();
     }
 }
 
-// ========== 模块 VALUE 变化时调用 ==========
 function moduleValueChanged(value) {
-    // 当 Values 面板中的任何值变化时调用
-    // 可能被脚本 (value.set()) 或外部链接改变
-    var name = value.name;
-    var val = value.get();
+    // value: Values 面板中变化的值对象
+    if (value.isParameter()) {
+        script.log("Module value changed : " + value.name + " > " + value.get());
+    } else {
+        script.log("Module value triggered : " + value.name);
+    }
 }
 
-// ========== 脚本本地参数变化时调用 ==========
 function scriptParameterChanged(param) {
-    // 仅适用于通过 script.add*Parameter() 添加的参数
-    // 不适用于 module.json 定义的参数
+    // 仅适用于 script.add*Parameter() 添加的本地参数，不适用于 module.json 定义
+    script.log("Script param changed : " + param.name);
 }
 ```
 
@@ -580,41 +575,103 @@ function scriptParameterChanged(param) {
 
 ```javascript
 function messageBoxCallback(id, result) {
-    // 在 util.showOkCancelBox() 或 showYesNoCancelBox() 之后调用
-    // id: 传给 show*Box() 的 id 字符串
-    // result: "ok"/"cancel"/"yes"/"no"
+    // 用户对消息框做出选择后触发
+    // id:     传给 show*Box() 的标识字符串
+    // result: "ok" / "cancel" / "yes" / "no"
+    script.log("Message box callback : " + id + " > " + result);
 }
 ```
 
 ### 4.3 协议专用回调（完整列表见 §13）
 
 ```javascript
-// WebSocket 客户端
-function wsMessageReceived(client, message) { }
+// WebSocket 客户端 — 收到文本消息时调用
+function wsMessageReceived(client, message) {
+    script.log("Message received: " + message);
+}
 
-// TCP/UDP/串口
-function dataReceived(data) { }
+// WebSocket — 收到二进制数据时调用
+function wsDataReceived(data) {
+    script.log("Data received : " + data.length);
+}
 
-// OSC
-function oscEvent(address, args, originIp) { }
+// TCP / UDP / 串口（Lines 模式）— 收到一行数据时调用
+function dataReceived(data) {
+    script.log("Received data : " + data);
+}
 
-// MIDI
-function noteOnEvent(channel, pitch, velocity) { }
-function ccEvent(channel, number, value) { }
+// OSC — 收到 OSC 消息时调用
+function oscEvent(address, args, originIp) {
+    script.log("OSC Message received " + address + ", " + args.length + " arguments");
+}
 
-// HTTP
-function dataEvent(data, requestURL) { }
+// MIDI Note On
+function noteOnEvent(channel, pitch, velocity) {
+    script.log("Note on received " + channel + ", " + pitch + ", " + velocity);
+}
 
-// OS 模块（非阻塞进程）
-function processDataReceived(data, originCommand) { }
+// MIDI Note Off
+function noteOffEvent(channel, pitch, velocity) {
+    script.log("Note off received " + channel + ", " + pitch + ", " + velocity);
+}
+
+// MIDI Control Change
+function ccEvent(channel, number, value) {
+    script.log("ControlChange received " + channel + ", " + number + ", " + value);
+}
+
+// MIDI System Exclusive
+function sysExEvent(data) {
+    script.log("Sysex Message received, " + data.length + " bytes");
+    for (var i = 0; i < data.length; i++) {
+        script.log(" > " + data[i]);
+    }
+}
+
+// MIDI Channel Pressure
+function channelPressureEvent(channel, value) {
+    script.log("Channel Pressure received " + channel + ", " + value);
+}
+
+// MIDI After Touch
+function afterTouchEvent(channel, note, value) {
+    script.log("After Touch received " + channel + ", " + note + ", " + value);
+}
+
+// MQTT — 收到消息时调用
+function dataEvent(data, topic) {
+    script.log("MQTT Message received " + topic + " : " + data);
+}
+
+// DMX — 收到一组 DMX 值时调用
+function dmxEvent(values) {
+    script.log("Received dmx : " + values.length + " values");
+}
+
+// HTTP — 收到响应时调用
+function dataEvent(data, requestURL) {
+    script.log("Data received, request URL : " + requestURL + "\nContent :\n" + data);
+}
+
+// OS 模块 — 进程非阻塞输出时调用
+function processDataReceived(data, originCommand) {
+    script.log("Data received", data, originCommand);
+}
 ```
 
 ### 4.4 命令回调
 
+命令回调由 `module.json` 中命令的 `"callback"` 字段定义。参数按命令参数定义顺序传入:
+
 ```javascript
-// 由 module.json 的 "callback" 字段定义
-// 参数按定义顺序传入，最后一个参数是命令索引
-function myCommand(param1, param2, commandIndex) { }
+function myCommand(param1, param2, commandIndex) {
+    // param1: 命令第 1 个参数的值
+    // param2: 命令第 2 个参数的值
+    // commandIndex: 命令索引（从 0 开始，用于同一命令调用多次）
+    script.log("Command called: param1=" + param1 + " param2=" + param2);
+    // 返回结果可被后续映射使用
+    return param1;
+}
 ```
 
 ---
