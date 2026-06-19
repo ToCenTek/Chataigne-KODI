@@ -121,7 +121,7 @@ function update(deltaTime) {
         var parts = [];
         for (var i = 1; i < allIps.length; i++) {
             var driftVal = parseFloat(posMs[i]) - parseFloat(refMs);
-            parts.push("" + (driftVal > 0 ? Math.floor(driftVal + 0.5) : Math.ceil(driftVal - 0.5)));
+            parts.push("" + parseInt(driftVal + (driftVal > 0 ? 0.5 : -0.5)));
         }
         var dc = local.values.getChild("Status").getChild("Drift");
         if (dc) dc.set(parts.join(", "));
