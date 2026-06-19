@@ -104,16 +104,17 @@ function update(deltaTime) {
             local.sendTo(allIps[i].split(":")[0], 9527, "POS\n");
         }
     }
-    // Phase 2: 计算漂移（dataReceived 已收集 POS 响应）
+    // Phase 2: 以第一台为基准，计算每台漂移
     if (driftPhase % 2 === 0 && posReady >= allIps.length) {
-        var minMs = posMs[0], maxMs = posMs[0];
-        for (var i = 1; i < posMs.length; i++) {
-            if (posMs[i] < minMs) minMs = posMs[i];
-            if (posMs[i] > maxMs) maxMs = posMs[i];
+        var refMs = posMs[0];
+        var parts = [];
+        for (var i = 0; i < allIps.length; i++) {
+            var ip = allIps[i].split(":")[0];
+            var dv = Math.round(posMs[i] - refMs);
+            parts.push(ip + ":" + dv);
         }
-        var dv = maxMs - minMs;
         var dc = local.values.getChild("Status").getChild("Drift");
-        if (dc) dc.set("" + dv + "ms");
+        if (dc) dc.set(parts.join(", "));
     }
 }
 
