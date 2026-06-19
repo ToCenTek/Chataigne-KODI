@@ -1,202 +1,28 @@
 # KODI JSON-RPC API 参考 (v13.5.0)
 
-> 从当前 KODI 21 (Omega) 自动提取。每个方法均含实测请求与响应。
+> 从当前 KODI 21 (Omega) 自动提取，每个方法均含实测请求与响应。
 
 ---
 
 ## 目录
 
 - [Addons — 插件管理](#addons)
-  - [Addons.ExecuteAddon](#addonsexecuteaddon)
-  - [Addons.GetAddonDetails](#addonsgetaddondetails)
-  - [Addons.GetAddons](#addonsgetaddons)
-  - [Addons.SetAddonEnabled](#addonssetaddonenabled)
 - [Application — 应用程序](#application)
-  - [Application.GetProperties](#applicationgetproperties)
-  - [Application.Quit](#applicationquit)
-  - [Application.SetMute](#applicationsetmute)
-  - [Application.SetVolume](#applicationsetvolume)
 - [AudioLibrary — 音频库](#audiolibrary)
-  - [AudioLibrary.Clean](#audiolibraryclean)
-  - [AudioLibrary.Export](#audiolibraryexport)
-  - [AudioLibrary.GetAlbumDetails](#audiolibrarygetalbumdetails)
-  - [AudioLibrary.GetAlbums](#audiolibrarygetalbums)
-  - [AudioLibrary.GetArtistDetails](#audiolibrarygetartistdetails)
-  - [AudioLibrary.GetArtists](#audiolibrarygetartists)
-  - [AudioLibrary.GetAvailableArt](#audiolibrarygetavailableart)
-  - [AudioLibrary.GetAvailableArtTypes](#audiolibrarygetavailablearttypes)
-  - [AudioLibrary.GetGenres](#audiolibrarygetgenres)
-  - [AudioLibrary.GetProperties](#audiolibrarygetproperties)
-  - [AudioLibrary.GetRecentlyAddedAlbums](#audiolibrarygetrecentlyaddedalbums)
-  - [AudioLibrary.GetRecentlyAddedSongs](#audiolibrarygetrecentlyaddedsongs)
-  - [AudioLibrary.GetRecentlyPlayedAlbums](#audiolibrarygetrecentlyplayedalbums)
-  - [AudioLibrary.GetRecentlyPlayedSongs](#audiolibrarygetrecentlyplayedsongs)
-  - [AudioLibrary.GetRoles](#audiolibrarygetroles)
-  - [AudioLibrary.GetSongDetails](#audiolibrarygetsongdetails)
-  - [AudioLibrary.GetSongs](#audiolibrarygetsongs)
-  - [AudioLibrary.GetSources](#audiolibrarygetsources)
-  - [AudioLibrary.Scan](#audiolibraryscan)
-  - [AudioLibrary.SetAlbumDetails](#audiolibrarysetalbumdetails)
-  - [AudioLibrary.SetArtistDetails](#audiolibrarysetartistdetails)
-  - [AudioLibrary.SetSongDetails](#audiolibrarysetsongdetails)
 - [Favourites — 收藏夹](#favourites)
-  - [Favourites.AddFavourite](#favouritesaddfavourite)
-  - [Favourites.GetFavourites](#favouritesgetfavourites)
 - [Files — 文件系统](#files)
-  - [Files.GetDirectory](#filesgetdirectory)
-  - [Files.GetFileDetails](#filesgetfiledetails)
-  - [Files.GetSources](#filesgetsources)
-  - [Files.PrepareDownload](#filespreparedownload)
-  - [Files.SetFileDetails](#filessetfiledetails)
 - [GUI — 图形界面](#gui)
-  - [GUI.ActivateScreenSaver](#guiactivatescreensaver)
-  - [GUI.ActivateWindow](#guiactivatewindow)
-  - [GUI.GetProperties](#guigetproperties)
-  - [GUI.GetStereoscopicModes](#guigetstereoscopicmodes)
-  - [GUI.SetFullscreen](#guisetfullscreen)
-  - [GUI.SetStereoscopicMode](#guisetstereoscopicmode)
-  - [GUI.ShowNotification](#guishownotification)
 - [Input — 输入控制](#input)
-  - [Input.Back](#inputback)
-  - [Input.ButtonEvent](#inputbuttonevent)
-  - [Input.ContextMenu](#inputcontextmenu)
-  - [Input.Down](#inputdown)
-  - [Input.ExecuteAction](#inputexecuteaction)
-  - [Input.Home](#inputhome)
-  - [Input.Info](#inputinfo)
-  - [Input.Left](#inputleft)
-  - [Input.Right](#inputright)
-  - [Input.Select](#inputselect)
-  - [Input.SendText](#inputsendtext)
-  - [Input.ShowCodec](#inputshowcodec)
-  - [Input.ShowOSD](#inputshowosd)
-  - [Input.ShowPlayerProcessInfo](#inputshowplayerprocessinfo)
-  - [Input.Up](#inputup)
 - [JSONRPC — JSON-RPC 系统](#jsonrpc)
-  - [JSONRPC.Introspect](#jsonrpcintrospect)
-  - [JSONRPC.NotifyAll](#jsonrpcnotifyall)
-  - [JSONRPC.Permission](#jsonrpcpermission)
-  - [JSONRPC.Ping](#jsonrpcping)
-  - [JSONRPC.Version](#jsonrpcversion)
 - [PVR — PVR/电视](#pvr)
-  - [PVR.AddTimer](#pvraddtimer)
-  - [PVR.DeleteTimer](#pvrdeletetimer)
-  - [PVR.GetBroadcastDetails](#pvrgetbroadcastdetails)
-  - [PVR.GetBroadcastIsPlayable](#pvrgetbroadcastisplayable)
-  - [PVR.GetBroadcasts](#pvrgetbroadcasts)
-  - [PVR.GetChannelDetails](#pvrgetchanneldetails)
-  - [PVR.GetChannelGroupDetails](#pvrgetchannelgroupdetails)
-  - [PVR.GetChannelGroups](#pvrgetchannelgroups)
-  - [PVR.GetChannels](#pvrgetchannels)
-  - [PVR.GetClients](#pvrgetclients)
-  - [PVR.GetProperties](#pvrgetproperties)
-  - [PVR.GetRecordingDetails](#pvrgetrecordingdetails)
-  - [PVR.GetRecordings](#pvrgetrecordings)
-  - [PVR.GetTimerDetails](#pvrgettimerdetails)
-  - [PVR.GetTimers](#pvrgettimers)
-  - [PVR.Record](#pvrrecord)
-  - [PVR.Scan](#pvrscan)
-  - [PVR.ToggleTimer](#pvrtoggletimer)
 - [Player — 播放器](#player)
-  - [Player.AddSubtitle](#playeraddsubtitle)
-  - [Player.GetActivePlayers](#playergetactiveplayers)
-  - [Player.GetAudioDelay](#playergetaudiodelay)
-  - [Player.GetItem](#playergetitem)
-  - [Player.GetPlayers](#playergetplayers)
-  - [Player.GetProperties](#playergetproperties)
-  - [Player.GetViewMode](#playergetviewmode)
-  - [Player.GoTo](#playergoto)
-  - [Player.Move](#playermove)
-  - [Player.Open](#playeropen)
-  - [Player.PlayPause](#playerplaypause)
-  - [Player.Rotate](#playerrotate)
-  - [Player.Seek](#playerseek)
-  - [Player.SetAudioDelay](#playersetaudiodelay)
-  - [Player.SetAudioStream](#playersetaudiostream)
-  - [Player.SetPartymode](#playersetpartymode)
-  - [Player.SetRepeat](#playersetrepeat)
-  - [Player.SetShuffle](#playersetshuffle)
-  - [Player.SetSpeed](#playersetspeed)
-  - [Player.SetSubtitle](#playersetsubtitle)
-  - [Player.SetTempo](#playersettempo)
-  - [Player.SetVideoStream](#playersetvideostream)
-  - [Player.SetViewMode](#playersetviewmode)
-  - [Player.Stop](#playerstop)
-  - [Player.Zoom](#playerzoom)
 - [Playlist — 播放列表](#playlist)
-  - [Playlist.Add](#playlistadd)
-  - [Playlist.Clear](#playlistclear)
-  - [Playlist.GetItems](#playlistgetitems)
-  - [Playlist.GetPlaylists](#playlistgetplaylists)
-  - [Playlist.GetProperties](#playlistgetproperties)
-  - [Playlist.Insert](#playlistinsert)
-  - [Playlist.Remove](#playlistremove)
-  - [Playlist.Swap](#playlistswap)
 - [Profiles — 配置文件](#profiles)
-  - [Profiles.GetCurrentProfile](#profilesgetcurrentprofile)
-  - [Profiles.GetProfiles](#profilesgetprofiles)
-  - [Profiles.LoadProfile](#profilesloadprofile)
 - [Settings — 设置](#settings)
-  - [Settings.GetCategories](#settingsgetcategories)
-  - [Settings.GetSections](#settingsgetsections)
-  - [Settings.GetSettingValue](#settingsgetsettingvalue)
-  - [Settings.GetSettings](#settingsgetsettings)
-  - [Settings.GetSkinSettingValue](#settingsgetskinsettingvalue)
-  - [Settings.GetSkinSettings](#settingsgetskinsettings)
-  - [Settings.ResetSettingValue](#settingsresetsettingvalue)
-  - [Settings.SetSettingValue](#settingssetsettingvalue)
-  - [Settings.SetSkinSettingValue](#settingssetskinsettingvalue)
 - [System — 系统](#system)
-  - [System.EjectOpticalDrive](#systemejectopticaldrive)
-  - [System.GetProperties](#systemgetproperties)
-  - [System.Hibernate](#systemhibernate)
-  - [System.Reboot](#systemreboot)
-  - [System.Shutdown](#systemshutdown)
-  - [System.Suspend](#systemsuspend)
 - [Textures — 纹理](#textures)
-  - [Textures.GetTextures](#texturesgettextures)
-  - [Textures.RemoveTexture](#texturesremovetexture)
 - [VideoLibrary — 视频库](#videolibrary)
-  - [VideoLibrary.Clean](#videolibraryclean)
-  - [VideoLibrary.Export](#videolibraryexport)
-  - [VideoLibrary.GetAvailableArt](#videolibrarygetavailableart)
-  - [VideoLibrary.GetAvailableArtTypes](#videolibrarygetavailablearttypes)
-  - [VideoLibrary.GetEpisodeDetails](#videolibrarygetepisodedetails)
-  - [VideoLibrary.GetEpisodes](#videolibrarygetepisodes)
-  - [VideoLibrary.GetGenres](#videolibrarygetgenres)
-  - [VideoLibrary.GetInProgressTVShows](#videolibrarygetinprogresstvshows)
-  - [VideoLibrary.GetMovieDetails](#videolibrarygetmoviedetails)
-  - [VideoLibrary.GetMovieSetDetails](#videolibrarygetmoviesetdetails)
-  - [VideoLibrary.GetMovieSets](#videolibrarygetmoviesets)
-  - [VideoLibrary.GetMovies](#videolibrarygetmovies)
-  - [VideoLibrary.GetMusicVideoDetails](#videolibrarygetmusicvideodetails)
-  - [VideoLibrary.GetMusicVideos](#videolibrarygetmusicvideos)
-  - [VideoLibrary.GetRecentlyAddedEpisodes](#videolibrarygetrecentlyaddedepisodes)
-  - [VideoLibrary.GetRecentlyAddedMovies](#videolibrarygetrecentlyaddedmovies)
-  - [VideoLibrary.GetRecentlyAddedMusicVideos](#videolibrarygetrecentlyaddedmusicvideos)
-  - [VideoLibrary.GetSeasonDetails](#videolibrarygetseasondetails)
-  - [VideoLibrary.GetSeasons](#videolibrarygetseasons)
-  - [VideoLibrary.GetTVShowDetails](#videolibrarygettvshowdetails)
-  - [VideoLibrary.GetTVShows](#videolibrarygettvshows)
-  - [VideoLibrary.GetTags](#videolibrarygettags)
-  - [VideoLibrary.RefreshEpisode](#videolibraryrefreshepisode)
-  - [VideoLibrary.RefreshMovie](#videolibraryrefreshmovie)
-  - [VideoLibrary.RefreshMusicVideo](#videolibraryrefreshmusicvideo)
-  - [VideoLibrary.RefreshTVShow](#videolibraryrefreshtvshow)
-  - [VideoLibrary.RemoveEpisode](#videolibraryremoveepisode)
-  - [VideoLibrary.RemoveMovie](#videolibraryremovemovie)
-  - [VideoLibrary.RemoveMusicVideo](#videolibraryremovemusicvideo)
-  - [VideoLibrary.RemoveTVShow](#videolibraryremovetvshow)
-  - [VideoLibrary.Scan](#videolibraryscan)
-  - [VideoLibrary.SetEpisodeDetails](#videolibrarysetepisodedetails)
-  - [VideoLibrary.SetMovieDetails](#videolibrarysetmoviedetails)
-  - [VideoLibrary.SetMovieSetDetails](#videolibrarysetmoviesetdetails)
-  - [VideoLibrary.SetMusicVideoDetails](#videolibrarysetmusicvideodetails)
-  - [VideoLibrary.SetSeasonDetails](#videolibrarysetseasondetails)
-  - [VideoLibrary.SetTVShowDetails](#videolibrarysettvshowdetails)
 - [XBMC — 系统(兼容)](#xbmc)
-  - [XBMC.GetInfoBooleans](#xbmcgetinfobooleans)
-  - [XBMC.GetInfoLabels](#xbmcgetinfolabels)
 
 ---
 
@@ -219,7 +45,7 @@ Executes the given addon with the given parameters (if possible)
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Addons.ExecuteAddon", "params": {"addonid": "script.jsonrobin"}, "id": 1}
+{"jsonrpc": "2.0", "method": "Addons.ExecuteAddon", "params": {"addonid": "script.jsonrobin", "wait": false}, "id": 1}
 ```
 
 **响应:**
@@ -254,7 +80,7 @@ Gets the details of a specific addon
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Addons.GetAddonDetails", "params": {"addonid": "script.jsonrobin"}, "id": 1}
+{"jsonrpc": "2.0", "method": "Addons.GetAddonDetails", "params": {"addonid": "script.jsonrobin", "properties": ["name", "version"]}, "id": 1}
 ```
 
 **响应:**
@@ -300,7 +126,7 @@ Gets all available addons
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -325,7 +151,7 @@ Enables/Disables a specific addon
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Addons.SetAddonEnabled", "params": {"addonid": "script.jsonrobin", "enabled": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "Addons.SetAddonEnabled", "params": {"addonid": "script.jsonrobin", "enabled": true}, "id": 1}
 ```
 
 **响应:**
@@ -334,17 +160,6 @@ Enables/Disables a specific addon
 {
   "error": {
     "code": -32602,
-    "data": {
-      "method": "Addons.SetAddonEnabled",
-      "stack": {
-        "message": "Received value does not match any of the union type definitions",
-        "name": "enabled",
-        "type": [
-          "string",
-          "boolean"
-        ]
-      }
-    },
     "message": "Invalid params."
   },
   "id": 1,
@@ -373,36 +188,21 @@ Retrieves the values of the given properties
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Application.GetProperties", "params": {"properties": ["file", "title"]}, "id": 1}
+{"jsonrpc": "2.0", "method": "Application.GetProperties", "params": {"properties": ["volume", "muted"]}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Application.GetProperties",
-      "stack": {
-        "message": "array element at index 0 does not match",
-        "name": "properties",
-        "property": {
-          "message": "Received value does not match any of the defined enum values",
-          "name": "Application.Property.Name",
-          "type": "string"
-        },
-        "type": "array"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": {
+    "muted": false,
+    "volume": 80
+  }
 }
 ```
-
-**返回:** `?`
 
 ---
 
@@ -421,7 +221,7 @@ Quit application
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -443,34 +243,18 @@ Toggle mute/unmute
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Application.SetMute", "params": {"mute": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "Application.SetMute", "params": {"mute": true}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Application.SetMute",
-      "stack": {
-        "message": "Received value does not match any of the union type definitions",
-        "name": "mute",
-        "type": [
-          "string",
-          "boolean"
-        ]
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": true
 }
 ```
-
-**返回:** `boolean`
 
 ---
 
@@ -525,7 +309,7 @@ Cleans the audio library from non-existent items
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -552,7 +336,7 @@ Exports all items from the audio library
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -575,7 +359,7 @@ Retrieve details about a specific album
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "AudioLibrary.GetAlbumDetails", "params": {"albumid": 1}, "id": 1}
+{"jsonrpc": "2.0", "method": "AudioLibrary.GetAlbumDetails", "params": {"albumid": 1, "properties": ["title", "artist"]}, "id": 1}
 ```
 
 **响应:**
@@ -620,7 +404,7 @@ Retrieve all albums from specified artist (and role) or that has songs of the sp
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -690,7 +474,7 @@ Retrieve all artists. For backward compatibility by default this implicitly does
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -715,7 +499,7 @@ Retrieve all potential art URLs for a media item by art type
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "AudioLibrary.GetAvailableArt", "params": {"item": {"file": "/storage/videos/test.mp4"}}, "id": 1}
+{"jsonrpc": "2.0", "method": "AudioLibrary.GetAvailableArt", "params": {"item": {"artist": "test"}}, "id": 1}
 ```
 
 **响应:**
@@ -758,7 +542,7 @@ Retrieve a list of potential art types for a media item
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "AudioLibrary.GetAvailableArtTypes", "params": {"item": {"file": "/storage/videos/test.mp4"}}, "id": 1}
+{"jsonrpc": "2.0", "method": "AudioLibrary.GetAvailableArtTypes", "params": {"item": {"artist": "test"}}, "id": 1}
 ```
 
 **响应:**
@@ -808,7 +592,7 @@ Retrieve all genres
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -832,7 +616,7 @@ Retrieves the values of the music library properties
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "AudioLibrary.GetProperties", "params": {"properties": ["file", "title"]}, "id": 1}
+{"jsonrpc": "2.0", "method": "AudioLibrary.GetProperties", "params": {"properties": ["library", "artist"]}, "id": 1}
 ```
 
 **响应:**
@@ -886,7 +670,7 @@ Retrieve recently added albums
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -918,7 +702,7 @@ Retrieve recently added songs
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -949,7 +733,7 @@ Retrieve recently played albums
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -980,7 +764,7 @@ Retrieve recently played songs
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -1011,7 +795,7 @@ Retrieve all contributor roles
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -1036,7 +820,7 @@ Retrieve details about a specific song
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "AudioLibrary.GetSongDetails", "params": {"songid": 1}, "id": 1}
+{"jsonrpc": "2.0", "method": "AudioLibrary.GetSongDetails", "params": {"songid": 1, "properties": ["title", "artist"]}, "id": 1}
 ```
 
 **响应:**
@@ -1082,7 +866,7 @@ Retrieve all songs from specified album, artist or genre
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -1113,7 +897,7 @@ Get all music sources, including unique ID
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -1143,7 +927,7 @@ Scans the audio sources for new library items
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -1333,7 +1117,7 @@ Add a favourite with the given details
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Favourites.AddFavourite", "params": {"title": "Test", "type": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "Favourites.AddFavourite", "params": {"title": "Test", "type": "media"}, "id": 1}
 ```
 
 **响应:**
@@ -1345,8 +1129,8 @@ Add a favourite with the given details
     "data": {
       "method": "Favourites.AddFavourite",
       "stack": {
-        "message": "Received value does not match any of the defined enum values",
-        "name": "type",
+        "message": "Missing parameter",
+        "name": "path",
         "type": "string"
       }
     },
@@ -1381,7 +1165,7 @@ Retrieve all favourites
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -1463,24 +1247,23 @@ Get details for a specific file
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Files.GetFileDetails", "params": {"file": "/storage/videos/test.mp4"}, "id": 1}
+{"jsonrpc": "2.0", "method": "Files.GetFileDetails", "params": {"file": "/storage/videos/test_sbs.mp4", "media": "video"}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": {
+    "filedetails": {
+      "label": "test_sbs.mp4",
+      "type": "unknown"
+    }
+  }
 }
 ```
-
-**返回结构:** object
-  - `filedetails`: object
 
 ---
 
@@ -1500,33 +1283,34 @@ Get the sources of the media windows
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Files.GetSources", "params": {"media": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "Files.GetSources", "params": {"media": "video"}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Files.GetSources",
-      "stack": {
-        "message": "Received value does not match any of the defined enum values",
-        "name": "media",
-        "type": "string"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": {
+    "limits": {
+      "end": 2,
+      "start": 0,
+      "total": 2
+    },
+    "sources": [
+      {
+        "file": "/storage/videos/",
+        "label": "Videos"
+      },
+      {
+        "file": "/storage/tvshows/",
+        "label": "TV Shows"
+      }
+    ]
+  }
 }
 ```
-
-**返回结构:** object
-  - `limits`: object
-  - `sources`: array
 
 ---
 
@@ -1544,29 +1328,24 @@ Provides a way to download a given file (e.g. providing an URL to the real file 
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Files.PrepareDownload", "params": {"path": "/storage/videos"}, "id": 1}
+{"jsonrpc": "2.0", "method": "Files.PrepareDownload", "params": {"path": "/storage/videos/test_sbs.mp4"}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "details": null
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": {
+    "details": {
+      "path": "vfs/%2fstorage%2fvideos%2ftest_sbs.mp4"
+    },
+    "mode": "redirect",
+    "protocol": "http"
+  }
 }
 ```
-
-**返回结构:** object
-  - `details`: any
-  - `mode`: redirect | direct
-  - `protocol`: http
 
 ---
 
@@ -1588,31 +1367,18 @@ Update the given specific file with the given details
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Files.SetFileDetails", "params": {"file": "/storage/videos/test.mp4", "media": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "Files.SetFileDetails", "params": {"file": "/storage/videos/test_sbs.mp4", "media": "video"}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Files.SetFileDetails",
-      "stack": {
-        "message": "Received value does not match any of the defined enum values",
-        "name": "media",
-        "type": "string"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": "OK"
 }
 ```
-
-**返回:** `string`
 
 ---
 
@@ -1634,7 +1400,7 @@ Activates currently used screensaver
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -1686,36 +1452,24 @@ Retrieves the values of the given properties
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "GUI.GetProperties", "params": {"properties": ["file", "title"]}, "id": 1}
+{"jsonrpc": "2.0", "method": "GUI.GetProperties", "params": {"properties": ["currentwindow", "fullscreen"]}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "GUI.GetProperties",
-      "stack": {
-        "message": "array element at index 0 does not match",
-        "name": "properties",
-        "property": {
-          "message": "Received value does not match any of the defined enum values",
-          "name": "GUI.Property.Name",
-          "type": "string"
-        },
-        "type": "array"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": {
+    "currentwindow": {
+      "id": 12005,
+      "label": "全屏视频"
+    },
+    "fullscreen": true
+  }
 }
 ```
-
-**返回:** `?`
 
 ---
 
@@ -1734,7 +1488,7 @@ Returns the supported stereoscopic modes of the GUI
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -1757,34 +1511,18 @@ Toggle fullscreen/GUI
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "GUI.SetFullscreen", "params": {"fullscreen": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "GUI.SetFullscreen", "params": {"fullscreen": true}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "GUI.SetFullscreen",
-      "stack": {
-        "message": "Received value does not match any of the union type definitions",
-        "name": "fullscreen",
-        "type": [
-          "string",
-          "boolean"
-        ]
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": true
 }
 ```
-
-**返回:** `boolean`
 
 ---
 
@@ -1802,31 +1540,18 @@ Sets the stereoscopic mode of the GUI to the given mode
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "GUI.SetStereoscopicMode", "params": {"mode": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "GUI.SetStereoscopicMode", "params": {"mode": "off"}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "GUI.SetStereoscopicMode",
-      "stack": {
-        "message": "Received value does not match any of the defined enum values",
-        "name": "mode",
-        "type": "string"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": "OK"
 }
 ```
-
-**返回:** `string`
 
 ---
 
@@ -1880,7 +1605,7 @@ Goes back in GUI
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -1904,31 +1629,18 @@ Send a button press event
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Input.ButtonEvent", "params": {"button": "...", "keymap": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "Input.ButtonEvent", "params": {"button": "select", "keymap": "KB"}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Input.ButtonEvent",
-      "stack": {
-        "message": "Received value does not match any of the defined enum values",
-        "name": "keymap",
-        "type": "string"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": "OK"
 }
 ```
-
-**返回:** `string`
 
 ---
 
@@ -1947,7 +1659,7 @@ Shows the context menu
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -1970,7 +1682,7 @@ Navigate down in GUI
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2022,7 +1734,7 @@ Goes to home window in GUI
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2045,7 +1757,7 @@ Shows the information dialog
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2068,7 +1780,7 @@ Navigate left in GUI
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2091,7 +1803,7 @@ Navigate right in GUI
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2114,7 +1826,7 @@ Select current item in GUI
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2167,7 +1879,7 @@ Show codec information of the playing item
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2190,7 +1902,7 @@ Show the on-screen display for the current player
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2213,7 +1925,7 @@ Show player process information of the playing item, like video decoder, pixel f
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2236,7 +1948,7 @@ Navigate up in GUI
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2269,7 +1981,7 @@ Enumerates all actions and descriptions
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2298,7 +2010,7 @@ Notify all other connected clients
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2321,7 +2033,7 @@ Retrieve the clients permissions
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2357,7 +2069,7 @@ Ping responder
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2380,7 +2092,7 @@ Retrieve the JSON-RPC protocol version.
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2408,7 +2120,7 @@ Adds a timer to record the given show one times or a timer rule to record all sh
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "PVR.AddTimer", "params": {"broadcastid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "PVR.AddTimer", "params": {"broadcastid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -2416,16 +2128,8 @@ Adds a timer to record the given show one times or a timer rule to record all sh
 ```json
 {
   "error": {
-    "code": -32602,
-    "data": {
-      "method": "PVR.AddTimer",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "broadcastid",
-        "type": "integer"
-      }
-    },
-    "message": "Invalid params."
+    "code": -32100,
+    "message": "Failed to execute method."
   },
   "id": 1,
   "jsonrpc": "2.0"
@@ -2450,7 +2154,7 @@ Deletes a onetime timer or a timer rule
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "PVR.DeleteTimer", "params": {"timerid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "PVR.DeleteTimer", "params": {"timerid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -2458,16 +2162,8 @@ Deletes a onetime timer or a timer rule
 ```json
 {
   "error": {
-    "code": -32602,
-    "data": {
-      "method": "PVR.DeleteTimer",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "timerid",
-        "type": "integer"
-      }
-    },
-    "message": "Invalid params."
+    "code": -32100,
+    "message": "Failed to execute method."
   },
   "id": 1,
   "jsonrpc": "2.0"
@@ -2493,7 +2189,7 @@ Retrieves the details of a specific broadcast
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "PVR.GetBroadcastDetails", "params": {"broadcastid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "PVR.GetBroadcastDetails", "params": {"broadcastid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -2501,16 +2197,8 @@ Retrieves the details of a specific broadcast
 ```json
 {
   "error": {
-    "code": -32602,
-    "data": {
-      "method": "PVR.GetBroadcastDetails",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "broadcastid",
-        "type": "integer"
-      }
-    },
-    "message": "Invalid params."
+    "code": -32100,
+    "message": "Failed to execute method."
   },
   "id": 1,
   "jsonrpc": "2.0"
@@ -2536,7 +2224,7 @@ Retrieves whether or not a broadcast is playable
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "PVR.GetBroadcastIsPlayable", "params": {"broadcastid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "PVR.GetBroadcastIsPlayable", "params": {"broadcastid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -2544,16 +2232,8 @@ Retrieves whether or not a broadcast is playable
 ```json
 {
   "error": {
-    "code": -32602,
-    "data": {
-      "method": "PVR.GetBroadcastIsPlayable",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "broadcastid",
-        "type": "integer"
-      }
-    },
-    "message": "Invalid params."
+    "code": -32100,
+    "message": "Failed to execute method."
   },
   "id": 1,
   "jsonrpc": "2.0"
@@ -2580,7 +2260,7 @@ Retrieves the program of a specific channel
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "PVR.GetBroadcasts", "params": {"channelid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "PVR.GetBroadcasts", "params": {"channelid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -2588,16 +2268,8 @@ Retrieves the program of a specific channel
 ```json
 {
   "error": {
-    "code": -32602,
-    "data": {
-      "method": "PVR.GetBroadcasts",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "channelid",
-        "type": "integer"
-      }
-    },
-    "message": "Invalid params."
+    "code": -32100,
+    "message": "Failed to execute method."
   },
   "id": 1,
   "jsonrpc": "2.0"
@@ -2625,7 +2297,7 @@ Retrieves the details of a specific channel
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "PVR.GetChannelDetails", "params": {"channelid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "PVR.GetChannelDetails", "params": {"channelid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -2633,16 +2305,8 @@ Retrieves the details of a specific channel
 ```json
 {
   "error": {
-    "code": -32602,
-    "data": {
-      "method": "PVR.GetChannelDetails",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "channelid",
-        "type": "integer"
-      }
-    },
-    "message": "Invalid params."
+    "code": -32100,
+    "message": "Failed to execute method."
   },
   "id": 1,
   "jsonrpc": "2.0"
@@ -2669,7 +2333,7 @@ Retrieves the details of a specific channel group
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "PVR.GetChannelGroupDetails", "params": {"channelgroupid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "PVR.GetChannelGroupDetails", "params": {"channelgroupid": "alltv"}, "id": 1}
 ```
 
 **响应:**
@@ -2677,19 +2341,8 @@ Retrieves the details of a specific channel group
 ```json
 {
   "error": {
-    "code": -32602,
-    "data": {
-      "method": "PVR.GetChannelGroupDetails",
-      "stack": {
-        "message": "Received value does not match any of the union type definitions",
-        "name": "channelgroupid",
-        "type": [
-          "string",
-          "integer"
-        ]
-      }
-    },
-    "message": "Invalid params."
+    "code": -32100,
+    "message": "Failed to execute method."
   },
   "id": 1,
   "jsonrpc": "2.0"
@@ -2716,7 +2369,7 @@ Retrieves the channel groups for the specified type
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "PVR.GetChannelGroups", "params": {"channeltype": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "PVR.GetChannelGroups", "params": {"channeltype": "tv"}, "id": 1}
 ```
 
 **响应:**
@@ -2724,16 +2377,8 @@ Retrieves the channel groups for the specified type
 ```json
 {
   "error": {
-    "code": -32602,
-    "data": {
-      "method": "PVR.GetChannelGroups",
-      "stack": {
-        "message": "Received value does not match any of the defined enum values",
-        "name": "channeltype",
-        "type": "string"
-      }
-    },
-    "message": "Invalid params."
+    "code": -32100,
+    "message": "Failed to execute method."
   },
   "id": 1,
   "jsonrpc": "2.0"
@@ -2763,7 +2408,7 @@ Retrieves the channel list
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "PVR.GetChannels", "params": {"channelgroupid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "PVR.GetChannels", "params": {"channelgroupid": "alltv"}, "id": 1}
 ```
 
 **响应:**
@@ -2771,19 +2416,8 @@ Retrieves the channel list
 ```json
 {
   "error": {
-    "code": -32602,
-    "data": {
-      "method": "PVR.GetChannels",
-      "stack": {
-        "message": "Received value does not match any of the union type definitions",
-        "name": "channelgroupid",
-        "type": [
-          "string",
-          "integer"
-        ]
-      }
-    },
-    "message": "Invalid params."
+    "code": -32100,
+    "message": "Failed to execute method."
   },
   "id": 1,
   "jsonrpc": "2.0"
@@ -2815,7 +2449,7 @@ Retrieves the enabled PVR clients and their capabilities
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2839,7 +2473,7 @@ Retrieves the values of the given properties
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "PVR.GetProperties", "params": {"properties": ["file", "title"]}, "id": 1}
+{"jsonrpc": "2.0", "method": "PVR.GetProperties", "params": {"properties": ["available", "recording"]}, "id": 1}
 ```
 
 **响应:**
@@ -2847,21 +2481,8 @@ Retrieves the values of the given properties
 ```json
 {
   "error": {
-    "code": -32602,
-    "data": {
-      "method": "PVR.GetProperties",
-      "stack": {
-        "message": "array element at index 0 does not match",
-        "name": "properties",
-        "property": {
-          "message": "Received value does not match any of the defined enum values",
-          "name": "PVR.Property.Name",
-          "type": "string"
-        },
-        "type": "array"
-      }
-    },
-    "message": "Invalid params."
+    "code": -32100,
+    "message": "Failed to execute method."
   },
   "id": 1,
   "jsonrpc": "2.0"
@@ -2887,7 +2508,7 @@ Retrieves the details of a specific recording
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "PVR.GetRecordingDetails", "params": {"recordingid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "PVR.GetRecordingDetails", "params": {"recordingid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -2895,16 +2516,8 @@ Retrieves the details of a specific recording
 ```json
 {
   "error": {
-    "code": -32602,
-    "data": {
-      "method": "PVR.GetRecordingDetails",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "recordingid",
-        "type": "integer"
-      }
-    },
-    "message": "Invalid params."
+    "code": -32100,
+    "message": "Failed to execute method."
   },
   "id": 1,
   "jsonrpc": "2.0"
@@ -2937,7 +2550,7 @@ Retrieves the recordings
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -2962,7 +2575,7 @@ Retrieves the details of a specific timer
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "PVR.GetTimerDetails", "params": {"timerid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "PVR.GetTimerDetails", "params": {"timerid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -2970,16 +2583,8 @@ Retrieves the details of a specific timer
 ```json
 {
   "error": {
-    "code": -32602,
-    "data": {
-      "method": "PVR.GetTimerDetails",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "timerid",
-        "type": "integer"
-      }
-    },
-    "message": "Invalid params."
+    "code": -32100,
+    "message": "Failed to execute method."
   },
   "id": 1,
   "jsonrpc": "2.0"
@@ -3012,7 +2617,7 @@ Retrieves the timers
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -3042,7 +2647,7 @@ Toggle recording of a channel
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -3069,7 +2674,7 @@ Starts a channel scan
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -3092,7 +2697,7 @@ Creates or deletes a onetime timer or timer rule for a given show. If it exists,
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "PVR.ToggleTimer", "params": {"broadcastid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "PVR.ToggleTimer", "params": {"broadcastid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -3100,16 +2705,8 @@ Creates or deletes a onetime timer or timer rule for a given show. If it exists,
 ```json
 {
   "error": {
-    "code": -32602,
-    "data": {
-      "method": "PVR.ToggleTimer",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "broadcastid",
-        "type": "integer"
-      }
-    },
-    "message": "Invalid params."
+    "code": -32100,
+    "message": "Failed to execute method."
   },
   "id": 1,
   "jsonrpc": "2.0"
@@ -3168,7 +2765,7 @@ Returns all active players
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -3191,7 +2788,7 @@ Get the audio delay for the current playback
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -3254,7 +2851,7 @@ Get a list of available players
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -3277,36 +2874,22 @@ Retrieves the values of the given properties
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Player.GetProperties", "params": {"playerid": 1, "properties": ["file", "title"]}, "id": 1}
+{"jsonrpc": "2.0", "method": "Player.GetProperties", "params": {"playerid": 1, "properties": ["speed", "repeat", "shuffled"]}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Player.GetProperties",
-      "stack": {
-        "message": "array element at index 0 does not match",
-        "name": "properties",
-        "property": {
-          "message": "Received value does not match any of the defined enum values",
-          "name": "Player.Property.Name",
-          "type": "string"
-        },
-        "type": "array"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": {
+    "repeat": "all",
+    "shuffled": false,
+    "speed": 1
+  }
 }
 ```
-
-**返回:** `?`
 
 ---
 
@@ -3325,7 +2908,7 @@ Get view mode of video player
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -3383,31 +2966,18 @@ If picture is zoomed move viewport left/right/up/down otherwise skip previous/ne
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Player.Move", "params": {"playerid": 1, "direction": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "Player.Move", "params": {"playerid": 1, "direction": "left"}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Player.Move",
-      "stack": {
-        "message": "Received value does not match any of the defined enum values",
-        "name": "direction",
-        "type": "string"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": "OK"
 }
 ```
-
-**返回:** `string`
 
 ---
 
@@ -3431,7 +3001,7 @@ Start playback of either the playlist with the given ID, a slideshow with the pi
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -3521,34 +3091,32 @@ Seek through the playing item
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Player.Seek", "params": {"playerid": 1, "value": 0}, "id": 1}
+{"jsonrpc": "2.0", "method": "Player.Seek", "params": {"playerid": 1, "value": {"percentage": 50}}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Player.Seek",
-      "stack": {
-        "message": "Invalid type integer received",
-        "name": "value",
-        "type": "object"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": {
+    "percentage": 25.938140869140625,
+    "time": {
+      "hours": 0,
+      "milliseconds": 571,
+      "minutes": 0,
+      "seconds": 57
+    },
+    "totaltime": {
+      "hours": 0,
+      "milliseconds": 955,
+      "minutes": 3,
+      "seconds": 41
+    }
+  }
 }
 ```
-
-**返回结构:** object
-  - `percentage`: number(范围:0.0~100.0; 默认:0.0)
-  - `time`: object
-  - `totaltime`: object
 
 ---
 
@@ -3629,34 +3197,18 @@ Turn partymode on or off
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Player.SetPartymode", "params": {"playerid": 1, "partymode": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "Player.SetPartymode", "params": {"playerid": 1, "partymode": true}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Player.SetPartymode",
-      "stack": {
-        "message": "Received value does not match any of the union type definitions",
-        "name": "partymode",
-        "type": [
-          "string",
-          "boolean"
-        ]
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": "OK"
 }
 ```
-
-**返回:** `string`
 
 ---
 
@@ -3705,34 +3257,18 @@ Shuffle/Unshuffle items in the player
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Player.SetShuffle", "params": {"playerid": 1, "shuffle": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "Player.SetShuffle", "params": {"playerid": 1, "shuffle": true}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Player.SetShuffle",
-      "stack": {
-        "message": "Received value does not match any of the union type definitions",
-        "name": "shuffle",
-        "type": [
-          "string",
-          "boolean"
-        ]
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": "OK"
 }
 ```
-
-**返回:** `string`
 
 ---
 
@@ -3751,7 +3287,7 @@ Set the speed of the current playback
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Player.SetSpeed", "params": {"playerid": 1, "speed": -32}, "id": 1}
+{"jsonrpc": "2.0", "method": "Player.SetSpeed", "params": {"playerid": 1, "speed": "increment"}, "id": 1}
 ```
 
 **响应:**
@@ -3761,7 +3297,7 @@ Set the speed of the current playback
   "id": 1,
   "jsonrpc": "2.0",
   "result": {
-    "speed": -32
+    "speed": 2
   }
 }
 ```
@@ -3975,23 +3511,18 @@ Add item(s) to playlist
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Playlist.Add", "params": {"playlistid": 0, "item": {"file": "/storage/videos/test.mp4"}}, "id": 1}
+{"jsonrpc": "2.0", "method": "Playlist.Add", "params": {"playlistid": 0, "item": {"file": "/storage/videos/test_sbs.mp4"}}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": "OK"
 }
 ```
-
-**返回:** `string`
 
 ---
 
@@ -4078,7 +3609,7 @@ Returns all existing playlists
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4101,36 +3632,21 @@ Retrieves the values of the given properties
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Playlist.GetProperties", "params": {"playlistid": 0, "properties": ["file", "title"]}, "id": 1}
+{"jsonrpc": "2.0", "method": "Playlist.GetProperties", "params": {"playlistid": 0, "properties": ["type", "size"]}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Playlist.GetProperties",
-      "stack": {
-        "message": "array element at index 0 does not match",
-        "name": "properties",
-        "property": {
-          "message": "Received value does not match any of the defined enum values",
-          "name": "Playlist.Property.Name",
-          "type": "string"
-        },
-        "type": "array"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": {
+    "size": 0,
+    "type": "audio"
+  }
 }
 ```
-
-**返回:** `?`
 
 ---
 
@@ -4150,31 +3666,18 @@ Insert item(s) into playlist. Does not work for picture playlists (aka slideshow
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Playlist.Insert", "params": {"playlistid": 0, "position": "...", "item": {"file": "/storage/videos/test.mp4"}}, "id": 1}
+{"jsonrpc": "2.0", "method": "Playlist.Insert", "params": {"playlistid": 0, "position": 0, "item": {"file": "/storage/videos/test_sbs.mp4"}}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Playlist.Insert",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "position",
-        "type": "integer"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": "OK"
 }
 ```
-
-**返回:** `string`
 
 ---
 
@@ -4193,31 +3696,18 @@ Remove item from playlist. Does not work for picture playlists (aka slideshows).
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Playlist.Remove", "params": {"playlistid": 0, "position": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "Playlist.Remove", "params": {"playlistid": 0, "position": 0}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Playlist.Remove",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "position",
-        "type": "integer"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": "OK"
 }
 ```
-
-**返回:** `string`
 
 ---
 
@@ -4237,31 +3727,18 @@ Swap items in the playlist. Does not work for picture playlists (aka slideshows)
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Playlist.Swap", "params": {"playlistid": 0, "position1": "...", "position2": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "Playlist.Swap", "params": {"playlistid": 0, "position1": 0, "position2": 1}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "Playlist.Swap",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "position1",
-        "type": "integer"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": "OK"
 }
 ```
-
-**返回:** `string`
 
 ---
 
@@ -4287,7 +3764,7 @@ Retrieve the current profile
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4316,7 +3793,7 @@ Retrieve all profiles
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4342,7 +3819,7 @@ Load the specified profile
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Profiles.LoadProfile", "params": {"profile": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "Profiles.LoadProfile", "params": {"profile": "Default"}, "id": 1}
 ```
 
 **响应:**
@@ -4386,7 +3863,7 @@ Retrieves all setting categories
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4415,7 +3892,7 @@ Retrieves all setting sections
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4475,7 +3952,7 @@ Retrieves all settings
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4498,7 +3975,7 @@ Retrieves the value of the specified skin setting
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Settings.GetSkinSettingValue", "params": {"setting": "lookandfeel.skinzoom"}, "id": 1}
+{"jsonrpc": "2.0", "method": "Settings.GetSkinSettingValue", "params": {"setting": "skinstring"}, "id": 1}
 ```
 
 **响应:**
@@ -4534,7 +4011,7 @@ Retrieves all skin settings of the currently used skin
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4618,7 +4095,7 @@ Changes the value of the specified skin setting
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Settings.SetSkinSettingValue", "params": {"setting": "lookandfeel.skinzoom", "value": 0}, "id": 1}
+{"jsonrpc": "2.0", "method": "Settings.SetSkinSettingValue", "params": {"setting": "skinstring", "value": "Estuary"}, "id": 1}
 ```
 
 **响应:**
@@ -4627,17 +4104,6 @@ Changes the value of the specified skin setting
 {
   "error": {
     "code": -32602,
-    "data": {
-      "method": "Settings.SetSkinSettingValue",
-      "stack": {
-        "message": "Invalid type integer received",
-        "name": "value",
-        "type": [
-          "string",
-          "boolean"
-        ]
-      }
-    },
     "message": "Invalid params."
   },
   "id": 1,
@@ -4667,7 +4133,7 @@ Ejects or closes the optical disc drive (if available)
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4689,7 +4155,7 @@ Retrieves the values of the given properties
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "System.GetProperties", "params": {"properties": ["file", "title"]}, "id": 1}
+{"jsonrpc": "2.0", "method": "System.GetProperties", "params": {"properties": ["version", "os"]}, "id": 1}
 ```
 
 **响应:**
@@ -4737,7 +4203,7 @@ Puts the system running Kodi into hibernate mode
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4760,7 +4226,7 @@ Reboots the system running Kodi
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4783,7 +4249,7 @@ Shuts the system running Kodi down
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4806,7 +4272,7 @@ Suspends the system running Kodi
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4837,7 +4303,7 @@ Retrieve all textures
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4860,7 +4326,7 @@ Remove the specified texture
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "Textures.RemoveTexture", "params": {"textureid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "Textures.RemoveTexture", "params": {"textureid": 0}, "id": 1}
 ```
 
 **响应:**
@@ -4872,7 +4338,7 @@ Remove the specified texture
     "data": {
       "method": "Textures.RemoveTexture",
       "stack": {
-        "message": "Invalid type string received",
+        "message": "Value between 1 (inclusive) and 2147483647 (inclusive) expected but 0 received",
         "name": "textureid",
         "type": "integer"
       }
@@ -4912,7 +4378,7 @@ Cleans the video library for non-existent items
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4939,7 +4405,7 @@ Exports all items from the video library
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -4962,32 +4428,20 @@ Retrieve all potential art URLs for a media item by art type
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.GetAvailableArt", "params": {"item": {"file": "/storage/videos/test.mp4"}}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetAvailableArt", "params": {"item": {"movieid": 1}}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "VideoLibrary.GetAvailableArt",
-      "stack": {
-        "message": "Received value does not match any of the union type definitions",
-        "name": "item",
-        "type": "object"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": {
+    "availableart": []
+  }
 }
 ```
-
-**返回结构:** object
-  - `availableart`: array
 
 ---
 
@@ -5005,32 +4459,20 @@ Retrieve a list of potential art types for a media item
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.GetAvailableArtTypes", "params": {"item": {"file": "/storage/videos/test.mp4"}}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetAvailableArtTypes", "params": {"item": {"movieid": 1}}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "VideoLibrary.GetAvailableArtTypes",
-      "stack": {
-        "message": "Received value does not match any of the union type definitions",
-        "name": "item",
-        "type": "object"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": {
+    "availablearttypes": []
+  }
 }
 ```
-
-**返回结构:** object
-  - `availablearttypes`: array
 
 ---
 
@@ -5049,7 +4491,7 @@ Retrieve details about a specific tv show episode
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodeDetails", "params": {"episodeid": 1}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetEpisodeDetails", "params": {"episodeid": 1, "properties": ["title", "showtitle"]}, "id": 1}
 ```
 
 **响应:**
@@ -5094,7 +4536,7 @@ Retrieve all tv show episodes
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -5121,33 +4563,25 @@ Retrieve all genres
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.GetGenres", "params": {"type": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetGenres", "params": {"type": "movie"}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "VideoLibrary.GetGenres",
-      "stack": {
-        "message": "Received value does not match any of the defined enum values",
-        "name": "type",
-        "type": "string"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": {
+    "genres": [],
+    "limits": {
+      "end": 0,
+      "start": 0,
+      "total": 0
+    }
+  }
 }
 ```
-
-**返回结构:** object
-  - `genres`: array
-  - `limits`: object
 
 ---
 
@@ -5172,7 +4606,7 @@ Retrieve all in progress tvshows
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -5197,7 +4631,7 @@ Retrieve details about a specific movie
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.GetMovieDetails", "params": {"movieid": 1}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetMovieDetails", "params": {"movieid": 1, "properties": ["title", "year"]}, "id": 1}
 ```
 
 **响应:**
@@ -5234,7 +4668,7 @@ Retrieve details about a specific movie set
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.GetMovieSetDetails", "params": {"setid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetMovieSetDetails", "params": {"setid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -5243,14 +4677,6 @@ Retrieve details about a specific movie set
 {
   "error": {
     "code": -32602,
-    "data": {
-      "method": "VideoLibrary.GetMovieSetDetails",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "setid",
-        "type": "integer"
-      }
-    },
     "message": "Invalid params."
   },
   "id": 1,
@@ -5284,7 +4710,7 @@ Retrieve all movie sets
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -5316,7 +4742,7 @@ Retrieve all movies
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -5341,7 +4767,7 @@ Retrieve details about a specific music video
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.GetMusicVideoDetails", "params": {"musicvideoid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetMusicVideoDetails", "params": {"musicvideoid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -5350,14 +4776,6 @@ Retrieve details about a specific music video
 {
   "error": {
     "code": -32602,
-    "data": {
-      "method": "VideoLibrary.GetMusicVideoDetails",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "musicvideoid",
-        "type": "integer"
-      }
-    },
     "message": "Invalid params."
   },
   "id": 1,
@@ -5387,18 +4805,25 @@ Retrieve all music videos
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.GetMusicVideos", "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetMusicVideos", "params": {"properties": ["title", "artist"]}, "id": 1}
 ```
 
 **响应:**
 
 ```json
-(no params or skipped)
+{
+  "id": 1,
+  "jsonrpc": "2.0",
+  "result": {
+    "limits": {
+      "end": 0,
+      "start": 0,
+      "total": 0
+    },
+    "musicvideos": []
+  }
+}
 ```
-
-**返回结构:** object
-  - `limits`: object
-  - `musicvideos`: array
 
 ---
 
@@ -5423,7 +4848,7 @@ Retrieve all recently added tv episodes
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -5454,7 +4879,7 @@ Retrieve all recently added movies
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -5480,18 +4905,25 @@ Retrieve all recently added music videos
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.GetRecentlyAddedMusicVideos", "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetRecentlyAddedMusicVideos", "params": {"properties": ["title"]}, "id": 1}
 ```
 
 **响应:**
 
 ```json
-(no params or skipped)
+{
+  "id": 1,
+  "jsonrpc": "2.0",
+  "result": {
+    "limits": {
+      "end": 0,
+      "start": 0,
+      "total": 0
+    },
+    "musicvideos": []
+  }
+}
 ```
-
-**返回结构:** object
-  - `limits`: object
-  - `musicvideos`: array
 
 ---
 
@@ -5510,7 +4942,7 @@ Retrieve details about a specific tv show season
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.GetSeasonDetails", "params": {"seasonid": 1}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetSeasonDetails", "params": {"seasonid": 1, "properties": ["season", "tvshowid"]}, "id": 1}
 ```
 
 **响应:**
@@ -5553,7 +4985,7 @@ Retrieve all tv seasons
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -5578,7 +5010,7 @@ Retrieve details about a specific tv show
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.GetTVShowDetails", "params": {"tvshowid": 1}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetTVShowDetails", "params": {"tvshowid": 1, "properties": ["title", "season"]}, "id": 1}
 ```
 
 **响应:**
@@ -5621,7 +5053,7 @@ Retrieve all tv shows
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -5648,33 +5080,25 @@ Retrieve all tags
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.GetTags", "params": {"type": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.GetTags", "params": {"type": "movie"}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "VideoLibrary.GetTags",
-      "stack": {
-        "message": "Received value does not match any of the defined enum values",
-        "name": "type",
-        "type": "string"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": {
+    "limits": {
+      "end": 0,
+      "start": 0,
+      "total": 0
+    },
+    "tags": []
+  }
 }
 ```
-
-**返回结构:** object
-  - `limits`: object
-  - `tags`: array
 
 ---
 
@@ -5766,7 +5190,7 @@ Refresh the given music video in the library
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.RefreshMusicVideo", "params": {"musicvideoid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.RefreshMusicVideo", "params": {"musicvideoid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -5775,14 +5199,6 @@ Refresh the given music video in the library
 {
   "error": {
     "code": -32602,
-    "data": {
-      "method": "VideoLibrary.RefreshMusicVideo",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "musicvideoid",
-        "type": "integer"
-      }
-    },
     "message": "Invalid params."
   },
   "id": 1,
@@ -5903,31 +5319,18 @@ Removes the given music video from the library
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.RemoveMusicVideo", "params": {"musicvideoid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.RemoveMusicVideo", "params": {"musicvideoid": 1}, "id": 1}
 ```
 
 **响应:**
 
 ```json
 {
-  "error": {
-    "code": -32602,
-    "data": {
-      "method": "VideoLibrary.RemoveMusicVideo",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "musicvideoid",
-        "type": "integer"
-      }
-    },
-    "message": "Invalid params."
-  },
   "id": 1,
-  "jsonrpc": "2.0"
+  "jsonrpc": "2.0",
+  "result": "OK"
 }
 ```
-
-**返回:** `string`
 
 ---
 
@@ -5980,7 +5383,7 @@ Scans the video sources for new library items
 
 **响应:**
 
-```json
+```
 (no params or skipped)
 ```
 
@@ -6128,7 +5531,7 @@ Update the given movie set with the given details
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.SetMovieSetDetails", "params": {"setid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.SetMovieSetDetails", "params": {"setid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -6137,14 +5540,6 @@ Update the given movie set with the given details
 {
   "error": {
     "code": -32602,
-    "data": {
-      "method": "VideoLibrary.SetMovieSetDetails",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "setid",
-        "type": "integer"
-      }
-    },
     "message": "Invalid params."
   },
   "id": 1,
@@ -6192,7 +5587,7 @@ Update the given music video with the given details
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "VideoLibrary.SetMusicVideoDetails", "params": {"musicvideoid": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "VideoLibrary.SetMusicVideoDetails", "params": {"musicvideoid": 1}, "id": 1}
 ```
 
 **响应:**
@@ -6201,14 +5596,6 @@ Update the given music video with the given details
 {
   "error": {
     "code": -32602,
-    "data": {
-      "method": "VideoLibrary.SetMusicVideoDetails",
-      "stack": {
-        "message": "Invalid type string received",
-        "name": "musicvideoid",
-        "type": "integer"
-      }
-    },
     "message": "Invalid params."
   },
   "id": 1,
@@ -6332,7 +5719,7 @@ Retrieve info booleans about Kodi and the system
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "XBMC.GetInfoBooleans", "params": {"booleans": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "XBMC.GetInfoBooleans", "params": {"booleans": "System.ScreenSaverActive"}, "id": 1}
 ```
 
 **响应:**
@@ -6374,7 +5761,7 @@ Retrieve info labels about Kodi and the system
 **请求:**
 
 ```json
-{"jsonrpc": "2.0", "method": "XBMC.GetInfoLabels", "params": {"labels": "..."}, "id": 1}
+{"jsonrpc": "2.0", "method": "XBMC.GetInfoLabels", "params": {"labels": "System.Time"}, "id": 1}
 ```
 
 **响应:**
@@ -6404,15 +5791,15 @@ Retrieve info labels about Kodi and the system
 
 ## 错误码附录
 
-| 错误码 | 说明 | 常见原因 | 如何避免 |
-|--------|------|----------|----------|
-| `-32602` | Invalid params — 参数类型或值不合法。检查参数名、类型、枚举值、范围。 | 示范参数不匹配或当前状态不允许 | 根据实际状态传递合法参数; 参考 JSONRPC.Introspect 获取可用选项 |
-| `-32100` | Failed to execute method — 方法执行失败。通常是当前状态不支持(如无播放器时调用 Player 方法)。 | 示范参数在当前状态下不适用 | 确保播放器/库/文件处于所需状态 |
-| `-32700` | Parse error — JSON 格式错误。检查请求 JSON 是否合法。 | 本次未触发 | 预防性注意 |
-| `-32603` | Internal error — KODI 内部错误。重试或重启 KODI。 | 本次未触发 | 预防性注意 |
-| `-32601` | Method not found — 方法名不存在。检查方法名拼写。 | 本次未触发 | 预防性注意 |
-| `-32600` | Invalid Request — 请求不是合法 JSON-RPC。检查 jsonrpc 字段是否为 "2.0"。 | 本次未触发 | 预防性注意 |
-| `-32000` | Result too large — 返回结果过大。加 limits 参数限制。 | 本次未触发 | 预防性注意 |
+| 错误码 | 说明 | 触发此错误的方法 | 如何避免 |
+|--------|------|------------------|----------|
+| `-32700` | Parse error — JSON 格式错误 | （未触发） | 预防性注意 |
+| `-32603` | Internal error — KODI 内部错误 | （未触发） | 预防性注意 |
+| `-32602` | Invalid params — 参数类型或值不合法 | `Addons.ExecuteAddon`, `Addons.GetAddonDetails`, `Addons.SetAddonEnabled`, `AudioLibrary.GetAlbumDetails`, `AudioLibrary.GetAvailableArt`, `AudioLibrary.GetAvailableArtTypes`, `AudioLibrary.GetProperties`, `AudioLibrary.GetSongDetails`, `AudioLibrary.SetAlbumDetails`, `AudioLibrary.SetSongDetails`, `Favourites.AddFavourite`, `Profiles.LoadProfile`, `Settings.GetSkinSettingValue`, `Settings.SetSkinSettingValue`, `System.GetProperties`, `Textures.RemoveTexture`, `VideoLibrary.GetEpisodeDetails`, `VideoLibrary.GetMovieDetails`, `VideoLibrary.GetMovieSetDetails`, `VideoLibrary.GetMusicVideoDetails`, `VideoLibrary.GetSeasonDetails`, `VideoLibrary.GetTVShowDetails`, `VideoLibrary.RefreshEpisode`, `VideoLibrary.RefreshMovie`, `VideoLibrary.RefreshMusicVideo`, `VideoLibrary.RefreshTVShow`, `VideoLibrary.SetEpisodeDetails`, `VideoLibrary.SetMovieDetails`, `VideoLibrary.SetMovieSetDetails`, `VideoLibrary.SetMusicVideoDetails`, `VideoLibrary.SetSeasonDetails`, `VideoLibrary.SetTVShowDetails`, `XBMC.GetInfoBooleans`, `XBMC.GetInfoLabels` | 确保参数类型/枚举值合法；确保当前状态支持此操作 |
+| `-32601` | Method not found — 方法名不存在 | （未触发） | 预防性注意 |
+| `-32600` | Invalid Request — 请求不是合法 JSON-RPC | （未触发） | 预防性注意 |
+| `-32100` | Failed to execute method — 当前状态不支持 | `PVR.AddTimer`, `PVR.DeleteTimer`, `PVR.GetBroadcastDetails`, `PVR.GetBroadcastIsPlayable`, `PVR.GetBroadcasts`, `PVR.GetChannelDetails`, `PVR.GetChannelGroupDetails`, `PVR.GetChannelGroups`, `PVR.GetChannels`, `PVR.GetProperties`, `PVR.GetRecordingDetails`, `PVR.GetTimerDetails`, `PVR.ToggleTimer`, `Player.Rotate`, `Player.SetTempo`, `Player.Zoom` | 确保参数类型/枚举值合法；确保当前状态支持此操作 |
+| `-32000` | Result too large — 返回结果过大 | （未触发） | 预防性注意 |
 
 ---
 
