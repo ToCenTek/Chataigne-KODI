@@ -661,15 +661,15 @@ function processDataReceived(data, originCommand) {
 
 ### 4.4 命令回调
 
-命令回调由 `module.json` 中命令的 `"callback"` 字段定义。参数按命令参数定义顺序传入:
+命令回调由 `module.json` 中命令的 `"callback"` 字段定义。参数按命令参数定义顺序传入，最后一个是可选的命令索引:
 
 ```javascript
-function myCommand(param1, param2, commandIndex) {
+function myCommand(param1, param2, *[commandIndex]*) {
     // param1: 命令第 1 个参数的值
     // param2: 命令第 2 个参数的值
-    // commandIndex: 命令索引（从 0 开始，用于同一命令调用多次）
+    // commandIndex: 可选，命令索引（从 0 开始），同一命令被多次调用时区分
     script.log("Command called: param1=" + param1 + " param2=" + param2);
-    // 返回结果可被后续映射使用
+    // 可返回值，供后续映射使用
     return param1;
 }
 ```
