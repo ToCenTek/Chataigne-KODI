@@ -7,6 +7,7 @@ var sysHelperName = "OS";
 var allIps = [];
 var ackCount = 0;
 var posMs = [];
+var posReady = 0;
 var localPort = 9527;
 
 var lastFile = "/storage/videos/4K_29.97-Chimei-inn-RoastDuck.mp4";
@@ -84,8 +85,8 @@ function dataReceived(data) {
     if (data.length > 4 && data.substring(0, 4) === "POS:") {
         var parts = data.split(":");
         if (parts.length >= 3) {
-            var ms = Number(parts[1]);
-            if (!isNaN(ms)) posMs.push(ms);
+            var ms = parseFloat(parts[1]);
+            if (ms > 0) posMs.push(ms);
         }
     } else {
         ackCount++;
