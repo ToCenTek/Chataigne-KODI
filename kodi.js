@@ -19,6 +19,7 @@ var progBasePct = 0;
 var progPerTick = 0;
 var progTotalMs = 0;
 var progFps = 0;
+var audioOutputList = [];   // 从 KODI 获取的音频设备列表 [{label, value, shortLabel}, ...]
 // (sync removed)
 
 // (sync removed from main module)
@@ -102,6 +103,63 @@ function playListGetItems() {
     local.send(JSON.stringify(msg));
 }
 
+
+// 查询 KODI 当前可用的音频输出设备列表，存入全局 audioOutputList 供其它函数使用
+function getAudioOutputs() {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.GetSettings",
+        params: { level: "basic" },
+        id: "GetAudioOutputsList"
+    }));
+}
+
+// 通过下标循环切换：每次调用切到下一个设备，到末尾循环回 0
+// 需要先用 getAudioOutputs() 填充 audioOutputList
+function switchAudioOutput() {
+    if (audioOutputList.length === 0) {
+        script.log("audioOutputList empty, call getAudioOutputs() first");
+        return;
+    }
+    // 读取当前值
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.GetSettingValue",
+        params: { setting: "audiooutput.audiodevice" },
+        id: "GetCurrentAudio"
+    }));
+    // 响应里切到下一个，逻辑在 GetCurrentAudio 响应处理中
+}
+
+// 按设备名切换（必须是 audioOutputList 中某个元素的 label 或 shortLabel）
+function chooseAudioOutput(device) {
+    if (audioOutputList.length === 0) {
+        script.log("audioOutputList empty, call getAudioOutputs() first");
+        return;
+    }
+    var found = null;
+    for (var i = 0; i < audioOutputList.length; i++) {
+        if (audioOutputList[i].label === device || audioOutputList[i].shortLabel === device) {
+            found = audioOutputList[i];
+            break;
+        }
+    }
+    if (!found) {
+        script.log("Device not found: " + device);
+        return;
+    }
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: { setting: "audiooutput.audiodevice", value: found.value },
+        id: "SetAudioOutput"
+    }));
+    script.log("Choose Audio Output: " + device);
+}
+
+// 处理 GetAudioOutputsList 响应：填充 audioOutputList
+// 处理 GetCurrentAudio 响应：切到下一个设备
+
 function timeToMs(t) {
     if (t == null) return 0;
     return (t.hours * 3600 + t.minutes * 60 + t.seconds) * 1000 + (t.milliseconds || 0);
@@ -109,8 +167,10 @@ function timeToMs(t) {
 
 // ========== 监听 Values 面板值变化 ==========
 function moduleValueChanged(value) {
+    // 模块中的参数变化
     if (value.isParameter()) {
         var paramName = value.name;
+        // 音量逻辑
         if (paramName.toLowerCase() === "volume") {
             if (ignoreNextVolumeChange) {
                 ignoreNextVolumeChange = false;
@@ -120,8 +180,8 @@ function moduleValueChanged(value) {
             var newVol = value.get();
             var intVol = Math.round(newVol);
             script.log("Volume slider changed: " + newVol + " -> intVol=" + intVol + ", lastSyncedVolume=" + lastSyncedVolume);
-            
-            var isMutedParam = local.values.getChild("Info").getChild("isMuted");
+            // 
+            var isMutedParam = local.values.getChild("Info").getChild("isMuted");   // 获取 values 中的 Info 容器中的子参数地址
             var wasMuted = isMutedParam && isMutedParam.get() === true;
             if (wasMuted && newVol > 0) {
                 script.log("Volume adjusted while muted, unmuting first.");
@@ -161,6 +221,7 @@ function moduleValueChanged(value) {
                     script.log("Volume change too small or equal to last synced, skipping send.");
                 }
             }
+        // 进度条
         } else if (paramName.toLowerCase() === "playing") {
             if (ignoreNextPlayingChange) {
                 ignoreNextPlayingChange = false;
@@ -179,9 +240,10 @@ function moduleValueChanged(value) {
                 id: "SeekFromSlider"
             };
             local.send(JSON.stringify(seekMsg));
+        // 播放索引
         } else {
             var cname = paramName.toLowerCase();
-            if (cname === "Seek %") {
+            if (cname === "seek") {
                 seekToParameters(value.get());
             } else if (cname === "index") {
                 playIndex(value.get());
@@ -200,6 +262,7 @@ function moduleValueChanged(value) {
                 set3DMode(value.get(), false);
             }
         }
+    // 模块中的按钮点击
     } else {
         var tname = value.name.toLowerCase();
         if (tname === "play/pause" || tname === "play_pause") {
@@ -208,8 +271,14 @@ function moduleValueChanged(value) {
             playPause(!isPaused);
         } else if (tname === "next") {
             nextTrack();
-        }  else if (tname === "fullscreen") {
+        } else if (tname === "previous") {
+            prevTrack();
+        } else if (tname === "fullscreen") {
             forceFullscreenAndClean();
+        } else if(tname === "switchAudioOutput") {
+            // switchAudioOutput();
+            script.log("switchAudioOutput");
+
         }
     }
 }
@@ -228,6 +297,7 @@ function playIndex(Index) {
         id: "Player.GoTo"
     };
     local.send(JSON.stringify(msg));
+    // sccript.log("Playing index: " + Index);
 }
 
 // 下一曲
@@ -235,7 +305,10 @@ function nextTrack() {
     var msg = {
         jsonrpc: "2.0",
         method: "Player.GoTo",
-        params: { playerid: currentPlayerId, to: "next" },
+        params: { 
+            playerid: currentPlayerId,
+            to: "next" 
+        },
         id: "Player.GoTo"
     };
     local.send(JSON.stringify(msg));
@@ -247,7 +320,10 @@ function prevTrack() {
     var msg = {
         jsonrpc: "2.0",
         method: "Player.GoTo",
-        params: { playerid: currentPlayerId, to: "previous" },
+        params: { 
+            playerid: currentPlayerId,
+            to: "previous" 
+        },
         id: "Player.GoTo"
     };
     local.send(JSON.stringify(msg));
@@ -988,7 +1064,51 @@ function wsMessageReceived(message) {
     }
 
     // 处理 GetItems 响应
-    if (data.id === "GetCurrentListAllItems" && data.result && data.result.items) {
+    // 处理获取音频设备列表响应
+        if (data.id === "GetAudioOutputsList" && data.result && data.result.settings) {
+            audioOutputList = [];
+            for (var gsi = 0; gsi < data.result.settings.length; gsi++) {
+                if (data.result.settings[gsi].id !== "audiooutput.audiodevice") continue;
+                var gsOpts = data.result.settings[gsi].options;
+                if (!gsOpts) break;
+                for (var gsoi = 0; gsoi < gsOpts.length; gsoi++) {
+                    var gsLabel = gsOpts[gsoi].label;
+                    var gsValue = gsOpts[gsoi].value;
+                    var gsShort = gsLabel
+                        .replace(new RegExp("^ALSA: "), "")
+                        .replace(new RegExp(",?[ ]+CARD=[^,|]+"), "")
+                        .replace(new RegExp("[ ]+\\([A-Z]+\\)"), "");
+                    audioOutputList.push({ label: gsLabel, value: gsValue, shortLabel: gsShort });
+                }
+                script.log("Audio outputs loaded: " + audioOutputList.length);
+                break;
+            }
+            return;
+        }
+        // 处理获取当前音频设备响应：切到下一个
+        if (data.id === "GetCurrentAudio" && data.result && data.result.value) {
+            var curValue = data.result.value;
+            var curIdx = -1;
+            for (var gci = 0; gci < audioOutputList.length; gci++) {
+                if (audioOutputList[gci].value === curValue) { curIdx = gci; break; }
+            }
+            if (audioOutputList.length === 0) return;
+            var nextIdx = (curIdx + 1) % audioOutputList.length;
+            var next = audioOutputList[nextIdx];
+            local.send(JSON.stringify({
+                jsonrpc: "2.0",
+                method: "Settings.SetSettingValue",
+                params: { setting: "audiooutput.audiodevice", value: next.value },
+                id: "SetAudioOutput"
+            }));
+            script.log("Switch Audio Output: " + next.label + " (" + (curIdx+1) + " -> " + (nextIdx+1) + "/" + audioOutputList.length + ")");
+            return;
+        }
+        // 处理切换设备响应
+        if (data.id === "SetAudioOutput" && data.result) {
+            return;
+        }
+        if (data.id === "GetCurrentListAllItems" && data.result && data.result.items) {
         var items = data.result.items;
         var output = "";
         if (items.length === 0) {
