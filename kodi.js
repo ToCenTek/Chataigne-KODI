@@ -132,6 +132,19 @@ function switchAudioOutput() {
 }
 
 // 按设备名切换（必须是 audioOutputList 中某个元素的 label 或 shortLabel）
+// 切换声道数 (1=2.0, 2=2.1, ..., 10=7.1)
+function switchAudioChannels(num) {
+    if (num == null || num < 1) num = 1;
+    if (num > 10) num = 10;
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: { setting: "audiooutput.channels", value: num },
+        id: "SetAudioChannels"
+    }));
+    script.log("Switch Audio Channels: " + num);
+}
+
 function chooseAudioOutput(device) {
     if (audioOutputList.length === 0) {
         script.log("audioOutputList empty, call getAudioOutputs() first");
