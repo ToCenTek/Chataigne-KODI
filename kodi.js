@@ -105,11 +105,11 @@ function playListGetItems() {
 
 
 // 查询 KODI 当前可用的音频输出设备列表，存入全局 audioOutputList 供其它函数使用
-function getSettings() {
+function getAudioOutputs() {
     local.send(JSON.stringify({
         jsonrpc: "2.0",
         method: "Settings.GetSettings",
-        params: {level: "basic"},
+        params: { level: "basic" },
         id: "GetAudioOutputsList"
     }));
 }
@@ -145,39 +145,26 @@ function switchAudioChannels(num) {
     script.log("Switch Audio Channels: " + num);
 }
 
-// 打印 audioOutputList 中所有设备，便于测试
-function listAudioDevices() {
+function chooseAudioOutput(device) {
     if (audioOutputList.length === 0) {
-        script.log("audioOutputList is empty. Call getSettings() first.");
+        script.log("audioOutputList empty, call getAudioOutputs() first");
         return;
     }
-    script.log("=== Audio Output Devices (" + audioOutputList.length + ") ===");
-    for (var li = 0; li < audioOutputList.length; li++) {
-        var d = audioOutputList[li];
-        script.log("  [" + li + "] " + d.shortLabel + " | " + d.label + " | " + d.value);
+    var found = null;
+    for (var i = 0; i < audioOutputList.length; i++) {
+        if (audioOutputList[i].label === device || audioOutputList[i].shortLabel === device) {
+            found = audioOutputList[i];
+            break;
+        }
     }
-}
-
-function chooseAudioOutput(device) {
-    // if (audioOutputList.length === 0) {
-    //     script.log("audioOutputList empty, call getAudioOutputs() first");
-    //     return;
-    // }
-    // var found = null;
-    // for (var i = 0; i < audioOutputList.length; i++) {
-    //     if (audioOutputList[i].label === device || audioOutputList[i].shortLabel === device) {
-    //         found = audioOutputList[i];
-    //         break;
-    //     }
-    // }
-    // if (!found) {
-    //     script.log("Device not found: " + device);
-    //     return;
-    // }
+    if (!found) {
+        script.log("Device not found: " + device);
+        return;
+    }
     local.send(JSON.stringify({
         jsonrpc: "2.0",
         method: "Settings.SetSettingValue",
-        params: { setting: "audiooutput.audiodevice", value: device },
+        params: { setting: "audiooutput.audiodevice", value: found.value },
         id: "SetAudioOutput"
     }));
     script.log("Choose Audio Output: " + device);
@@ -266,7 +253,7 @@ function moduleValueChanged(value) {
                 id: "SeekFromSlider"
             };
             local.send(JSON.stringify(seekMsg));
-        // 播放索引
+        // 
         } else {
             var cname = paramName.toLowerCase();
             if (cname === "seek") {
@@ -302,8 +289,9 @@ function moduleValueChanged(value) {
         } else if (tname === "fullscreen") {
             forceFullscreenAndClean();
         } else if(tname === "switchAudioOutput") {
-            switchAudioOutput();
+            // switchAudioOutput();
             script.log("switchAudioOutput");
+
         }
     }
 }
@@ -1290,5 +1278,18 @@ function moduleParameterChanged(param) {
         var infoContainer = local.values.getChild("Info");
         if (infoContainer) infoContainer.setCollapsed(false);
         init();
+    }
+}
+
+// 打印 audioOutputList 中所有设备
+function listAudioDevices() {
+    if (audioOutputList.length === 0) {
+        script.log("audioOutputList is empty. Call getSettings() first.");
+        return;
+    }
+    script.log("=== Audio Output Devices (" + audioOutputList.length + ") ===");
+    for (var li = 0; li < audioOutputList.length; li++) {
+        var d = audioOutputList[li];
+        script.log("  [" + li + "] " + d.shortLabel + " | " + d.label + " | " + d.value);
     }
 }
