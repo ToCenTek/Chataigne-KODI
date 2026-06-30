@@ -9,9 +9,11 @@
     "hasInput": true,
     "hasOutput": true,
     "hideDefaultCommands": true,
+    "hideDefaultParameters":["protocol", "messageStructure", "customSeparator", "firstValueIsTheName", "useSecureConnection"],
     "defaults": {
         "Protocol": "Lines",
         "autoAdd": false,
+        "useSecureConnection": false,
         "serverPath": "10.0.0.53:9090"
     },
     "parameters": {
@@ -67,16 +69,16 @@
                 "ui": "slider",
                 "min": 0.0,
                 "max": 100.0,
-                "default": 60.0
+                "default": 80.0
             },
             "isMuted":{
                 "type": "Boolean",
                 "readOnly": true
             }
         },
-        "commands":{
+        "Commands":{
             "type": "Container",
-            "collapsed": true,
+            "collapsed": false,
             "Next":{
                 "type":"Trigger",
                 "description": "下一曲.\nNext track."
@@ -85,9 +87,10 @@
                 "type":"Trigger",
                 "description": "上一曲.\nPrevious track."
             },
-            "Seek %":{
+            "Seek":{
                 "description":"要跳转到的百分比.\nSeek to percentage.",
-                "type": "Integer"
+                "type": "Integer",
+                "default": 49
             },
             "Index":{
                 "type":"Integer",
@@ -98,11 +101,29 @@
             "File":{
                 "type":"String",
                 "description":"播放指定路径的媒体文件.\nPlay Media File at Path",
-                "default":""
+                "default":"/storage/videos/???.mp4"
             },     
             "Mute":{
                 "type":"Boolean",
                 "description":"静音\nMute"
+            },
+            "Audio Device":{
+                "type":"Enum",
+                "description":"切换音频输出.\nSwitch Audio output",
+                "options": {
+                    "20.5 PCM: Default": "ALSA:@",
+                    "20.5 PCM: Headphone": "ALSA:sysdefault:CARD=AMLAUGESOUND",
+                    "20.5 PCM: HDMI Multi Channels": "ALSA:surround71:CARD=AMLAUGESOUND,DEV=0",
+                    "20.5 S/PDIF": "ALSA:iec958:CARD=AMLAUGESOUND,DEV=0",
+                    "20.5 HDMI": "ALSA:hdmi:CARD=AMLAUGESOUND,DEV=0",
+                    "20.5 PulseAudio: Bluetooth": "PULSE:Default",
+                    "21.3 PCM: Default": "ALSA:@|Default (AML-AUGESOUND Analog)",
+                    "21.3 PCM: Headphone": "ALSA:sysdefault:CARD=AMLAUGESOUND|AML-AUGESOUND",
+                    "21.3 PCM: HDMI Multi Channels": "ALSA:surround71:CARD=AMLAUGESOUND,DEV=0|AML-AUGESOUND",
+                    "21.3 S/PDIF": "ALSA:iec958:CARD=AMLAUGESOUND,DEV=0|AML-AUGESOUND",
+                    "21.3 HDMI": "ALSA:hdmi:CARD=AMLAUGESOUND,DEV=0|AML-AUGESOUND",
+                    "21.3 PulseAudio: Bluetooth": "PULSE:Default|Bluetooth Audio (PULSEAUDIO)"
+                }
             },
             "Loop":{
                 "type": "Enum",
@@ -118,13 +139,85 @@
                 "type":"Boolean",
                 "default":false
             },
-            "Show Info":{
+            
+            "Debug Info":{
                 "description":"show debug info",
                 "type":"Boolean"
             },
             "Fullscreen":{
                 "description":"使视频播放界面前置",
                 "type":"Trigger"
+            },
+            "Player Process Info":{
+                "type": "Container",
+                "collapsed": false,
+                "Show Info":{
+                    "description":"显示播放器进程信息.\nShow Player Process Info",
+                    "type":"Trigger"
+                },
+                "Toggle Info":{
+                    "description":"切换播放器进程信息显示.\nToggle Player Process Info",
+                    "type":"Trigger"
+                }
+            },
+            "Adjust Refresh Rate":{
+                "type": "Container",
+                "description": "调整显示刷新率.\nAdjust Refresh Rate",
+                "collapsed": true,
+                "Adjust":{
+                    "description":"Off, 显示输出固定为桌面分辨率.\nOn start/stop, 视频开始时切换到视频分辨率, 结束时切到桌面分辨率.\nOn start, 仅在视频开始时切换.\nShow Player Process Info",
+                    "type":"Enum",
+                    "options":{
+                        "On start/stop": 2,
+                        "On start": 3,
+                        "Off": 0,
+                    }
+                },
+                "Minumise Black Bars":{
+                    "description":"最小化黑边.\nMinimise Black Bars",
+                    "type":"Integer",
+                    "default": 0,
+                    "min": 0,
+                    "max": 20
+                },
+                "Display 43 as":{
+                    "description":"将 4:3 视频显示为:\nNormal: 正常\nWide Zoom: 宽屏\nStretch 16:9: 拉伸为 16:9\nStretch 16:9 - Nonlinear: 拉伸为 16:9 - 非线性\nZoom: 满屏\nDisplay 4:3 videos as",
+                    "type": "Enum",
+                    "options":{
+                        "Normal": 0,
+                        "Wide Zoom": 3,
+                        "Stretch 16:9": 4,
+                        "Stretch 16:9 - Nonlinear": 7,
+                        "Zoom": 1
+                    }
+                },
+                "High Quality Scaler": {
+                    "description":"当视频放大达到此比例(x 10)% 时启用高品质缩放器.\n",
+                    "type":"Integer",
+                    "default": 2,
+                    "min": 2,
+                    "max": 10
+                },
+                "Hardware Decoder": {
+                    "description":"使用硬件解码器.\nUse Hardware Decoder",
+                    "type":"Boolean",
+                    "default": true
+                },
+                "Other Blank Displays": { 
+                    "description":"使其它显示器为空白.\nMake other displays blank",
+                    "type":"Boolean",
+                    "default": false
+                },
+                "Allow 32 Refresh Rate": { 
+                    "description":"允许 3:2 折 刷新率.\n比如 24fps 视频在 60Hz 显示器上通过 '3帧、2帧、3帧、2帧…' 重复模式实现流畅播放, 不需要切刷新率. \n适合显示器不支持 24Hz 的情况.\nAllow 3:2 pulldown refresh rate",
+                    "type":"Boolean",
+                    "default": true
+                },
+                "Allow Double Refresh Rate": {
+                    "description":"允许 2 倍速刷新.\n24fps 用 48Hz 播, 30fps 用 60Hz 播, 每帧显示整数次. 理论上比 3:2 折 刷新率更流畅.\nAllow double refresh rate",
+                    "type":"Boolean",
+                    "default": true
+                }
             },
             "3D":{
                 "description":"切换3D模式.\nswitch 3D mode.",
@@ -247,6 +340,67 @@
             "menu": "Volume",
             "description": "音量递减.\nVolume decrement",
             "callback": "volumeDown"
+        },
+        "Choose Audio Output 20.5":{
+            "menu": "Volume",
+            "description": "选择音频输出设备.\nChoose Audio Output",
+            "callback": "chooseAudioOutput",
+            "parameters": {
+                "Device":{
+                    "description": "要选择的音频输出设备.\nChoose Audio Output",
+                    "type": "Enum",
+                    "options": {
+                        "PCM: Default": "ALSA:@",
+                        "PCM: Headphone": "ALSA:sysdefault:CARD=AMLAUGESOUND",
+                        "PCM: HDMI Multi Channels": "ALSA:surround71:CARD=AMLAUGESOUND,DEV=0",
+                        "S/PDIF": "ALSA:iec958:CARD=AMLAUGESOUND,DEV=0",
+                        "HDMI": "ALSA:hdmi:CARD=AMLAUGESOUND,DEV=0",
+                        "PulseAudio: Bluetooth": "PULSE:Default"
+                    }
+                }
+            }
+        },
+        "Choose Audio Output 21.3":{
+            "menu": "Volume",
+            "description": "选择音频输出设备.\nChoose Audio Output",
+            "callback": "chooseAudioOutput",
+            "parameters": {
+                "Device":{
+                    "description": "要选择的音频输出设备. KODI 21.3 有效\nChoose Audio Output",
+                    "type": "Enum",
+                    "options": {
+                        "PCM: Default": "ALSA:@|Default (AML-AUGESOUND Analog)",
+                        "PCM: Headphone": "ALSA:sysdefault:CARD=AMLAUGESOUND|AML-AUGESOUND",
+                        "PCM: HDMI Multi Channels": "ALSA:surround71:CARD=AMLAUGESOUND,DEV=0|AML-AUGESOUND",
+                        "S/PDIF": "ALSA:iec958:CARD=AMLAUGESOUND,DEV=0|AML-AUGESOUND",
+                        "HDMI": "ALSA:hdmi:CARD=AMLAUGESOUND,DEV=0|AML-AUGESOUND",
+                        "PulseAudio: Bluetooth": "PULSE:Default|Bluetooth Audio (PULSEAUDIO)"
+                    }
+                }
+            }
+        },
+        "Switch Audio Channels":{
+            "menu": "Volume",
+            "description": "切换音频声道.\nSwitch Audio Channels",
+            "callback": "switchAudioChannels",
+            "parameters":{
+                "Channels": {
+                    "type": "Enum",
+                    "description": "选择音频声道.\nSelect Audio Channels",
+                    "options":{
+                        "2.0": 1,
+                        "2.1": 2,
+                        "3.0": 3,
+                        "3.1": 4,
+                        "4.0": 5,
+                        "4.1": 6,
+                        "5.0": 7,
+                        "5.1": 8,
+                        "7.0": 9,
+                        "7.1": 10
+                    }
+                }
+            }
         },
 
         "Seek": {
@@ -422,6 +576,12 @@
             "description": "关闭远程媒体中心.\nShutdown the Remote Media Center.",
             "callback": "shutdown"
         },
+
+        "Show Player Info":{
+            "menu": "System",
+            "description": "显示/关闭播放器处理信息.\nShow Player Process Info",
+            "callback": "showPlayerProcessInfo"
+        },
         "Show Info":{
             "menu": "System",
             "description": "切换 debug 消息显示.\nToggle debug overlay info.",
@@ -438,14 +598,14 @@
             "callback": "showNotification",
             "parameters": {
                 "Title": {
-                    "description": "通知的标题.\nNotification Title.",
-                    "type": "String",
-                    "default": "Hello"
+                    "description": "输入消息标题或选择一个文本文件.\n如果输入消息标题, 不要以 / 开头, \n否则会被解析为路径, 导致控制台出现黄色警告.",
+                    "type": "File",
+                    "default": ""
                 },
                 "Message":{
-                    "description": "通知信息或文本文件路径.\nNotification Message or text file path.",
+                    "description": "输入消息内容或选择一个文本文件.\n如果输入消息内容, 不要以 / 开头, \n否则会被解析为路径, 导致控制台出现黄色警告\nNotification Message or text file path.",
                     "type": "File",
-                    "default": "Browse to a text File and Enter text into it."
+                    "default": "Browse to the text file and enter a message."
                 },
                 "Displaytime": {
                     "description": "通知持续时间.\nNotification Displaytime.",
@@ -453,10 +613,15 @@
                     "min": 1000,
                     "default": 5000
                 },
-                "Image": {
-                    "description": "通知的背景图.\nNotification image.",
-                    "type": "File",
-                    "default": ""
+                "ICON": {
+                    "description": "通知图标\nNotification icon",
+                    "type": "Enum",
+                    "options":{
+                        "Warning": "warning",
+                        "Info": "info",
+                        "None": "none",
+                        "Error": "error"
+                    }
                 }
             }
         },

@@ -105,30 +105,13 @@ function playListGetItems() {
 
 
 // 查询 KODI 当前可用的音频输出设备列表，存入全局 audioOutputList 供其它函数使用
-function getAudioOutputs() {
+function getSettings() {
     local.send(JSON.stringify({
         jsonrpc: "2.0",
         method: "Settings.GetSettings",
         params: { level: "basic" },
         id: "GetAudioOutputsList"
     }));
-}
-
-// 通过下标循环切换：每次调用切到下一个设备，到末尾循环回 0
-// 需要先用 getAudioOutputs() 填充 audioOutputList
-function switchAudioOutput() {
-    if (audioOutputList.length === 0) {
-        script.log("audioOutputList empty, call getAudioOutputs() first");
-        return;
-    }
-    // 读取当前值
-    local.send(JSON.stringify({
-        jsonrpc: "2.0",
-        method: "Settings.GetSettingValue",
-        params: { setting: "audiooutput.audiodevice" },
-        id: "GetCurrentAudio"
-    }));
-    // 响应里切到下一个，逻辑在 GetCurrentAudio 响应处理中
 }
 
 // 按设备名切换（必须是 audioOutputList 中某个元素的 label 或 shortLabel）
@@ -146,25 +129,10 @@ function switchAudioChannels(num) {
 }
 
 function chooseAudioOutput(device) {
-    if (audioOutputList.length === 0) {
-        script.log("audioOutputList empty, call getAudioOutputs() first");
-        return;
-    }
-    var found = null;
-    for (var i = 0; i < audioOutputList.length; i++) {
-        if (audioOutputList[i].label === device || audioOutputList[i].shortLabel === device) {
-            found = audioOutputList[i];
-            break;
-        }
-    }
-    if (!found) {
-        script.log("Device not found: " + device);
-        return;
-    }
     local.send(JSON.stringify({
         jsonrpc: "2.0",
         method: "Settings.SetSettingValue",
-        params: { setting: "audiooutput.audiodevice", value: found.value },
+        params: {setting: "audiooutput.audiodevice", value: device},
         id: "SetAudioOutput"
     }));
     script.log("Choose Audio Output: " + device);
@@ -176,124 +144,6 @@ function chooseAudioOutput(device) {
 function timeToMs(t) {
     if (t == null) return 0;
     return (t.hours * 3600 + t.minutes * 60 + t.seconds) * 1000 + (t.milliseconds || 0);
-}
-
-// ========== 监听 Values 面板值变化 ==========
-function moduleValueChanged(value) {
-    // 模块中的参数变化
-    if (value.isParameter()) {
-        var paramName = value.name;
-        // 音量逻辑
-        if (paramName.toLowerCase() === "volume") {
-            if (ignoreNextVolumeChange) {
-                ignoreNextVolumeChange = false;
-                script.log("Volume change from KODI, ignoring send.");
-                return;
-            }
-            var newVol = value.get();
-            var intVol = Math.round(newVol);
-            script.log("Volume slider changed: " + newVol + " -> intVol=" + intVol + ", lastSyncedVolume=" + lastSyncedVolume);
-            // 
-            var isMutedParam = local.values.getChild("Info").getChild("isMuted");   // 获取 values 中的 Info 容器中的子参数地址
-            var wasMuted = isMutedParam && isMutedParam.get() === true;
-            if (wasMuted && newVol > 0) {
-                script.log("Volume adjusted while muted, unmuting first.");
-                var unmuteMsg = {
-                    jsonrpc: "2.0",
-                    method: "Application.SetMute",
-                    params: { mute: false },
-                    id: "Application.SetMute"
-                };
-                local.send(JSON.stringify(unmuteMsg));
-                isMutedParam.set(false);
-                isMutedFlag = false;
-                volumeBeforeMute = intVol;
-                if (Math.abs(intVol - lastSyncedVolume) > 0.5) {
-                    var volMsg = {
-                        jsonrpc: "2.0",
-                        method: "Application.SetVolume",
-                        params: { volume: intVol },
-                        id: "SetVolume"
-                    };
-                    local.send(JSON.stringify(volMsg));
-                    lastSyncedVolume = intVol;
-                }
-                script.log("Unmuted and set volume to: " + intVol);
-            } else {
-                if (Math.abs(intVol - lastSyncedVolume) > 0.5) {
-                    var volMsg = {
-                        jsonrpc: "2.0",
-                        method: "Application.SetVolume",
-                        params: { volume: intVol },
-                        id: "SetVolume"
-                    };
-                    local.send(JSON.stringify(volMsg));
-                    lastSyncedVolume = intVol;
-                    script.log("Sent SetVolume command: " + intVol);
-                } else {
-                    script.log("Volume change too small or equal to last synced, skipping send.");
-                }
-            }
-        // 进度条
-        } else if (paramName.toLowerCase() === "playing") {
-            if (ignoreNextPlayingChange) {
-                ignoreNextPlayingChange = false;
-                return;
-            }
-            var pct = value.get();
-            progBaseTick = progTick;
-            progBasePct = pct;
-            var seekMsg = {
-                jsonrpc: "2.0",
-                method: "Player.Seek",
-                params: {
-                    playerid: currentPlayerId,
-                    value: { percentage: pct }
-                },
-                id: "SeekFromSlider"
-            };
-            local.send(JSON.stringify(seekMsg));
-        // 
-        } else {
-            var cname = paramName.toLowerCase();
-            if (cname === "seek") {
-                seekToParameters(value.get());
-            } else if (cname === "index") {
-                playIndex(value.get());
-            } else if (cname === "file" && value.getParent && value.getParent().name === "commands") {
-                if (value.get() === "") return;
-                playFile(value.get());
-            } else if (cname === "mute") {
-                mute(value.get());
-            } else if (cname === "loop") {
-                setLoop(value.get());
-            } else if (cname === "random") {
-                setRandom(value.get());
-            } else if (cname === "showinfo") {
-                showInfo(value.get());
-            } else if (cname === "3d") {
-                set3DMode(value.get(), false);
-            }
-        }
-    // 模块中的按钮点击
-    } else {
-        var tname = value.name.toLowerCase();
-        if (tname === "play/pause" || tname === "play_pause") {
-            var pausedVal = local.values.getChild("Info").getChild("isPaused");
-            var isPaused = pausedVal ? pausedVal.get() : false;
-            playPause(!isPaused);
-        } else if (tname === "next") {
-            nextTrack();
-        } else if (tname === "previous") {
-            prevTrack();
-        } else if (tname === "fullscreen") {
-            forceFullscreenAndClean();
-        } else if(tname === "switchAudioOutput") {
-            // switchAudioOutput();
-            script.log("switchAudioOutput");
-
-        }
-    }
 }
 
 // 跳转到播放列表的指定索引位置
@@ -624,8 +474,17 @@ function shutdown() {
     script.log("System Shutdown");
 }
 
+// ShowPlayerProcessInfo 播放进程信息
+function showPlayerProcessInfo() {
+    var msg = {
+        jsonrpc: "2.0",
+        method: "Input.ShowPlayerProcessInfo",
+        id: "Input.ShowPlayerProcessInfo"
+    };
+    local.send(JSON.stringify(msg));
+}
 // 显示调试信息
-function showInfo(Show) {
+function showDebugInfo(Show) {
     if (Show == null) Show = false;
     var msg = {
         jsonrpc: "2.0",
@@ -641,18 +500,28 @@ function showNotification(Title, Message, Displaytime, Image) {
     if (Title == null) Title = "";
     if (Message == null) Message = "";
     if (Displaytime == null) Displaytime = 5000;
-    if (Image == null) Image = "";
-    var messageText = Message;
-    var content = util.readFile(Message);
-    if (content !== undefined && content !== null && content.length > 0) {
-        messageText = content;
+    // if (Image == null) Image = "";
+    if (Title.length > 0 && Title.charAt(0) === '/') {
+        var title = util.readFile(Title);
+        if (title !== undefined && title !== null && title.length > 0) {
+            Title = title;
+        }
+    }
+    // var messageText = Message;
+    if (Message.length > 0 && Message.charAt(0) === '/') {
+        var content = util.readFile(Message);
+        if (content !== undefined && content !== null && content.length > 0) {
+            // messageText = content;
+            Message = content;
+        }
     }
     var msg = {
         jsonrpc: "2.0",
         method: "GUI.ShowNotification",
         params: {
             title: Title,
-            message: messageText,
+            // message: messageText,
+            message: Message,
             displaytime: Displaytime,
             image: Image
         },
@@ -981,6 +850,145 @@ function init() {
 
 }
 
+// 调整显示刷新率及分辨率: 这个设置本质是帧率匹配，但因为刷新率和分辨率是打包的，所以切刷新率的时候分辨率也可能跟着变。
+// {"jsonrpc":"2.0","method":"Input.ShowPlayerProcessInfo","id":1}
+function adjustRefreshRate(num) {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: {
+            setting:"videoplayer.adjustrefreshrate",
+            value: num
+        },
+        id: "videoplayer.adjustrefreshrate"
+    }));
+    script.log("videoplayer.adjustrefreshrate: " + num);
+}
+
+// 最小化黑边
+// {"jsonrpc":"2.0","method":"Settings.SetSettingValue","params":{"setting":"videoplayer.errorinaspect","value":0},"id":1}
+function minumiseBlackBars(num) {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: {
+            setting:"videoplayer.errorinaspect",
+            value: num
+        },
+        id: "videoplayer.errorinaspect"
+    }));
+    script.log("Remote: " + num);
+}
+
+
+// 将 4:3 视频显示为
+// {"jsonrpc":"2.0","method":"Settings.SetSettingValue","params":{"setting":"videoplayer.stretch43","value":0},"id":1}
+function display43as(num) {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: {
+            setting:"videoplayer.stretch43",
+            value: num
+        },
+        id: "videoplayer.adjustresolution"
+    }));
+    script.log("videoplayer.stretch4:3: " + num);
+}
+
+//高品质缩放器
+// {"jsonrpc":"2.0","method":"Settings.SetSettingValue","params":{"setting":"videoplayer.hqscalers","value":20},"id":1}
+function highQualityScaler(num) {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: {
+            setting:"videoplayer.hqscalers",
+            value: num
+        },
+        id: "videoplayer.hqscalers"
+    }));
+    script.log("videoplayer.hqscalers: " + num);
+}
+
+// 硬件解码
+// {"jsonrpc":"2.0","method":"Settings.SetSettingValue","params":{"setting":"videoplayer.useamcodec","value":true},"id":1}
+function useHardwareDecoder(num) {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: {
+            setting:"videoplayer.useamcodec",
+            value: num
+        },
+        id: "videoplayer.useamcodec"
+    }));
+    script.log("use Hardware Decoder: " + num);
+}
+
+// 设置桌面 GUI 分辨率, 已移除 GUI 中的命令, 因为会导致死机
+// {"jsonrpc":"2.0","method":"Settings.SetSettingValue","params":{"setting":"videoscreen.resolution","value":29},"id":1}
+function setDesktopResolution(num) {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: {
+            setting:"videoscreen.resolution",
+            value: num
+        },
+        id: "videoscreen.resolution"
+    }));
+    script.log("videoscreen.resolution: " + num);
+}
+
+// 使其它显示器空白显示
+// {"jsonrpc":"2.0","method":"Settings.SetSettingValue","params":{"setting":"videoscreen.blankdisplays","value":true},"id":1}
+function setBlankDisplays(bool) {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: {
+            setting:"videoscreen.blankdisplays",
+            value: bool
+        },
+        id: "videoscreen.blankdisplays"
+    }));
+    script.log("videoscreen.blankdisplays: " + bool);
+}
+
+// 允许 3:2 折刷新率：
+// {"jsonrpc":"2.0","method":"Settings.SetSettingValue","params":{"setting":"videoscreen.whitelistpulldown","value":true},"id":1}
+function setPullDown(bool) {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: {
+            setting:"videoscreen.whitelistpulldown",
+            value: bool
+        },
+        id: "videoscreen.whitelistpulldown"
+    }));
+    script.log("videoscreen.whitelistpulldown: " + bool);
+}
+
+// 允许双倍刷新率：
+// {"jsonrpc":"2.0","method":"Settings.SetSettingValue","params":{"setting":"videoscreen.whitelistdoublerefreshrate","value":true},"id":1}
+function setDoubleRefreshRate(bool) {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: {
+            setting:"videoscreen.whitelistdoublerefreshrate",
+            value: bool
+        },
+        id: "videoscreen.whitelistdoublerefreshrate"
+    }));
+    script.log("videoscreen.whitelistdou: " + bool);
+}
+
+
+
+// ============================================================================
 // ========== WebSocket 消息接收：处理 KODI 返回的 JSON-RPC 响应和事件通知 ==========
 function wsMessageReceived(message) {
     var data = JSON.parse(message);
@@ -1028,6 +1036,11 @@ function wsMessageReceived(message) {
         return;
     }
 
+    // 收听音频设备
+    // if (data.id === "audiooutput.audiodevice"){
+    //     listAudioDevices();
+    // }
+
     // 处理统一 id="init" 的响应
     if (data.id === "init" && !data.error) {
         if (initStep === 2) {
@@ -1068,7 +1081,6 @@ function wsMessageReceived(message) {
         }
         var itemsValue = local.values.getChild("Info").getChild("Items");
         if (itemsValue) itemsValue.set(output);
-
 
         initStep = 2;
         buildPlaylistFromM3U();
@@ -1281,15 +1293,140 @@ function moduleParameterChanged(param) {
     }
 }
 
-// 打印 audioOutputList 中所有设备
-function listAudioDevices() {
-    if (audioOutputList.length === 0) {
-        script.log("audioOutputList is empty. Call getSettings() first.");
-        return;
-    }
-    script.log("=== Audio Output Devices (" + audioOutputList.length + ") ===");
-    for (var li = 0; li < audioOutputList.length; li++) {
-        var d = audioOutputList[li];
-        script.log("  [" + li + "] " + d.shortLabel + " | " + d.label + " | " + d.value);
+// ========== 监听 Values 面板值变化 ==========
+function moduleValueChanged(value) {
+    // 模块中的参数变化
+    if (value.isParameter()) {
+        var paramName = value.name;
+        // 音量逻辑
+        if (paramName.toLowerCase() === "volume") {
+            if (ignoreNextVolumeChange) {
+                ignoreNextVolumeChange = false;
+                script.log("Volume change from KODI, ignoring send.");
+                return;
+            }
+            var newVol = value.get();
+            var intVol = Math.round(newVol);
+            script.log("Volume slider changed: " + newVol + " -> intVol=" + intVol + ", lastSyncedVolume=" + lastSyncedVolume);
+            // 
+            var isMutedParam = local.values.getChild("Info").getChild("isMuted");   // 获取 values 中的 Info 容器中的子参数地址
+            var wasMuted = isMutedParam && isMutedParam.get() === true;
+            if (wasMuted && newVol > 0) {
+                script.log("Volume adjusted while muted, unmuting first.");
+                var unmuteMsg = {
+                    jsonrpc: "2.0",
+                    method: "Application.SetMute",
+                    params: { mute: false },
+                    id: "Application.SetMute"
+                };
+                local.send(JSON.stringify(unmuteMsg));
+                isMutedParam.set(false);
+                isMutedFlag = false;
+                volumeBeforeMute = intVol;
+                if (Math.abs(intVol - lastSyncedVolume) > 0.5) {
+                    var volMsg = {
+                        jsonrpc: "2.0",
+                        method: "Application.SetVolume",
+                        params: { volume: intVol },
+                        id: "SetVolume"
+                    };
+                    local.send(JSON.stringify(volMsg));
+                    lastSyncedVolume = intVol;
+                }
+                script.log("Unmuted and set volume to: " + intVol);
+            } else {
+                if (Math.abs(intVol - lastSyncedVolume) > 0.5) {
+                    var volMsg = {
+                        jsonrpc: "2.0",
+                        method: "Application.SetVolume",
+                        params: { volume: intVol },
+                        id: "SetVolume"
+                    };
+                    local.send(JSON.stringify(volMsg));
+                    lastSyncedVolume = intVol;
+                    script.log("Sent SetVolume command: " + intVol);
+                } else {
+                    script.log("Volume change too small or equal to last synced, skipping send.");
+                }
+            }
+        // 进度条
+        } else if (paramName.toLowerCase() === "playing") {
+            if (ignoreNextPlayingChange) {
+                ignoreNextPlayingChange = false;
+                return;
+            }
+            var pct = value.get();
+            progBaseTick = progTick;
+            progBasePct = pct;
+            var seekMsg = {
+                jsonrpc: "2.0",
+                method: "Player.Seek",
+                params: {
+                    playerid: currentPlayerId,
+                    value: { percentage: pct }
+                },
+                id: "SeekFromSlider"
+            };
+            local.send(JSON.stringify(seekMsg));
+        // 
+        } else {
+            var cname = paramName.toLowerCase();
+            if (cname === "seek") {
+                seekToParameters(value.get());
+            } else if (cname === "index") {
+                playIndex(value.get());
+            } else if (cname === "file" && value.getParent && value.getParent().name === "commands") {
+                if (value.get() === "") return;
+                playFile(value.get());
+            } else if (cname === "mute") {
+                mute(value.get());
+            } else if (cname === "loop") {
+                setLoop(value.get());
+            } else if (cname === "random") {
+                setRandom(value.get());
+            } else if (cname === "debuginfo") {
+                showDebugInfo(value.get());
+            } else if (cname === "3d") {
+                setStereoMode(value.get(), false);
+            } else if (cname === "audiodevice") {
+                chooseAudioOutput(value.get());
+            } else if (cname == "adjust") {
+                adjustRefreshRate(value.get());
+            } else if(cname === "minumiseblackbars") {
+                minumiseBlackBars(value.get());
+            } else if(cname === "display43as") {
+                display43as(value.get());
+            } else if (cname === "highqualityscaler"){
+                highQualityScaler(value.get() * 10);
+            } else if (cname === "hardwaredecoder") {
+                useHardwareDecoder(value.get());
+            } else if (cname === "guiresolution") {
+                setDesktopResolution(value.get());
+            } else if (cname === "otherblankdisplays") {
+                setBlankDisplays(value.get());
+            } else if (cname === "allow32refreshrate") {
+                setPullDown(value.get());
+            } else if (cname === "allowdoublerefreshrate") {
+                setDoubleRefreshRate(value.get());
+            }
+        }
+    // 模块中的按钮点击
+    } else {
+        var tname = value.name.toLowerCase();
+        if (tname === "play/pause" || tname === "play_pause") {
+            var pausedVal = local.values.getChild("info").getChild("isPaused");
+            var isPaused = pausedVal ? pausedVal.get() : false;
+            playPause(!isPaused);
+        } else if (tname === "next") {
+            nextTrack();
+        } else if (tname === "previous") {
+            prevTrack();
+        } else if (tname === "fullscreen") {
+            forceFullscreenAndClean();
+        } else if (tname === "showinfo") { 
+            showPlayerProcessInfo();
+        } else if (tname === "toggleinfo") {
+            remoteControl("right");
+        }
     }
 }
