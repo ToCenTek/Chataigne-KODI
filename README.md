@@ -4,7 +4,7 @@
 |------|------|
 | **模块名称** | KODI |
 | **类型** | WebSocket Client |
-| **版本** | 1.2.0 |
+| **版本** | 1.3.0 |
 | **路径** | ToCenTek |
 | **描述** | 通过 WebSocket 控制 KODI，基于 KODI Websocket API v13.0.0 |
 | **官网** | https://kodi.wiki |
@@ -34,6 +34,7 @@
 - **原始 JSON 命令**：发送任意 JSON-RPC 命令
 - **调试信息**：Show Player Process Info / Toggle Info / Debug Info 开关
 - **SSH 分辨率检测**：播放开始时通过 SSH 查询 KODI 真实输出分辨率（HDMI VIC），SSH 失败时弹窗引导用户安装 SSH 密钥
+- **Zeroconf 设备发现**：自动扫描局域网内 KODI 设备（macOS `dns-sd`，Linux `avahi-browse`），扫描结果动态展示在 Parameters 面板，一键填入 serverPath
 
 ---
 
@@ -366,6 +367,7 @@ flowchart TD
 
 ## 版本历史
 
+- **1.3.0** (2026-07-01) – 新增 Zeroconf 设备发现扫描、动态参数列表、SSH 主机密钥自动接受
 - **1.2.0** (2026-06-19) – 新增视频校准（Remote Control / Navigate / Reset）、音频输出设备切换、声道数切换、刷新率调整参数（Adjust/Minimise Black Bars/Display 43 as/HQ Scaler/Hardware Decoder/Blank Displays/Pulldown/Double Refresh Rate）、SSH 分辨率检测 + 弹窗引导 `ssh-copy-id`、debug info 开关；清理 sync 残留和外部脚本；重构日志；文档全面补全
 - **1.1.0** (2026-06-19) – 新增 3D 模式、宽高比循环、视频画面控制、Region & Language、进度条、播放列表索引映射
 - **1.0.0** (2026-06-15) – 初始发布

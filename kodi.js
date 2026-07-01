@@ -1427,8 +1427,7 @@ function scanNetwork() {
     }
     script.log('Scan: found ' + _discoveredDevices.length + ' device(s)');
     if (_discoveredDevices.length === 0) return;
-    var zeroconf = local.parameters.getChild('zeroconf');
-    var kodis = (zeroconf) ? zeroconf.getChild('kodis') : null;
+    var kodis = local.parameters.getChild('kodis');
     if (kodis) {
         kodis.clear(false, true);
         for (var di = 0; di < _discoveredDevices.length; di++) {
@@ -1437,9 +1436,10 @@ function scanNetwork() {
             var devPath = dev.ip + ':9090';
             var p = kodis.addStringParameter('kodi' + di, label, devPath);
             p.setName('KODI ' + di, 'kodi' + di);
-            var t = kodis.addTrigger('select' + di, '连接到 ' + dev.name);
+            var t = kodis.addTrigger('select' + di, '选择并连接到这台设备: ' + dev.name);
             t.setName('Select ' + di, 'select' + di);
         }
+        if (kodis) kodis.setCollapsed(false);
         if (_discoveredDevices.length === 1) {
             var firstDev = _discoveredDevices[0];
             var sp = local.parameters.getChild('serverPath');
@@ -1456,8 +1456,8 @@ function selectKODIDevice(index) {
         sp.set(dev.ip + ':9090');
         script.log('Selected: ' + dev.name + ' (' + dev.ip + ':9090)');
     }
-    var zeroconf = local.parameters.getChild('zeroconf');
-    if (zeroconf) zeroconf.setCollapsed(true);
+    var kodis = local.parameters.getChild('kodis');
+    if (kodis) kodis.setCollapsed(true);
 }
 
 // ========== 监听 Parameters 面板值变化 ==========
@@ -1467,7 +1467,7 @@ function scriptParameterChanged(param) {
     if (lc.substring(0, 6) === 'select') {
         var idx = parseInt(param.name.substring(6), 10);
         if (idx >= 0) {
-            var kodiParam = local.parameters.getChild('zeroconf').getChild('kodis').getChild('kodi' + idx);
+            var kodiParam = local.parameters.getChild('kodis').getChild('kodi' + idx);
             if (kodiParam) {
                 var sp = local.parameters.getChild('serverPath');
                 if (sp) sp.set(kodiParam.get());
@@ -1490,7 +1490,9 @@ function moduleParameterChanged(param) {
         return;
     }
     if (lc.substring(0, 6) === 'select') {
-        var idx = parseInt(paramName.substring(6), 10);
+        var lastC = paramName.charAt(paramName.length - 1);
+        var idx = parseInt(lastC, 10);
+        script.log('select: dev=' + idx);
         if (idx >= 0 && idx < _discoveredDevices.length) {
             var dev = _discoveredDevices[idx];
             var sp = local.parameters.getChild('serverPath');
@@ -1498,8 +1500,8 @@ function moduleParameterChanged(param) {
                 sp.set(dev.ip + ':9090');
                 script.log('Set serverpath: ' + dev.ip + ':9090');
             }
-            var zf = local.parameters.getChild('zeroconf');
-            if (zf) zf.setCollapsed(true);
+            var ko = local.parameters.getChild('kodis');
+            if (ko) ko.setCollapsed(true);
         } else {
             script.log('Invalid idx: ' + idx + ' (len=' + _discoveredDevices.length + ')');
         }

@@ -9,7 +9,7 @@
     "hasInput": true,
     "hasOutput": true,
     "hideDefaultCommands": true,
-    "hideDefaultParameters":["protocol", "messageStructure", "customSeparator", "firstValueIsTheName", "useSecureConnection"],
+    "hideDefaultParameters":["autoAdd", "protocol", "messageStructure", "customSeparator", "firstValueIsTheName", "useSecureConnection"],
     "defaults": {
         "Protocol": "Lines",
         "autoAdd": false,
@@ -17,9 +17,17 @@
         "serverPath": "10.0.0.53:9090"
     },
     "parameters": {
+        "Scan":{
+            "type": "Trigger",
+            "description": "扫描网络中的 KODI 实例.\nScan for KODI instances on the network."
+        },
         "Initialization": {
             "type": "Trigger",
             "description": "初始化, 加载视频播放列表.\nInitialize, load playlist."
+        },
+        "KODIs":{
+            "type": "Container",
+            "collapsed": true
         }
     },
     "values":{
