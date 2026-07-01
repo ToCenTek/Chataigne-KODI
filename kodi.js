@@ -21,6 +21,7 @@ var progTotalMs = 0;
 var progFps = 0;
 var _vic_pending_ip = "";  // used by messageBoxCallback for dialog result
 var audioOutputList = [];   // 从 KODI 获取的音频设备列表 [{label, value, shortLabel}, ...]
+
 // (sync removed)
 
 // (sync removed from main module)
@@ -811,7 +812,6 @@ function setAspectRatio(Count) {
 }
 
 var progTick = 0;
-
 function update(deltaTime) {
     progTick++;
     if (progTotalMs === 0 && progTick % 10 === 0) {
@@ -846,7 +846,10 @@ function init() {
     initStep = 1;
     script.setUpdateRate(2);
     getDirectoryFiles();
-    local.scripts.setCollapsed(true);
+
+    local.scripts.kodi.setCollapsed(true);
+    local.values.commands.setCollapsed(true);
+    local.values.calibration.setCollapsed(true);
 
 }
 
@@ -1544,25 +1547,28 @@ function moduleValueChanged(value) {
             showPlayerProcessInfo();
         } else if (tname === "toggleinfo") {
             remoteControl("right");
-        } else if (tname === "videocalibration") {
+        } else if (tname === "videocalibration") {  // 校准
             navigateCalibration();
-            local.parameters.setCollapsed(true);
-            local.scripts.setCollapsed(true);
-            local.values.getChild("Info").setCollapsed(true);
-            local.values.getChild("Commands").setCollapsed(true);
-        } else if (tname === "up") {
+            local.parameters.setCollapsed(true);    // 折叠 Parameters
+            local.scripts.kodi.setCollapsed(true);       // 折叠 Scripts 中的 Kodi 子容器
+            local.values.getChild("Info").setCollapsed(true);   // 折叠 Values 中的 Info 子容器
+            // local.values.getChild("Commands").setCollapsed(true);   // 折叠 Vlaues 中的 Commands 子容器
+            local.values.commands.setCollapsed(true);   // 折叠 Values 中的 Commands 子容器(不用getChild()也可以)
+            local.parameters.setCollapsed(true);    // 折叠 Parameters
+        } else if (tname === "up") {        // 上
             remoteControl("up");
-        } else if (tname === "down") {
+        } else if (tname === "down") {      // 下
             remoteControl("down");
-        } else if (tname === "left") {
+        } else if (tname === "left") {      // 左
             remoteControl("left");
-        } else if (tname === "right") {
+        } else if (tname === "right") {     // 右
             remoteControl("right");
-        } else if (tname === "enter") {
+        } else if (tname === "enter") {     // 确定
             remoteControl("select");
-        } else if (tname === "back") {
+        } else if (tname === "back") {      // 返回
             remoteControl("back");
-        } else if (tname === "home") {}
+            local.values.getChild("Info").setCollapsed(false);  // 展开 Info
+        } 
     }
 }
 

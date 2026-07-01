@@ -245,20 +245,20 @@
                 "description": "视频校准\nVideo Calibration",
                 "type": "Trigger"
             },
-            "Left": {
-                "description": "左\nLeft",
-                "type": "Trigger"
-            },
-            "Right": {
-                "description": "右\nRight",
-                "type": "Trigger"
-            },
             "Up": {
                 "description": "上\nUp",
                 "type": "Trigger"
             },
             "Down": {
                 "description": "下\nDown",
+                "type": "Trigger"
+            },
+            "Left": {
+                "description": "左\nLeft",
+                "type": "Trigger"
+            },
+            "Right": {
+                "description": "右\nRight",
                 "type": "Trigger"
             },
             "Enter": {
