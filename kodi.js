@@ -864,8 +864,6 @@ function getKodiIP() {
     return sp;
 }
 
-// SSH to KODI to query actual output resolution (HDMI VIC)
-// If SSH fails, clear stale value and prompt user to run ssh-copy-id manually
 function queryOutputResolution() {
     var osMod = root.modules.getItemWithName('OS');
     if (osMod == null) {
@@ -874,22 +872,22 @@ function queryOutputResolution() {
     }
     var ip = getKodiIP();
 
-    // Try SSH query
+    // Clear stale value immediately
+    clearVIC();
+
+    // SSH query (now fast since key should be installed)
     var output = doSSHQuery(osMod, ip);
     if (output != null && output.length > 0) {
         if (parseAndSetVIC(output)) return;
     }
 
-    // SSH failed - clear old VIC immediately, do NOT keep stale value
-    clearVIC();
-
-    // SSH failed - prompt user to run ssh-copy-id manually
+    // SSH failed -> show dialog (user needs to install key)
     script.log('VIC: SSH failed, prompting user...');
     promptManualSSHSetup(ip);
 }
 
 function doSSHQuery(osMod, ip) {
-    var cmd = '/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=5 root@' + ip + ' cat /sys/class/amhdmitx/amhdmitx0/config';
+    var cmd = '/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=3 root@' + ip + ' cat /sys/class/amhdmitx/amhdmitx0/config';
     return osMod.launchProcess(cmd, true);
 }
 
