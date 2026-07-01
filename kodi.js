@@ -41,6 +41,7 @@ function getDirectoryFiles() {
         id: "GetDirectory"
     };
     local.send(JSON.stringify(msg));
+    local.parameters.setCollapsed(true); 
 }
 
 // 清空并重建播放列表（通过 Playlist.Clear + 逐条 Playlist.Add）
@@ -851,6 +852,7 @@ function init() {
     local.scripts.kodi.setCollapsed(true);
     local.values.commands.setCollapsed(true);
     local.values.calibration.setCollapsed(true);
+    // local.parameters.setCollapsed(true); 
 
 }
 
@@ -1409,7 +1411,7 @@ function scanNetwork() {
         if (osMod && osMod.name !== 'OS') osMod.setName('OS');
         script.log('Scan: created OS module');
     }
-    osMod.launchCommand('echo aW1wb3J0IHN1YnByb2Nlc3Msc2lnbmFsLHJlLHRpbWUsc29ja2V0O3A9c3VicHJvY2Vzcy5Qb3BlbihbImRucy1zZCIsIi1aIiwiX3hibWMtanNvbnJwYy1oLl90Y3AiLCJsb2NhbCJdLHN0ZG91dD1zdWJwcm9jZXNzLlBJUEUsc3RkZXJyPXN1YnByb2Nlc3MuUElQRSk7dGltZS5zbGVlcCgzKTtwLnNlbmRfc2lnbmFsKHNpZ25hbC5TSUdURVJNKTtvPXAuY29tbXVuaWNhdGUoKVswXS5kZWNvZGUoInV0Zi04IiwicmVwbGFjZSIpO1twcmludCgiPTtldGgwO0lQdjQ7IittLmdyb3VwKDEpLnJlcGxhY2UoY2hyKDkyKSsiMDMyIiwiICIpLnJlcGxhY2UoIi5feGJtYy1qc29ucnBjLWguX3RjcCIsIiIpKyI7X3hibWMtanNvbnJwYy1oLl90Y3A7bG9jYWw7Iitzb2NrZXQuZ2V0aG9zdGJ5bmFtZShtLmdyb3VwKDMpKSsiOyIrbS5ncm91cCgyKSkgZm9yIG0gaW4gcmUuZmluZGl0ZXIociIoXFMrKVxzK1NSVlxzK1xkK1xzK1xkK1xzKyhcZCspXHMrKFxTKz8pXC4/XHMiLG8pIGlmIG0uZ3JvdXAoMyld | /usr/bin/base64 -D > /tmp/scan_kodi.py', true);
+    osMod.launchCommand('echo aW1wb3J0IHN1YnByb2Nlc3Msc2lnbmFsLHJlLHRpbWUsc29ja2V0O3A9c3VicHJvY2Vzcy5Qb3BlbihbImRucy1zZCIsIi1aIiwiX3hibWMtanNvbnJwYy1oLl90Y3AiLCJsb2NhbCJdLHN0ZG91dD1zdWJwcm9jZXNzLlBJUEUsc3RkZXJyPXN1YnByb2Nlc3MuUElQRSk7dGltZS5zbGVlcCg1KTtwLnNlbmRfc2lnbmFsKHNpZ25hbC5TSUdURVJNKTtvPXAuY29tbXVuaWNhdGUoKVswXS5kZWNvZGUoInV0Zi04IiwicmVwbGFjZSIpO1twcmludCgiPTtldGgwO0lQdjQ7IittLmdyb3VwKDEpLnJlcGxhY2UoY2hyKDkyKSsiMDMyIiwiICIpLnJlcGxhY2UoIi5feGJtYy1qc29ucnBjLWguX3RjcCIsIiIpKyI7X3hibWMtanNvbnJwYy1oLl90Y3A7bG9jYWw7Iitzb2NrZXQuZ2V0aG9zdGJ5bmFtZShtLmdyb3VwKDMpKSsiOyIrbS5ncm91cCgyKSkgZm9yIG0gaW4gcmUuZmluZGl0ZXIociIoXFMrKVxzK1NSVlxzK1xkK1xzK1xkK1xzKyhcZCspXHMrKFxTKz8pXC4/XHMiLG8pIGlmIG0uZ3JvdXAoMyld | /usr/bin/base64 -D > /tmp/scan_kodi.py', true);
     var result = osMod.launchProcess('/usr/bin/python3 /tmp/scan_kodi.py', true);
     if (result == null || result.length === 0) {
         script.log('Scan: no devices found');
