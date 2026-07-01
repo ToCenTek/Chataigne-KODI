@@ -926,8 +926,8 @@ function promptManualSSHSetup(ip) {
     _vic_pending_ip = ip;
     util.showOkCancelBox(
         'vic_auth',
-        'Authorization Required...',
-        "需要 ssh 密钥, 请按 'Enter Password' 输入密钥,\nroot 用户默认密码 coreelec (如果没有修改过的话)",
+        "ssh root@" + ip + " 需要密钥",
+        "root 用户初始密码: coreelec\n\n请按 [ Enter Password ] 输入密钥",
         'warning',
         'Enter Password',
         'Cancel'
