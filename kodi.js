@@ -21,6 +21,7 @@ var progTotalMs = 0;
 var progFps = 0;
 var _vic_pending_ip = "";  // used by messageBoxCallback for dialog result
 var audioOutputList = [];   // 从 KODI 获取的音频设备列表 [{label, value, shortLabel}, ...]
+var _discoveredDevices = [];  // Zeroconf 发现的 KODI 设备 [{name, ip, port}, ...]
 
 // (sync removed)
 
@@ -1398,16 +1399,111 @@ function wsMessageReceived(message) {
 
     // 同步状态机已移除，不再需要推进
 }
+// ========== Zeroconf 扫描与设备选择 ==========
+function scanNetwork() {
+    script.log('Scan: discovering...');
+    _discoveredDevices = [];
+    var osMod = root.modules.getItemWithName('OS');
+    if (osMod == null) {
+        osMod = root.modules.addItem('OS');
+        if (osMod && osMod.name !== 'OS') osMod.setName('OS');
+        script.log('Scan: created OS module');
+    }
+    osMod.launchCommand('echo aW1wb3J0IHN1YnByb2Nlc3Msc2lnbmFsLHJlLHRpbWUsc29ja2V0O3A9c3VicHJvY2Vzcy5Qb3BlbihbImRucy1zZCIsIi1aIiwiX3hibWMtanNvbnJwYy1oLl90Y3AiLCJsb2NhbCJdLHN0ZG91dD1zdWJwcm9jZXNzLlBJUEUsc3RkZXJyPXN1YnByb2Nlc3MuUElQRSk7dGltZS5zbGVlcCgzKTtwLnNlbmRfc2lnbmFsKHNpZ25hbC5TSUdURVJNKTtvPXAuY29tbXVuaWNhdGUoKVswXS5kZWNvZGUoInV0Zi04IiwicmVwbGFjZSIpO1twcmludCgiPTtldGgwO0lQdjQ7IittLmdyb3VwKDEpLnJlcGxhY2UoY2hyKDkyKSsiMDMyIiwiICIpLnJlcGxhY2UoIi5feGJtYy1qc29ucnBjLWguX3RjcCIsIiIpKyI7X3hibWMtanNvbnJwYy1oLl90Y3A7bG9jYWw7Iitzb2NrZXQuZ2V0aG9zdGJ5bmFtZShtLmdyb3VwKDMpKSsiOyIrbS5ncm91cCgyKSkgZm9yIG0gaW4gcmUuZmluZGl0ZXIociIoXFMrKVxzK1NSVlxzK1xkK1xzK1xkK1xzKyhcZCspXHMrKFxTKz8pXC4/XHMiLG8pIGlmIG0uZ3JvdXAoMyld | /usr/bin/base64 -D > /tmp/scan_kodi.py', true);
+    var result = osMod.launchProcess('/usr/bin/python3 /tmp/scan_kodi.py', true);
+    if (result == null || result.length === 0) {
+        script.log('Scan: no devices found');
+        return;
+    }
+    var lines = result.split('\n');
+    for (var li = 0; li < lines.length; li++) {
+        var line = lines[li];
+        if (line.length > 0 && line.substring(0, 2) === '=;') {
+            var parts = line.split(';');
+            if (parts.length >= 8) {
+                _discoveredDevices.push({name: parts[3], ip: parts[6], port: parts[7]});
+            }
+        }
+    }
+    script.log('Scan: found ' + _discoveredDevices.length + ' device(s)');
+    if (_discoveredDevices.length === 0) return;
+    var zeroconf = local.parameters.getChild('zeroconf');
+    var kodis = (zeroconf) ? zeroconf.getChild('kodis') : null;
+    if (kodis) {
+        kodis.clear(false, true);
+        for (var di = 0; di < _discoveredDevices.length; di++) {
+            var dev = _discoveredDevices[di];
+            var label = dev.name + ' (' + dev.ip + ':' + dev.port + ')';
+            var devPath = dev.ip + ':9090';
+            var p = kodis.addStringParameter('kodi' + di, label, devPath);
+            p.setName('KODI ' + di, 'kodi' + di);
+            var t = kodis.addTrigger('select' + di, '连接到 ' + dev.name);
+            t.setName('Select ' + di, 'select' + di);
+        }
+        if (_discoveredDevices.length === 1) {
+            var firstDev = _discoveredDevices[0];
+            var sp = local.parameters.getChild('serverPath');
+            if (sp) sp.set(firstDev.ip + ':9090');
+        }
+    }
+}
 
-// ========== 监听 Parameters 面板值变化（Trigger 点击、开关切换等） ==========
+function selectKODIDevice(index) {
+    if (index < 0 || index >= _discoveredDevices.length) return;
+    var dev = _discoveredDevices[index];
+    var sp = local.parameters.getChild('serverPath');
+    if (sp) {
+        sp.set(dev.ip + ':9090');
+        script.log('Selected: ' + dev.name + ' (' + dev.ip + ':9090)');
+    }
+    var zeroconf = local.parameters.getChild('zeroconf');
+    if (zeroconf) zeroconf.setCollapsed(true);
+}
+
+// ========== 监听 Parameters 面板值变化 ==========
+function scriptParameterChanged(param) {
+    script.log('scriptParam: ' + param.name);
+    var lc = param.name.toLowerCase();
+    if (lc.substring(0, 6) === 'select') {
+        var idx = parseInt(param.name.substring(6), 10);
+        if (idx >= 0) {
+            var kodiParam = local.parameters.getChild('zeroconf').getChild('kodis').getChild('kodi' + idx);
+            if (kodiParam) {
+                var sp = local.parameters.getChild('serverPath');
+                if (sp) sp.set(kodiParam.get());
+                script.log('Set serverPath: ' + kodiParam.get());
+            }
+        }
+    }
+}
+
 function moduleParameterChanged(param) {
     var paramName = param.name;
-    script.log("moduleParameterChanged: " + paramName);
-    if (paramName.toLowerCase() === "initialization") {
-
-        var infoContainer = local.values.getChild("Info");
+    script.log('moduleParam: ' + paramName);
+    if (paramName == null) return;
+    var lc = paramName.toLowerCase();
+    if (lc === 'scan') { scanNetwork(); return; }
+    if (lc === 'initialization') {
+        var infoContainer = local.values.getChild('Info');
         if (infoContainer) infoContainer.setCollapsed(false);
         init();
+        return;
+    }
+    if (lc.substring(0, 6) === 'select') {
+        var idx = parseInt(paramName.substring(6), 10);
+        if (idx >= 0 && idx < _discoveredDevices.length) {
+            var dev = _discoveredDevices[idx];
+            var sp = local.parameters.getChild('serverPath');
+            if (sp) {
+                sp.set(dev.ip + ':9090');
+                script.log('Set serverpath: ' + dev.ip + ':9090');
+            }
+            var zf = local.parameters.getChild('zeroconf');
+            if (zf) zf.setCollapsed(true);
+        } else {
+            script.log('Invalid idx: ' + idx + ' (len=' + _discoveredDevices.length + ')');
+        }
+        return;
     }
 }
 
