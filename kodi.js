@@ -1483,7 +1483,7 @@ function moduleParameterChanged(param) {
     if (paramName == null) return;
     var lc = paramName.toLowerCase();
     if (lc === 'scan') { scanNetwork(); return; }
-    if (lc === 'initialization') {
+    if (lc === 'init') {
         var infoContainer = local.values.getChild('Info');
         if (infoContainer) infoContainer.setCollapsed(false);
         init();

@@ -72,7 +72,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 root@<serverPath> cat /sys/class/amhdmi
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `videoDirectory` | `/storage/videos` | 视频文件目录，`Initialization` 从此目录读取文件列表 |
+| `videoDirectory` | `/storage/videos` | 视频文件目录，`Init` 从此目录读取文件列表 |
 
 ---
 
@@ -111,7 +111,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 root@<serverPath> cat /sys/class/amhdmi
 
 | 命令名 | 类型 | 参数 | 说明 |
 |--------|------|------|------|
-| `Initialization` | 触发 | 无 | 初始化：同步音量/播放状态 → 从 `videoDirectory` 获取文件列表 → 清空播放列表 → 逐条添加文件 → 开始播放 |
+| `Init` | 触发 | 无 | 初始化：同步音量/播放状态 → 从 `videoDirectory` 获取文件列表 → 清空播放列表 → 逐条添加文件 → 开始播放 |
 | `Send Raw JSON` | 事件 | `JSON`: String | 发送原始 JSON-RPC 命令字符串到 KODI |
 
 ### 播放控制 (Player)
@@ -123,7 +123,7 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 root@<serverPath> cat /sys/class/amhdmi
 | `Next` | 触发 | 无 | 下一曲 |
 | `Previous` | 触发 | 无 | 上一曲 |
 | `Index` | 事件 | `Index`: Integer | 按当前播放列表中的索引播放指定媒体项 |
-| `File` | 事件 | `FilePath`: String | **按路径播放文件。注意: 这会丢弃当前播放列表内容和索引映射，播放单一文件后 KODI 会结束。如需恢复列表请重新执行 Initialization。** |
+|| `File` | 事件 | `FilePath`: String | **按路径播放文件。注意: 这会丢弃当前播放列表内容和索引映射，播放单一文件后 KODI 会结束。如需恢复列表请重新执行 Init。** |
 
 ### 跳转 (Playback)
 
@@ -233,10 +233,10 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 root@<serverPath> cat /sys/class/amhdmi
 
 | 函数 | 触发时机 | 功能 |
 |------|----------|------|
-| `init()` | `Initialization` 命令 / `moduleParameterChanged` 检测到参数变化 | 初始化流程：获取文件列表 → 构建播放列表 → 设置循环模式 → 开始播放 |
+| `init()` | Init 命令 / Scan 后自动触发 | 初始化流程：获取文件列表 → 构建播放列表 → 设置循环模式 → 开始播放 |
 | `update(deltaTime)` | 每帧（由 `setUpdateRate` 控制） | 帧计数模拟进度条；每 20 帧查询一次 `Player.GetProperties` 校准进度 |
 | `wsMessageReceived(message)` | KODI WebSocket 返回 JSON-RPC 响应或推送事件 | 解析所有 JSON-RPC 响应和事件通知（详见下方） |
-| `moduleParameterChanged(param)` | Parameters 面板参数值变化 | 检测 `Initialization` Trigger 点击后调用 `init()` |
+| `moduleParameterChanged(param)` | Parameters 面板参数值变化 | 检测 Init/Scan Trigger 点击后调用 `init()` |
 | `moduleValueChanged(value)` | Values 面板值变化 | 处理滑块拖动（Volume、Playing）、切换开关（Mute、Loop、Random 等）、按钮点击（Play/Pause、Next、Previous 等） |
 
 ### WebSocket 消息处理 (`wsMessageReceived`)
@@ -297,10 +297,10 @@ flowchart TD
 
 ### 首次使用
 
-1. 确保 KODI 已开启 WebSocket 服务，配置 `serverPath`
-2. （可选）确保 KODI 设备 SSH 已开启，默认密码 `coreelec`
-3. 在 Chataigne 中加载模块
-4. 执行 `Initialization` 命令
+1. 在 Chataigne 中加载模块，配置 `serverPath`
+2. 点 **Scan** 扫描局域网内的 KODI 设备，选择你的设备自动填入 `serverPath`
+3. 确保 KODI 设备 SSH 已开启（默认密码 `coreelec`），分辨率检测需要 SSH
+4. 执行 **Init** 命令
 5. 观察日志确认初始化成功：
    ```
    Volume synced: 100
@@ -324,7 +324,7 @@ flowchart TD
 - **宽高比**: `Cycle Aspect` 或 `Set Aspect(N)`
 - **系统**: `Restart KODI` / `Standby` / `Reboot` / `Shutdown` / `Activate Window`
 - **校准**: 播放视频 → `Remote Control(OSD)` → 导航 → `Remote Control(↑↓←→Enter)`，或 `Navigate Calibration` 自动导航
-- **播放列表更新**: 目录文件变更后，执行 `Initialization` 重建
+- **播放列表更新**: 目录文件变更后，执行 `Init` 重建
 - **调试**: `Show Player Info`（OSD 覆盖层）、`Show Info(debug)`、`Toggle Info`
 
 ---
@@ -335,7 +335,7 @@ flowchart TD
    模块通过 `Files.GetDirectory` 读取 `videoDirectory` 中的文件列表，按文件名排序后通过 `Playlist.Clear` + 逐条 `Playlist.Add` 添加到 KODI 播放列表。不依赖 .m3u 文件。播放列表自然结束后自动重建。
 
 2. **`File` 命令（按路径播放）**  
-   此命令直接调用 `Player.Open` 打开指定文件，**会清空当前播放列表**，导致索引映射丢失。播放结束后 KODI 不会自动恢复列表。如需回到列表播放，请重新执行 `Initialization`。
+   此命令直接调用 `Player.Open` 打开指定文件，**会清空当前播放列表**，导致索引映射丢失。播放结束后 KODI 不会自动恢复列表。如需回到列表播放，请重新执行 `Init`。
 
 3. **音量同步**  
    初始化时自动获取当前音量。之后音量变化通过 KODI `Application.OnVolumeChanged` 事件自动更新到 UI。拖动 `Volume` 滑块立即发送 `SetVolume` 命令。静音时记忆当前音量，取消静音自动恢复。
@@ -367,7 +367,7 @@ flowchart TD
 
 ## 版本历史
 
-- **1.3.0** (2026-07-01) – 新增 Zeroconf 设备发现扫描、动态参数列表、SSH 主机密钥自动接受
+- **1.3.0** (2026-07-01) – 新增 Zeroconf 设备发现扫描、动态参数列表、SSH 主机密钥自动接受；Init 命令简化命名；首次使用流程优化：先 Scan 后 Init
 - **1.2.0** (2026-06-19) – 新增视频校准（Remote Control / Navigate / Reset）、音频输出设备切换、声道数切换、刷新率调整参数（Adjust/Minimise Black Bars/Display 43 as/HQ Scaler/Hardware Decoder/Blank Displays/Pulldown/Double Refresh Rate）、SSH 分辨率检测 + 弹窗引导 `ssh-copy-id`、debug info 开关；清理 sync 残留和外部脚本；重构日志；文档全面补全
 - **1.1.0** (2026-06-19) – 新增 3D 模式、宽高比循环、视频画面控制、Region & Language、进度条、播放列表索引映射
 - **1.0.0** (2026-06-15) – 初始发布
