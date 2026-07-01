@@ -76,6 +76,15 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 root@<serverPath> cat /sys/class/amhdmi
 
 ---
 
+### 4. Zeroconf 设备发现（可选）
+
+| 平台 | 依赖 | 说明 |
+|------|------|------|
+| macOS | 内置（Bonjour） | `dns-sd` 命令系统自带，无需安装 |
+| Linux | `avahi-utils` | 执行 `sudo apt install avahi-utils` 安装 `avahi-browse` |
+
+点 **Scan** 按钮自动扫描局域网中所有发布 `_xbmc-jsonrpc-h._tcp` 服务的 KODI 设备。
+
 ## UI 参数（Values）
 
 | 参数名 | 类型 | 读写 | 描述 |

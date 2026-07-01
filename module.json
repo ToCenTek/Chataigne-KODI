@@ -21,7 +21,7 @@
             "type": "Trigger",
             "description": "扫描网络中的 KODI 实例.\nScan for KODI instances on the network."
         },
-        "Initialization": {
+        "Init": {
             "type": "Trigger",
             "description": "初始化, 加载视频播放列表.\nInitialize, load playlist."
         },
@@ -283,7 +283,7 @@
     "scripts": ["kodi.js"],
 
     "commands": {
-        "Initialization":{
+        "Init":{
             "menu": "",
             "description": "初始化, 加载视频播放列表\nInitialization, Load Playlist",
             "callback": "init"

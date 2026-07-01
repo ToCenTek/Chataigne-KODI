@@ -1401,7 +1401,7 @@ function wsMessageReceived(message) {
 
     // 同步状态机已移除，不再需要推进
 }
-// ========== Zeroconf 扫描与设备选择 ==========
+// ========== Zeroconf 扫描与设备选择（跨平台，macOS 用 Python 调 dns-sd / Linux avahi-browse）==========
 function scanNetwork() {
     script.log('Scan: discovering...');
     _discoveredDevices = [];
@@ -1409,26 +1409,66 @@ function scanNetwork() {
     if (osMod == null) {
         osMod = root.modules.addItem('OS');
         if (osMod && osMod.name !== 'OS') osMod.setName('OS');
-        script.log('Scan: created OS module');
     }
-    osMod.launchCommand('echo aW1wb3J0IHN1YnByb2Nlc3Msc2lnbmFsLHJlLHRpbWUsc29ja2V0O3A9c3VicHJvY2Vzcy5Qb3BlbihbImRucy1zZCIsIi1aIiwiX3hibWMtanNvbnJwYy1oLl90Y3AiLCJsb2NhbCJdLHN0ZG91dD1zdWJwcm9jZXNzLlBJUEUsc3RkZXJyPXN1YnByb2Nlc3MuUElQRSk7dGltZS5zbGVlcCg4KTtwLnNlbmRfc2lnbmFsKHNpZ25hbC5TSUdURVJNKTtvPXAuY29tbXVuaWNhdGUoKVswXS5kZWNvZGUoInV0Zi04IiwicmVwbGFjZSIpO1twcmludCgiPTtldGgwO0lQdjQ7IittLmdyb3VwKDEpLnJlcGxhY2UoY2hyKDkyKSsiMDMyIiwiICIpLnJlcGxhY2UoIi5feGJtYy1qc29ucnBjLWguX3RjcCIsIiIpKyI7X3hibWMtanNvbnJwYy1oLl90Y3A7bG9jYWw7Iitzb2NrZXQuZ2V0aG9zdGJ5bmFtZShtLmdyb3VwKDMpKSsiOyIrbS5ncm91cCgyKSkgZm9yIG0gaW4gcmUuZmluZGl0ZXIociIoXFMrKVxzK1NSVlxzK1xkK1xzK1xkK1xzKyhcZCspXHMrKFxTKz8pXC4/XHMiLG8pIGlmIG0uZ3JvdXAoMyld | /usr/bin/base64 -D > /tmp/scan_kodi.py', true);
-    var result = osMod.launchProcess('/usr/bin/python3 /tmp/scan_kodi.py', true);
-    if (result == null || result.length === 0) {
+
+    var plat = osMod.launchProcess('uname -s', true);
+    var isMac = (plat != null && plat.indexOf('Darwin') >= 0);
+
+    var cmd = '';
+    if (isMac) {
+        // macOS: 写 Python 脚本到临时文件 → 执行 → 读输出 → 删文件
+        var py = 'import subprocess,socket,time,re\n';
+        py += 'p=subprocess.Popen(["dns-sd","-Z","_xbmc-jsonrpc-h._tcp","local"],stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)\n';
+        py += 'time.sleep(3)\n';
+        py += 'p.terminate()\n';
+        py += 'o=p.communicate()[0].decode()\n';
+        py += 's=set()\n';
+        py += 'for m in re.finditer(r"SRV\\s+0\\s+0\\s+(\\d+)\\s+(\\S+)",o):\n';
+        py += '    h=m.group(2).rstrip(".")\n';
+        py += '    n=h.replace(".local","")\n';
+        py += '    try:\n';
+        py += '        ip=socket.gethostbyname(h)\n';
+        py += '        k=ip+":"+m.group(1)\n';
+        py += '        if k not in s:\n';
+        py += '            s.add(k)\n';
+        py += '            print("=;"+n+";"+ip+";"+m.group(1))\n';
+        py += '    except:\n';
+        py += '        pass\n';
+        util.writeFile('/tmp/scan_kodi.py', py, true);
+        cmd = '/usr/bin/python3 /tmp/scan_kodi.py';
+    } else {
+        cmd = 'avahi-browse -p -t _xbmc-jsonrpc-h._tcp local 2>/dev/null';
+    }
+
+    var output = osMod.launchProcess(cmd, true);
+    if (isMac) {
+        osMod.launchCommand('rm /tmp/scan_kodi.py', true);
+    }
+    if (output == null || output.length == 0) {
         script.log('Scan: no devices found');
         return;
     }
-    var lines = result.split('\n');
+
+    var lines = output.split('\n');
+    var seen = {};
+
     for (var li = 0; li < lines.length; li++) {
         var line = lines[li];
-        if (line.length > 0 && line.substring(0, 2) === '=;') {
-            var parts = line.split(';');
-            if (parts.length >= 8) {
-                _discoveredDevices.push({name: parts[3], ip: parts[6], port: parts[7]});
-            }
-        }
+        if (line.length == 0 || line.charAt(0) != '=') continue;
+        var parts = line.split(';');
+        if (parts.length < 4) continue;
+        var name = parts[1];
+        var ip = parts[2];
+        var port = parts[3];
+        var key = ip + ':' + port;
+        if (seen[key] != null) continue;
+        seen[key] = true;
+        _discoveredDevices.push({name: name, ip: ip, port: port});
     }
+
     script.log('Scan: found ' + _discoveredDevices.length + ' device(s)');
-    if (_discoveredDevices.length === 0) return;
+    if (_discoveredDevices.length == 0) return;
+
     var kodis = local.parameters.getChild('kodis');
     if (kodis) {
         kodis.clear(false, true);
@@ -1437,12 +1477,12 @@ function scanNetwork() {
             var label = dev.name + ' (' + dev.ip + ':' + dev.port + ')';
             var devPath = dev.ip + ':9090';
             var p = kodis.addStringParameter('kodi' + di, label, devPath);
-            p.setName('KODI ' + di, 'kodi' + di);
+            p.setName('KODI ' + di);
             var t = kodis.addTrigger('select' + di, '选择并连接到这台设备: ' + dev.name);
-            t.setName('Select ' + di, 'select' + di);
+            t.setName('Select ' + di);
         }
-        if (kodis) kodis.setCollapsed(false);
-        if (_discoveredDevices.length === 1) {
+        kodis.setCollapsed(false);
+        if (_discoveredDevices.length == 1) {
             var firstDev = _discoveredDevices[0];
             var sp = local.parameters.getChild('serverPath');
             if (sp) sp.set(firstDev.ip + ':9090');
