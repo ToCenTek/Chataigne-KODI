@@ -19,6 +19,7 @@ var progBasePct = 0;
 var progPerTick = 0;
 var progTotalMs = 0;
 var progFps = 0;
+var _vic_pending_ip = "";  // used by messageBoxCallback for dialog result
 var audioOutputList = [];   // 从 KODI 获取的音频设备列表 [{label, value, shortLabel}, ...]
 // (sync removed)
 
@@ -475,6 +476,7 @@ function shutdown() {
 }
 
 // ShowPlayerProcessInfo 播放进程信息
+// {"jsonrpc":"2.0","method":"Input.ShowPlayerProcessInfo","id":1}
 function showPlayerProcessInfo() {
     var msg = {
         jsonrpc: "2.0",
@@ -699,18 +701,15 @@ function remoteControl(Action) {
     script.log("Remote: " + Action);
 }
 
-function navigateCalibration(Steps, Delay) {
-    if (Steps == null || Steps.length === 0) Steps = "osd,left,left,left,select,select,up,select";
-    if (Delay == null || Delay < 50) Delay = 300;
-    var actions = Steps.split(",");
-    script.log("Navigate " + actions.length + " steps (delay=" + Delay + "ms)...");
-    for (var ni = 0; ni < actions.length; ni++) {
-        var a = actions[ni];
-        if (a.length === 0) continue;
-        remoteControl(a);
-        util.delayThreadMS(Delay);
-    }
-    script.log("Navigation complete");
+function navigateCalibration() {
+    // 直接打开视频校准窗口 (screencalibration 是 KODI JSON-RPC 的合法 window 名)
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "GUI.ActivateWindow",
+        params: { window: "screencalibration" },
+        id: "NavigateCalibration"
+    }));
+    script.log("Navigate to video calibration screen");
 }
 
 function resetCalibration() {
@@ -847,9 +846,125 @@ function init() {
     initStep = 1;
     script.setUpdateRate(2);
     getDirectoryFiles();
+    local.scripts.setCollapsed(true);
 
 }
 
+// From serverPath extract KODI IP address
+function getKodiIP() {
+    var serverPath = local.parameters.getChild('serverPath');
+    if (serverPath == null) return '10.0.0.53';
+    var sp = serverPath.get();
+    if (sp == null || sp === '') return '10.0.0.53';
+    var colonIdx = sp.indexOf(':');
+    if (colonIdx > 0) return sp.substring(0, colonIdx);
+    return sp;
+}
+
+// SSH to KODI to query actual output resolution (HDMI VIC)
+// If SSH fails, clear stale value and prompt user to run ssh-copy-id manually
+function queryOutputResolution() {
+    var osMod = root.modules.getItemWithName('OS');
+    if (osMod == null) {
+        script.log('VIC: OS module not found');
+        return;
+    }
+    var ip = getKodiIP();
+
+    // Try SSH query
+    var output = doSSHQuery(osMod, ip);
+    if (output != null && output.length > 0) {
+        if (parseAndSetVIC(output)) return;
+    }
+
+    // SSH failed - clear old VIC immediately, do NOT keep stale value
+    clearVIC();
+
+    // SSH failed - prompt user to run ssh-copy-id manually
+    script.log('VIC: SSH failed, prompting user...');
+    promptManualSSHSetup(ip);
+}
+
+function doSSHQuery(osMod, ip) {
+    var cmd = '/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=5 root@' + ip + ' cat /sys/class/amhdmitx/amhdmitx0/config';
+    return osMod.launchProcess(cmd, true);
+}
+
+function parseAndSetVIC(output) {
+    var lines = output.split('\n');
+    var resolution = '';
+    for (var li = 0; li < lines.length; li++) {
+        var line = lines[li];
+        if (line.indexOf('VIC:') >= 0 && line.indexOf('cur_') < 0) {
+            var parts = line.split(' ');
+            resolution = parts[parts.length - 1];
+            break;
+        }
+    }
+    if (resolution === '') {
+        script.log('VIC: no VIC line in output');
+        return false;
+    }
+    script.log('Output Resolution: ' + resolution);
+    var resCtrl = local.values.getChild('Info').getChild('outputResolution');
+    if (resCtrl) resCtrl.set(resolution);
+    return true;
+}
+
+function clearVIC() {
+    var resCtrl = local.values.getChild('Info').getChild('outputResolution');
+    if (resCtrl) resCtrl.set('');
+}
+
+
+function promptManualSSHSetup(ip) {
+    // showOkCancelBox is ASYNC - returns 0 immediately
+    // When user clicks a button, messageBoxCallback(id, result) is called
+    // result: 0 = first button (Enter Password), 1 = second (Cancel)
+    _vic_pending_ip = ip;
+    util.showOkCancelBox(
+        'vic_auth',
+        'Authorization Required...',
+        "需要 ssh 密钥, 请按 'Enter Password' 输入密钥,\nroot 用户默认密码 coreelec (如果没有修改过的话)",
+        'warning',
+        'Enter Password',
+        'Cancel'
+    );
+    script.log('VIC: dialog shown, waiting for user response...');
+}
+
+function openTerminalWithCommand(cmd) {
+    var om = root.modules.getItemWithName('OS');
+    if (om == null) return;
+
+    var plat = om.launchProcess('uname -s', true);
+    if (plat != null && plat.indexOf('Darwin') >= 0) {
+        // macOS: launchCommand uses system() → /bin/sh
+        var appleScript = "osascript -e 'tell application \"Terminal\" to do script \"" + cmd + "\"' -e 'tell application \"Terminal\" to activate'";
+        om.launchCommand(appleScript);
+    } else if (plat != null && plat.indexOf("Linux") >= 0) {
+        // Linux (Debian系): 依次检测可用终端, 用第一个找到的
+        var terms = ["x-terminal-emulator", "xterm", "st", "gnome-terminal", "xfce4-terminal", "lxterminal"];
+        var foundTerm = null;
+        for (var ti = 0; ti < terms.length; ti++) {
+            var result = om.launchProcess("command -v " + terms[ti] + " 2>/dev/null", true);
+            if (result != null && result.length > 0) {
+                foundTerm = terms[ti];
+                break;
+            }
+        }
+        if (foundTerm != null) {
+            script.log("VIC: found terminal: " + foundTerm);
+            if (foundTerm === "gnome-terminal") {
+                om.launchProcess(foundTerm + " -- sh -c \"" + cmd + "\"", false);
+            } else {
+                om.launchProcess(foundTerm + " -e sh -c \"" + cmd + "\"", false);
+            }
+        } else {
+            script.log("VIC: no terminal emulator found on Linux");
+        }
+    }
+}
 // 调整显示刷新率及分辨率: 这个设置本质是帧率匹配，但因为刷新率和分辨率是打包的，所以切刷新率的时候分辨率也可能跟着变。
 // {"jsonrpc":"2.0","method":"Input.ShowPlayerProcessInfo","id":1}
 function adjustRefreshRate(num) {
@@ -1229,6 +1344,7 @@ function wsMessageReceived(message) {
         playListGetItems();
         progTotalMs = 0; progPerTick = 0; progFps = 0;
         progTick = 0; progBaseTick = 0; progBasePct = 0;
+        queryOutputResolution();
         script.log("Kodi state: Playing");
     }
     //
@@ -1237,6 +1353,7 @@ function wsMessageReceived(message) {
         if (pausedValue) pausedValue.set(true);
         script.log("Kodi state: Paused");
     }
+    //
     //
     if (data.method === "Player.OnResume") {
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
@@ -1427,6 +1544,36 @@ function moduleValueChanged(value) {
             showPlayerProcessInfo();
         } else if (tname === "toggleinfo") {
             remoteControl("right");
+        } else if (tname === "videocalibration") {
+            navigateCalibration();
+            local.parameters.setCollapsed(true);
+            local.scripts.setCollapsed(true);
+            local.values.getChild("Info").setCollapsed(true);
+            local.values.getChild("Commands").setCollapsed(true);
+        } else if (tname === "up") {
+            remoteControl("up");
+        } else if (tname === "down") {
+            remoteControl("down");
+        } else if (tname === "left") {
+            remoteControl("left");
+        } else if (tname === "right") {
+            remoteControl("right");
+        } else if (tname === "enter") {
+            remoteControl("select");
+        } else if (tname === "back") {
+            remoteControl("back");
+        } else if (tname === "home") {}
+    }
+}
+
+function messageBoxCallback(id, result) {
+    if (id === 'vic_auth') {
+        if (result == 1) {
+            script.log('VIC: user clicked Enter Password, opening Terminal...');
+            var hint = 'clear && echo 输入 root@' + _vic_pending_ip + ' 的 ssh 连接密码, 没有刻意修改过的话, 默认密码 coreelec';
+            openTerminalWithCommand(hint + ' && ssh-copy-id -f root@' + _vic_pending_ip);
+        } else {
+            script.log('VIC: user cancelled SSH setup');
         }
     }
 }

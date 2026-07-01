@@ -74,6 +74,11 @@
             "isMuted":{
                 "type": "Boolean",
                 "readOnly": true
+            },
+            "Output Resolution":{
+                "description": "当前实际输出的分辨率和刷新率\nCurrent actual output resolution and refresh rate",
+                "type": "String",
+                "readOnly": true
             }
         },
         "Commands":{
@@ -170,7 +175,7 @@
                     "options":{
                         "On start/stop": 2,
                         "On start": 3,
-                        "Off": 0,
+                        "Off": 0
                     }
                 },
                 "Minumise Black Bars":{
@@ -231,6 +236,38 @@
                     "Yellow/Blue": "anaglyph_yellow_blue",
                     "Monoscopic": "monoscopic"
                 }
+            }
+        },
+        "Calibration":{
+            "type": "Container",
+            "collapsed": true,
+            "Video Calibration":{
+                "description": "视频校准\nVideo Calibration",
+                "type": "Trigger"
+            },
+            "Left": {
+                "description": "左\nLeft",
+                "type": "Trigger"
+            },
+            "Right": {
+                "description": "右\nRight",
+                "type": "Trigger"
+            },
+            "Up": {
+                "description": "上\nUp",
+                "type": "Trigger"
+            },
+            "Down": {
+                "description": "下\nDown",
+                "type": "Trigger"
+            },
+            "Enter": {
+                "description": "确定\nEnter",
+                "type": "Trigger"
+            },
+            "Back": {
+                "description": "返回\nBack",
+                "type": "Trigger"
             }
         }
     },
@@ -717,26 +754,11 @@
         },
         "Navigate Calibration":{
             "menu": "Calibration",
-            "description": "导航到视频校准（按当前皮肤调整步骤序列）.\nNavigate to video calibration (adjust steps for your skin).",
-            "callback": "navigateCalibration",
-            "parameters": {
-                "Steps":{
-                    "description": "动作序列，逗号分隔.\nAction steps, comma-separated.",
-                    "type": "String",
-                    "default": "osd,left,left,left,select,select,up,select"
-                },
-                "Delay":{
-                    "description": "每步间隔毫秒.\nDelay between steps in ms.",
-                    "type": "Integer",
-                    "default": 300,
-                    "min": 50,
-                    "max": 2000
-                }
-            }
+            "description": "直接打开视频校准界面 (通过 GUI.ActivateWindow(screencalibration)).\nDirectly open video calibration screen.",
+            "callback": "navigateCalibration"
         },
         "Remote Control":{
             "menu": "Calibration",
-            "description": "发送按键/动作到 KODI.\nSend key/action to KODI.",
             "callback": "remoteControl",
             "parameters": {
                 "Action":{
