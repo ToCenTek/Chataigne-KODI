@@ -389,7 +389,7 @@ flowchart TD
 
 ## 版本历史
 
-- **1.3.0** (2026-07-01) – 新增 Zeroconf 设备发现扫描、动态参数列表、SSH 主机密钥自动接受；Init 命令简化命名；首次使用流程优化：先 Scan 后 Init
+- **1.3.0** (2026-07-01) – 新增 Zeroconf 设备发现扫描、跨平台支持（macOS dns-sd / Linux avahi-browse）、动态参数列表、mDNS 跨网段说明（avahi reflector）；进度模拟改用 deltaTime 实时累积，停止依赖固定更新率；PosUpdate 轮询独立 3 秒计时器；新增 Position 时间显示（HH:MM:SS.mmm）；进度条防抖改为 100ms 节流；暂停时进度条停止；update() 从 2Hz 提升到 30Hz；JUCE `.0` 问题修复（fromCharCode）
 - **1.2.0** (2026-06-19) – 新增视频校准（Remote Control / Navigate / Reset）、音频输出设备切换、声道数切换、刷新率调整参数（Adjust/Minimise Black Bars/Display 43 as/HQ Scaler/Hardware Decoder/Blank Displays/Pulldown/Double Refresh Rate）、SSH 分辨率检测 + 弹窗引导 `ssh-copy-id`、debug info 开关；清理 sync 残留和外部脚本；重构日志；文档全面补全
 - **1.1.0** (2026-06-19) – 新增 3D 模式、宽高比循环、视频画面控制、Region & Language、进度条、播放列表索引映射
 - **1.0.0** (2026-06-15) – 初始发布
