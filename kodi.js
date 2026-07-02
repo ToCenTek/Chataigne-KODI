@@ -875,10 +875,9 @@ function queryOutputResolution() {
     }
     var ip = getKodiIP();
 
-    // Clear stale value immediately
+    // Wait for HDMI to settle then query VIC
     clearVIC();
-
-    // SSH query (now fast since key should be installed)
+    util.delayThreadMS(1500);
     var output = doSSHQuery(osMod, ip);
     if (output != null && output.length > 0) {
         if (parseAndSetVIC(output)) return;
