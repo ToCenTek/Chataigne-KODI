@@ -108,6 +108,7 @@ function playListGetItems() {
 }
 
 
+// {"jsonrpc":"2.0","method":"Settings.GetSettings","id":1}
 // 查询 KODI 当前可用的音频输出设备列表，存入全局 audioOutputList 供其它函数使用
 function getSettings() {
     local.send(JSON.stringify({
@@ -118,6 +119,7 @@ function getSettings() {
     }));
 }
 
+// {"jsonrpc":"2.0","method":"Settings.SetSettingValue","id":1}
 // 按设备名切换（必须是 audioOutputList 中某个元素的 label 或 shortLabel）
 // 切换声道数 (1=2.0, 2=2.1, ..., 10=7.1)
 function switchAudioChannels(num) {
@@ -132,6 +134,7 @@ function switchAudioChannels(num) {
     script.log("Switch Audio Channels: " + num);
 }
 
+// {"jsonrpc":"2.0","method":"Settings.SetSettingValue","id":1}
 function chooseAudioOutput(device) {
     local.send(JSON.stringify({
         jsonrpc: "2.0",
@@ -692,6 +695,7 @@ function setNonlinearStretch(Stretch) {
     script.log("NLStretch: " + Stretch);
 }
 
+// {"jsonrpc":"2.0","method":"Input.ExecuteAction","id":1}
 // ========== 视频校准 & 按键输入 ==========
 function remoteControl(Action) {
     if (Action == null || Action.length === 0) Action = "osd";
@@ -704,6 +708,7 @@ function remoteControl(Action) {
     script.log("Remote: " + Action);
 }
 
+// {"jsonrpc":"2.0","method":"GUI.ActivateWindow","id":1}
 function navigateCalibration() {
     // 直接打开视频校准窗口 (screencalibration 是 KODI JSON-RPC 的合法 window 名)
     local.send(JSON.stringify({
@@ -801,6 +806,7 @@ function cycleAspectRatio() {
     script.log("Cycle aspect ratio");
 }
 
+// {"jsonrpc":"2.0","method":"Input.ExecuteAction","id":1}
 // 循环切换宽高比 N 次（仅当前 KODI）
 function setAspectRatio(Count) {
     if (Count == null || Count < 1) Count = 1;
@@ -814,6 +820,7 @@ function setAspectRatio(Count) {
 }
 
 var progTick = 0;
+// {"jsonrpc":"2.0","method":"Player.GetProperties","id":1}
 function update(deltaTime) {
     progTick++;
     if (progTotalMs === 0 && progTick % 10 === 0) {
@@ -1713,8 +1720,9 @@ function messageBoxCallback(id, result) {
     if (id === 'vic_auth') {
         if (result == 1) {
             script.log('VIC: user clicked Enter Password, opening Terminal...');
-            var hint = 'clear && echo 输入 root@' + _vic_pending_ip + ' 的 ssh 连接密码, 没有刻意修改过的话, 默认密码 coreelec';
-            openTerminalWithCommand(hint + ' && ssh-copy-id -f root@' + _vic_pending_ip);
+            var tip = getKodiIP();
+            var hint = 'clear && echo "正在为 root@' + tip + ' 安装 SSH 密钥, 请输入密码 (默认 coreelec)"';
+            openTerminalWithCommand(hint + ' && ssh-copy-id -f root@' + tip);
         } else {
             script.log('VIC: user cancelled SSH setup');
         }
