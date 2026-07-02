@@ -85,6 +85,13 @@ ssh -o BatchMode=yes -o ConnectTimeout=5 root@<serverPath> cat /sys/class/amhdmi
 
 点 **Scan** 按钮自动扫描局域网中所有发布 `_xbmc-jsonrpc-h._tcp` 服务的 KODI 设备。
 
+> **注意：** 如果 KODI 设备插着网线而运行 Chataigne 的电脑用 WiFi，mDNS 多播可能跨不过去，导致 Scan 扫不到该设备。
+> 解决方法：在 KODI 设备上开启 avahi reflector：
+> ```bash
+> ssh root@盒子IP "echo 'enable-reflector=yes' > /storage/.config/avahi-daemon.conf && systemctl restart avahi-daemon"
+> ```
+> 这会把有线口的 mDNS 广播转发到其他接口，WiFi 端就能扫到了。
+
 ## UI 参数（Values）
 
 | 参数名 | 类型 | 读写 | 描述 |
