@@ -49,12 +49,17 @@
                 "default": ""
             },
             "Playing":{
-                "description": "播放进度百分比。可拖动 seek。\nPlayback progress %. Draggable to seek.",
+                "description": "播放进度百分比 ( % )。可拖动 seek。\nPlayback progress %. Draggable to seek.",
                 "type": "Float",
                 "ui": "slider",
                 "min": 0,
                 "max": 100,
                 "default": 0
+            },
+            "Position":{
+                "description": "当前时间.\nCurrent Playback Position.",
+                "type":"String",
+                "readOnly": true
             },
             "Items":{
                 "description": "当前播放列表中的所有媒体项.\nAutomatically Retrieve from the Current playlist.",

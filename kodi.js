@@ -14,14 +14,57 @@ var volumeBeforeMute = -1;
 var isMutedFlag = false;
 var currentLoopMode = "off";
 var ignoreNextPlayingChange = false;
-var progBaseTick = 0;
-var progBasePct = 0;
-var progPerTick = 0;
+var progAccumMs = 0;
 var progTotalMs = 0;
 var progFps = 0;
+var _posUpdateTimer = 0;  // PosUpdate 轮询计时器
 var _vic_pending_ip = "";  // used by messageBoxCallback for dialog result
 var audioOutputList = [];   // 从 KODI 获取的音频设备列表 [{label, value, shortLabel}, ...]
 var _discoveredDevices = [];  // Zeroconf 发现的 KODI 设备 [{name, ip, port}, ...]
+var _seekPending = -1;  // 防抖：待发送的进度值，-1=无
+var _seekTimer = 0;     // 防抖：剩余等待秒数
+var _isPaused = false;  // 播放暂停状态，用于暂停时停止进度条模拟
+
+// 将毫秒转为 MM:SS 或 HH:MM:SS
+function pad2(i) {
+    if (i < 0) i = 0;
+    if (i > 99) i = 99;
+    var t = Math.floor(i / 10);
+    var o = i % 10;
+    return String.fromCharCode(48 + t) + String.fromCharCode(48 + o);
+}
+
+function pad3(i) {
+    if (i < 0) i = 0;
+    if (i > 999) i = 999;
+    var h = Math.floor(i / 100);
+    var r = i % 100;
+    var t = Math.floor(r / 10);
+    var o = r % 10;
+    return String.fromCharCode(48 + h) + String.fromCharCode(48 + t) + String.fromCharCode(48 + o);
+}
+
+function formatTime(millis) {
+    if (millis == null || millis <= 0) return '00:00.000';
+    var total = Math.floor(millis / 1000);
+    var h = Math.floor(total / 3600);
+    var mn = Math.floor((total % 3600) / 60);
+    var s = total % 60;
+    var ml = Math.floor(millis % 1000);
+    if (h > 0) return pad2(h) + ':' + pad2(mn) + ':' + pad2(s) + '.' + pad3(ml);
+    return pad2(mn) + ':' + pad2(s) + '.' + pad3(ml);
+}
+
+var _posCtrl = null;  // Position 控件缓存
+
+function updatePosition(curMs, totalMs) {
+    if (_posCtrl == null) {
+        _posCtrl = local.values.getChild('Info').getChild('Position');
+        if (_posCtrl == null) return;
+    }
+    if (totalMs <= 0) { _posCtrl.set('00:00.000'); return; }
+    _posCtrl.set(formatTime(curMs) + '  /  ' + formatTime(totalMs));
+}
 
 // (sync removed)
 
@@ -186,6 +229,7 @@ function nextTrack() {
 }
 
 // 上一曲
+// {"jsonrpc": "2.0","method": "Player.GoTo","params": { "playerid": 0,"to": "previous" },"id": "Player.GoTo"}
 function prevTrack() {
     var msg = {
         jsonrpc: "2.0",
@@ -806,8 +850,8 @@ function cycleAspectRatio() {
     script.log("Cycle aspect ratio");
 }
 
-// {"jsonrpc":"2.0","method":"Input.ExecuteAction","id":1}
 // 循环切换宽高比 N 次（仅当前 KODI）
+// {"jsonrpc":"2.0","method":"Input.ExecuteAction","id":1}
 function setAspectRatio(Count) {
     if (Count == null || Count < 1) Count = 1;
     for (var n = 0; n < Count; n++) {
@@ -819,24 +863,42 @@ function setAspectRatio(Count) {
     script.log("Aspect: cycled " + Count + " time(s)");
 }
 
-var progTick = 0;
 // {"jsonrpc":"2.0","method":"Player.GetProperties","id":1}
 function update(deltaTime) {
-    progTick++;
-    if (progTotalMs === 0 && progTick % 10 === 0) {
-        local.send(JSON.stringify({
-            jsonrpc: "2.0", method: "Player.GetProperties",
-            params: { playerid: currentPlayerId, properties: ["time", "speed", "totaltime", "videostreams"] },
-            id: "PosUpdate"
-        }));
+    // 节流：用户拖进度条时每 100ms 最多发一次 seek
+    if (_seekPending >= 0) {
+        _seekTimer = _seekTimer - deltaTime;
+        if (_seekTimer <= 0) {
+            local.send(JSON.stringify({
+                jsonrpc: "2.0",
+                method: "Player.Seek",
+                params: { playerid: currentPlayerId, value: { percentage: _seekPending } },
+                id: "SeekFromSlider"
+            }));
+            _seekPending = -1;
+        }
     }
-    if (progTotalMs > 0 && progPerTick > 0) {
-        var simPct = progBasePct + (progTick - progBaseTick) * progPerTick;
-        if (simPct > 100) simPct = 100;
+    // 未获取到总时长时每 5 秒轮询一次
+    if (progTotalMs === 0) {
+        _posUpdateTimer = _posUpdateTimer + deltaTime;
+        if (_posUpdateTimer >= 3) {
+            _posUpdateTimer = 0;
+            local.send(JSON.stringify({
+                jsonrpc: "2.0", method: "Player.GetProperties",
+                params: { playerid: currentPlayerId, properties: ["time", "speed", "totaltime", "videostreams"] },
+                id: "PosUpdate"
+            }));
+        }
+    }
+    if (progTotalMs > 0 && !_isPaused && _seekPending < 0) {
+        progAccumMs = progAccumMs + deltaTime * 1000;
+        if (progAccumMs > progTotalMs) progAccumMs = progTotalMs;
+        var curPct = progAccumMs / progTotalMs * 100;
         var progCtrl = local.values.getChild("Info").getChild("Playing");
         if (progCtrl) {
             ignoreNextPlayingChange = true;
-            progCtrl.set(simPct);
+            progCtrl.set(curPct);
+            updatePosition(progAccumMs, progTotalMs);
         }
     }
 }
@@ -853,7 +915,7 @@ function init() {
 
     }
     initStep = 1;
-    script.setUpdateRate(2);
+    script.setUpdateRate(30);
     getDirectoryFiles();
 
     local.scripts.kodi.setCollapsed(true);
@@ -1316,13 +1378,12 @@ function wsMessageReceived(message) {
             var ttMs = timeToMs(tt);
             if (ttMs > 0) {
                 progTotalMs = ttMs;
-                progBaseTick = progTick;
-                progBasePct = (tMs / ttMs) * 100;
-                progPerTick = 500 / ttMs * 100;
+                progAccumMs = tMs;
                 var progCtrl = local.values.getChild("Info").getChild("Playing");
                 if (progCtrl) {
                     ignoreNextPlayingChange = true;
-                    progCtrl.set(progBasePct);
+                    progCtrl.set(tMs / ttMs * 100);
+                updatePosition(tMs, ttMs);
                 }
                 if (data.result.videostreams && data.result.videostreams.length > 0) {
                     progFps = data.result.videostreams[0].fps;
@@ -1336,6 +1397,7 @@ function wsMessageReceived(message) {
     if (data.method === "Player.OnPlay") {
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(false);
+        _isPaused = false;
         if (data.params && data.params.data && data.params.data.player) {
             currentPlayerId = data.params.data.player.playerid;
         }
@@ -1352,8 +1414,8 @@ function wsMessageReceived(message) {
         local.send(JSON.stringify(getItem));
         // 刷新播放列表（Player.Open File 会替换列表）
         playListGetItems();
-        progTotalMs = 0; progPerTick = 0; progFps = 0;
-        progTick = 0; progBaseTick = 0; progBasePct = 0;
+        progTotalMs = 0; progFps = 0; progAccumMs = 0;
+        updatePosition(0, 0);
         queryOutputResolution();
         script.log("Kodi state: Playing");
     }
@@ -1361,6 +1423,7 @@ function wsMessageReceived(message) {
     if (data.method === "Player.OnPause") {
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(true);
+        _isPaused = true;
         script.log("Kodi state: Paused");
     }
     //
@@ -1368,6 +1431,7 @@ function wsMessageReceived(message) {
     if (data.method === "Player.OnResume") {
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(false);
+        _isPaused = false;
 
     }
     //
@@ -1376,7 +1440,8 @@ function wsMessageReceived(message) {
         if (fileValue) fileValue.set("[Stopped]");
         var progValue = local.values.getChild("Info").getChild("Playing");
         if (progValue) progValue.set(0);
-        progTotalMs = 0; progPerTick = 0; progFps = 0;
+        progTotalMs = 0; progFps = 0; progAccumMs = 0;
+        updatePosition(0, 0);
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(false);
         var end = data.params && data.params.data && data.params.data.end;
@@ -1620,18 +1685,9 @@ function moduleValueChanged(value) {
                 return;
             }
             var pct = value.get();
-            progBaseTick = progTick;
-            progBasePct = pct;
-            var seekMsg = {
-                jsonrpc: "2.0",
-                method: "Player.Seek",
-                params: {
-                    playerid: currentPlayerId,
-                    value: { percentage: pct }
-                },
-                id: "SeekFromSlider"
-            };
-            local.send(JSON.stringify(seekMsg));
+            progAccumMs = pct / 100 * progTotalMs;
+            _seekPending = pct;
+            _seekTimer = 0.1;
         // 
         } else {
             var cname = paramName.toLowerCase();
@@ -1721,7 +1777,7 @@ function messageBoxCallback(id, result) {
         if (result == 1) {
             script.log('VIC: user clicked Enter Password, opening Terminal...');
             var tip = getKodiIP();
-            var hint = 'clear && echo "正在为 root@' + tip + ' 安装 SSH 密钥, 请输入密码 (默认 coreelec)"';
+            var hint = 'clear && echo 正在为 root@' + tip + ' 安装 SSH 密钥, 默认密码 coreelec';
             openTerminalWithCommand(hint + ' && ssh-copy-id -f root@' + tip);
         } else {
             script.log('VIC: user cancelled SSH setup');
