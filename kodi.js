@@ -1028,9 +1028,9 @@ function openTerminalWithCommand(cmd) {
         if (foundTerm != null) {
             script.log("VIC: found terminal: " + foundTerm);
             if (foundTerm === "gnome-terminal") {
-                om.launchProcess(foundTerm + " -- sh -c \"" + cmd + "\"", false);
+                om.launchProcess("DISPLAY=:0 " + foundTerm + " -- sh -c \"" + cmd + "\"", false);
             } else {
-                om.launchProcess(foundTerm + " -e sh -c \"" + cmd + "\"", false);
+                om.launchProcess("DISPLAY=:0 " + foundTerm + " -e sh -c \"" + cmd + "\"", false);
             }
         } else {
             script.log("VIC: no terminal emulator found on Linux");
@@ -1784,10 +1784,7 @@ function messageBoxCallback(id, result) {
         if (result == 1) {
             script.log('VIC: user clicked Enter Password, opening Terminal...');
             var tip = getKodiIP();
-            var hint = "clear && echo '正在安装 SSH 密钥 / Installing SSH key for root@
-            hint = hint + tip;
-            hint = hint + ", 默认密码 / default password: coreelec'";
-            openTerminalWithCommand(hint + ' && ssh-copy-id -f root@' + tip);
+            openTerminalWithCommand('ssh-copy-id -f root@' + tip);
         } else {
             script.log('VIC: user cancelled SSH setup');
         }
