@@ -1784,7 +1784,9 @@ function messageBoxCallback(id, result) {
         if (result == 1) {
             script.log('VIC: user clicked Enter Password, opening Terminal...');
             var tip = getKodiIP();
-            var hint = 'clear && echo "正在安装 SSH 密钥 / Installing SSH key for root@' + tip + ', 默认密码 / default password: coreelec"';
+            var hint = "clear && echo '正在安装 SSH 密钥 / Installing SSH key for root@
+            hint = hint + tip;
+            hint = hint + ", 默认密码 / default password: coreelec'";
             openTerminalWithCommand(hint + ' && ssh-copy-id -f root@' + tip);
         } else {
             script.log('VIC: user cancelled SSH setup');
