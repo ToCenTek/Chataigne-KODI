@@ -1782,9 +1782,14 @@ function moduleValueChanged(value) {
 function messageBoxCallback(id, result) {
     if (id === 'vic_auth') {
         if (result == 1) {
-            script.log('VIC: user clicked Enter Password, opening Terminal...');
             var tip = getKodiIP();
-            openTerminalWithCommand("ssh-copy-id -f root@" + tip + " ; echo ; echo 'Done. Press Enter to close.' ; read x");
+            var os = util.getOSInfos();
+            var isMac = (os != null && os.type === 'MacOSX');
+            if (isMac) {
+                openTerminalWithCommand("ssh-copy-id -f root@" + tip + " ; echo ; echo 'Done. Press Enter to close.' ; read x");
+            } else {
+                util.showMessageBox('SSH Key Setup', 'Run this command in your terminal:\n\nssh-copy-id -f root@' + tip + '\n\nDefault password: coreelec', 'info', 'OK');
+            }
         } else {
             script.log('VIC: user cancelled SSH setup');
         }
