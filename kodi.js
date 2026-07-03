@@ -1508,7 +1508,7 @@ function scanNetwork() {
         util.writeFile('/tmp/scan_kodi.py', py, true);
         cmd = '/usr/bin/python3 /tmp/scan_kodi.py';
     } else {
-        cmd = 'avahi-browse -p -t _xbmc-jsonrpc-h._tcp local 2>/dev/null';
+        cmd = 'avahi-browse -p -t -r _xbmc-jsonrpc-h._tcp 2>/dev/null';
     }
 
     var output = osMod.launchProcess(cmd, true);
