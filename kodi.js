@@ -1028,9 +1028,9 @@ function openTerminalWithCommand(cmd) {
         if (foundTerm != null) {
             script.log("VIC: found terminal: " + foundTerm);
             if (foundTerm === "gnome-terminal") {
-                om.launchProcess("DISPLAY=:0 " + foundTerm + " -- sh -c \"" + cmd + "\"", false);
+                om.launchCommand("DISPLAY=:0 " + foundTerm + " -- sh -c \"" + cmd + "\"");
             } else {
-                om.launchProcess("DISPLAY=:0 " + foundTerm + " -e sh -c \"" + cmd + "\"", false);
+                om.launchCommand("DISPLAY=:0 " + foundTerm + " -e sh -c \"" + cmd + "\"");
             }
         } else {
             script.log("VIC: no terminal emulator found on Linux");
