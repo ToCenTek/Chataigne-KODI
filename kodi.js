@@ -996,8 +996,8 @@ function promptManualSSHSetup(ip) {
     _vic_pending_ip = ip;
     util.showOkCancelBox(
         'vic_auth',
-        "ssh root@" + ip + " needs SSH key",
-        "Default password: coreelec\n\nPress [Enter Password] to install key,",
+        "ssh root@" + ip + " 需要密钥 / needs SSH key",
+        "root 用户初始密码: coreelec\nDefault password: coreelec\n\n请按 Enter Password 安装密钥\nPress [Enter Password] to install key",
         'warning',
         'Enter Password',
         'Cancel'
@@ -1784,7 +1784,7 @@ function messageBoxCallback(id, result) {
         if (result == 1) {
             script.log('VIC: user clicked Enter Password, opening Terminal...');
             var tip = getKodiIP();
-            var hint = 'clear && echo Installing SSH key for root@' + tip + ', default password: coreelec';
+            var hint = 'clear && echo "正在安装 SSH 密钥 / Installing SSH key for root@' + tip + ', 默认密码 / default password: coreelec"';
             openTerminalWithCommand(hint + ' && ssh-copy-id -f root@' + tip);
         } else {
             script.log('VIC: user cancelled SSH setup');
