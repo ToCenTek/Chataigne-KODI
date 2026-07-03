@@ -1786,9 +1786,9 @@ function messageBoxCallback(id, result) {
             var os = util.getOSInfos();
             var isMac = (os != null && os.type === 'MacOSX');
             if (isMac) {
-                openTerminalWithCommand("ssh-copy-id -f root@" + tip + " ; echo ; echo 'Done. Press Enter to close.' ; read x");
+                openTerminalWithCommand("ssh-copy-id root@" + tip + " ; echo ; echo 'Done. Press Enter to close.' ; read x");
             } else {
-                util.showMessageBox('SSH Key Setup', 'Run this command in your terminal:\n\nssh-copy-id -f root@' + tip + '\n\nDefault password: coreelec', 'info', 'OK');
+                util.showMessageBox('SSH Key Setup', 'Run this command in your terminal:\n\nssh-copy-id root@' + tip + '\n\nDefault password: coreelec', 'info', 'OK');
             }
         } else {
             script.log('VIC: user cancelled SSH setup');
