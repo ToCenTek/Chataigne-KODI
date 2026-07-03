@@ -1527,10 +1527,17 @@ function scanNetwork() {
         var line = lines[li];
         if (line.length == 0 || line.charAt(0) != '=') continue;
         var parts = line.split(';');
-        if (parts.length < 4) continue;
-        var name = parts[1];
-        var ip = parts[2];
-        var port = parts[3];
+        if (isMac) {
+            if (parts.length < 4) continue;
+            var name = parts[1];
+            var ip = parts[2];
+            var port = parts[3];
+        } else {
+            if (parts.length < 9) continue;
+            var name = parts[3];
+            var ip = parts[7];
+            var port = parts[8];
+        }
         var key = ip + ':' + port;
         if (seen[key] != null) continue;
         seen[key] = true;
