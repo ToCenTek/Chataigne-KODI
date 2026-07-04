@@ -908,20 +908,30 @@ function init() {
     initStep = 0;
     sortedFileList = [];
     kodiPlaylistMap = [];
-    var osMod = root.modules.getItemWithName("OS");
+    var osMod = root.modules.getItemWithName("OS for KODI");
     if (osMod == null) {
         osMod = root.modules.addItem("OS");
-        if (osMod && osMod.name !== "OS") osMod.setName("OS");
-
+        if (osMod && osMod.name !== "OS for KODI") osMod.setName("OS for KODI");
     }
     initStep = 1;
     script.setUpdateRate(30);
     getDirectoryFiles();
 
-    local.scripts.kodi.setCollapsed(true);
-    local.values.commands.setCollapsed(true);
+    local.scripts.kodi.setCollapsed(true);          // 折叠脚本
+    local.values.commands.setCollapsed(true);      // 折叠参数 
     local.values.calibration.setCollapsed(true);
+    // var para = local.container.getChild("parameters");
+    // var para = local.parameters.getContainers();
+    // script.logWarning(para);
+    local.parameters.getChild("Pass-through").setCollapsed(true);
     // local.parameters.setCollapsed(true); 
+    
+   
+    // script.logWarning(local.parameters.getControllables(true, true));
+    // script.logWarning(local.parameters.getChild('Connected').get());
+
+
+    
 
 }
 
@@ -937,7 +947,7 @@ function getKodiIP() {
 }
 
 function queryOutputResolution() {
-    var osMod = root.modules.getItemWithName('OS');
+    var osMod = root.modules.getItemWithName('OS for KODI');
     if (osMod == null) {
         script.log('VIC: OS module not found');
         return;
@@ -1006,7 +1016,7 @@ function promptManualSSHSetup(ip) {
 }
 
 function openTerminalWithCommand(cmd) {
-    var om = root.modules.getItemWithName('OS');
+    var om = root.modules.getItemWithName('OS for KODI');
     if (om == null) return;
 
     var plat = om.launchProcess('uname -s', true);
@@ -1172,7 +1182,6 @@ function setDoubleRefreshRate(bool) {
     }));
     script.log("videoscreen.whitelistdou: " + bool);
 }
-
 
 
 // ============================================================================
@@ -1476,10 +1485,10 @@ function wsMessageReceived(message) {
 function scanNetwork() {
     script.log('Scan: discovering...');
     _discoveredDevices = [];
-    var osMod = root.modules.getItemWithName('OS');
+    var osMod = root.modules.getItemWithName('OS for KODI');
     if (osMod == null) {
         osMod = root.modules.addItem('OS');
-        if (osMod && osMod.name !== 'OS') osMod.setName('OS');
+        if (osMod && osMod.name !== 'OS for KODI') osMod.setName('OS for KODI');
     }
 
     var plat = osMod.launchProcess('uname -s', true);
@@ -1584,6 +1593,7 @@ function selectKODIDevice(index) {
 function scriptParameterChanged(param) {
     script.log('scriptParam: ' + param.name);
     var lc = param.name.toLowerCase();
+    // var lc = param.name;
     if (lc.substring(0, 6) === 'select') {
         var idx = parseInt(param.name.substring(6), 10);
         if (idx >= 0) {
@@ -1605,7 +1615,10 @@ function moduleParameterChanged(param) {
     if (lc === 'scan') { scanNetwork(); return; }
     if (lc === 'init') {
         var infoContainer = local.values.getChild('Info');
+        
         if (infoContainer) infoContainer.setCollapsed(false);
+        var commContainer = local.values.getChild('Commands');
+        if (commContainer) commContainer.setCollapsed(false);
         init();
         return;
     }
@@ -1628,6 +1641,8 @@ function moduleParameterChanged(param) {
         return;
     }
 }
+
+
 
 // ========== 监听 Values 面板值变化 ==========
 function moduleValueChanged(value) {
@@ -1759,7 +1774,7 @@ function moduleValueChanged(value) {
             local.parameters.setCollapsed(true);    // 折叠 Parameters
             local.scripts.kodi.setCollapsed(true);       // 折叠 Scripts 中的 Kodi 子容器
             local.values.getChild("Info").setCollapsed(true);   // 折叠 Values 中的 Info 子容器
-            // local.values.getChild("Commands").setCollapsed(true);   // 折叠 Vlaues 中的 Commands 子容器
+            local.values.getChild("Commands").setCollapsed(true);   // 折叠 Vlaues 中的 Commands 子容器
             local.values.commands.setCollapsed(true);   // 折叠 Values 中的 Commands 子容器(不用getChild()也可以)
             local.parameters.setCollapsed(true);    // 折叠 Parameters
         } else if (tname === "up") {        // 上
@@ -1775,6 +1790,8 @@ function moduleValueChanged(value) {
         } else if (tname === "back") {      // 返回
             remoteControl("back");
             local.values.getChild("Info").setCollapsed(false);  // 展开 Info
+            local.values.getChild("Commands").setCollapsed(false);  // 展开 Commands
+            local.values.getChild("Calibration").setCollapsed(true);  // 折叠 Calibration
         } 
     }
 }
