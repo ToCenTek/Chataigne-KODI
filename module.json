@@ -246,10 +246,18 @@
                     "type":"Trigger"
                 },
                 "Write Whitelist":{
-                    "description":"写入白名单.\nWhitelist",
+                    "description":"写入白名单, 不是所有参数都能写入, 需要显示设备时序支持.\nWhitelist",
                     "type":"Enum",
                     "options":{
-                        "Clear Whitelist": "",
+                        "Clear Whitelist": null,
+                        "1024x768@50.00": "0102407680050.00000pstd",
+                        "1024x768@60.00": "0102407680060.00000pstd",
+                        "1024x768@75.00": "0102407680075.00000pstd",
+                        "1280x720@50.00": "0128807200050.00000pstd",
+                        "1280x720@60.00": "0128807200060.00000pstd",
+                        "1280x720@75.00": "0128807200075.00000pstd",
+                        "1280x800@50.00": "0128808000050.00000pstd",
+                        "1280x800@60.00": "0128808000060.00000pstd",
                         "1920x1080@24.00": "0192001080024.00000pstd",
                         "1920x1080@25.00": "0192001080025.00000pstd",
                         "1920x1080@29.97": "0192001080029.97000pstd",
@@ -271,6 +279,10 @@
                 },
                 "Clear Whitelist":{
                     "description":"清空白名单.\nClear Whitelist",
+                    "type":"Trigger"
+                },
+                "black Screen Workaround":{
+                    "description":"黑屏救场, 如果写入了不匹配的白名单导致黑屏, 点击切换到 1920x1080@50\nblack screen workaround",
                     "type":"Trigger"
                 }
             },
@@ -876,10 +888,18 @@
             "callback": "writeWhitelist",
             "parameters":{
                 "Whitelist":{
-                    "description": "白名单.\nWhitelist",
+                    "description": "写入白名单, 不是所有参数都能写入, 需要显示设备时序支持.\nWhitelist",
                     "type":"Enum",
                     "options":{
-                        "Clear Whitelist": "",
+                        "Clear Whitelist": null,
+                        "1024x768@50.00": "0102407680050.00000pstd",
+                        "1024x768@60.00": "0102407680060.00000pstd",
+                        "1024x768@75.00": "0102407680075.00000pstd",
+                        "1280x720@50.00": "0128807200050.00000pstd",
+                        "1280x720@60.00": "0128807200060.00000pstd",
+                        "1280x720@75.00": "0128807200075.00000pstd",
+                        "1280x800@50.00": "0128808000050.00000pstd",
+                        "1280x800@60.00": "0128808000060.00000pstd",
                         "1920x1080@24.00": "0192001080024.00000pstd",
                         "1920x1080@25.00": "0192001080025.00000pstd",
                         "1920x1080@29.97": "0192001080029.97000pstd",
@@ -905,6 +925,12 @@
             "menu": "Calibration",
             "callback": "clearWhitelist",
             "description":"清空白名单.\nClear Whitelist",
+            "type":"Trigger"
+        },
+        "blackScreenWorkaround":{
+            "menu": "Calibration",
+            "callback": "blackScreenWorkaround",
+            "description":"黑屏救场.\nBlack Screen Workaround",
             "type":"Trigger"
         }
     }

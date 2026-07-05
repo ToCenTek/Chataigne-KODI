@@ -1015,6 +1015,10 @@ function promptManualSSHSetup(ip) {
     script.log('VIC: dialog shown, waiting for user response...');
 }
 
+
+
+
+
 function openTerminalWithCommand(cmd) {
     var om = root.modules.getItemWithName('OS for KODI');
     if (om == null) return;
@@ -1198,16 +1202,21 @@ function readWhitelist() {
 // 写一个白名单
 // {"jsonrpc":"2.0","id":1,"method":"Settings.SetSettingValue","params":{"setting":"videoscreen.whitelist","value":["0384002160025.00000pstd"]}}
 function writeWhitelist(value) {
+    var params = {
+        setting: "videoscreen.whitelist",
+        value: [value]
+    };
+    // null 时发空数组
+    if (value == null) {
+        params.value = [];
+    }
     local.send(JSON.stringify({
         jsonrpc: "2.0",
         method: "Settings.SetSettingValue",
-        params: {
-            setting:"videoscreen.whitelist",
-            value: [value]
-        },
+        params: params,
         id: "videoscreen.whitelist"
     }));
-    script.log("videoscreen.whitelist: " + [value]);
+    script.log("videoscreen.whitelist: " + JSON.stringify(params.value));
 }
 
 // 清除白名单
@@ -1225,6 +1234,21 @@ function clearWhitelist() {
     script.log("videoscreen.whitelist: []");
 }
 
+// 显示器黑屏救场
+function blackScreenWorkaround() {
+    var om = root.modules.getItemWithName('OS for KODI');
+    if (om == null) return;
+    var sp = local.parameters.getChild('serverPath').get(); // "10.0.0.54:9090"
+    var ip = sp.split(":")[0];                              // "10.0.0.54"
+    // 不要单引号，远端 shell 自己解析 >
+    // 命令：ssh root@10.0.0.54 'echo 1080p50hz > /sys/class/display/mode' 
+    // 绕过 KODI, 在 Linux 内核驱动层把 HDMI 输出分辨率切到 1080p50hz
+    var cmd = "ssh -o StrictHostKeyChecking=no root@" + ip + " echo 1920x1080p50hz > /sys/class/display/mode";
+    var result = om.launchProcess(cmd);
+    script.logWarning("Black screen rescue");
+
+
+}
 
 // ============================================================================
 // ========== WebSocket 消息接收：处理 KODI 返回的 JSON-RPC 响应和事件通知 ==========
@@ -1852,6 +1876,9 @@ function moduleValueChanged(value) {
             clearWhitelist();
             // 清除白名单显示
             local.values.getChild("Commands").getChild("Adjust Refresh Rate").getChild("White List").set("");
+        } else if (tname === "blackscreenworkaround") {
+            blackScreenWorkaround();
+            // script.logWarning("Black Screen Workaround: " + (result ? "Enabled" : "Disabled"));
         }
     }
 }
