@@ -1183,6 +1183,48 @@ function setDoubleRefreshRate(bool) {
     script.log("videoscreen.whitelistdou: " + bool);
 }
 
+// 读取白名单
+// {"jsonrpc":"2.0","id":1,"method":"Settings.GetSettingValue","params":{"setting":"videoscreen.whitelist"}}'
+function readWhitelist() {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.GetSettingValue",
+        params: {
+            setting:"videoscreen.whitelist"
+        },
+        id: "videoscreen.whitelist"
+    }));
+}
+// 写一个白名单
+// {"jsonrpc":"2.0","id":1,"method":"Settings.SetSettingValue","params":{"setting":"videoscreen.whitelist","value":["0384002160025.00000pstd"]}}
+function writeWhitelist(value) {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: {
+            setting:"videoscreen.whitelist",
+            value: [value]
+        },
+        id: "videoscreen.whitelist"
+    }));
+    script.log("videoscreen.whitelist: " + [value]);
+}
+
+// 清除白名单
+// {"jsonrpc":"2.0","id":1,"method":"Settings.SetSettingValue","params":{"setting":"videoscreen.whitelist","value":[]}}'
+function clearWhitelist() {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Settings.SetSettingValue",
+        params: {
+            setting:"videoscreen.whitelist",
+            value: []
+        },
+        id: "videoscreen.whitelist"
+    }));
+    script.log("videoscreen.whitelist: []");
+}
+
 
 // ============================================================================
 // ========== WebSocket 消息接收：处理 KODI 返回的 JSON-RPC 响应和事件通知 ==========
@@ -1286,50 +1328,50 @@ function wsMessageReceived(message) {
 
     // 处理 GetItems 响应
     // 处理获取音频设备列表响应
-        if (data.id === "GetAudioOutputsList" && data.result && data.result.settings) {
-            audioOutputList = [];
-            for (var gsi = 0; gsi < data.result.settings.length; gsi++) {
-                if (data.result.settings[gsi].id !== "audiooutput.audiodevice") continue;
-                var gsOpts = data.result.settings[gsi].options;
-                if (!gsOpts) break;
-                for (var gsoi = 0; gsoi < gsOpts.length; gsoi++) {
-                    var gsLabel = gsOpts[gsoi].label;
-                    var gsValue = gsOpts[gsoi].value;
-                    var gsShort = gsLabel
-                        .replace(new RegExp("^ALSA: "), "")
-                        .replace(new RegExp(",?[ ]+CARD=[^,|]+"), "")
-                        .replace(new RegExp("[ ]+\\([A-Z]+\\)"), "");
-                    audioOutputList.push({ label: gsLabel, value: gsValue, shortLabel: gsShort });
-                }
-                script.log("Audio outputs loaded: " + audioOutputList.length);
-                break;
+    if (data.id === "GetAudioOutputsList" && data.result && data.result.settings) {
+        audioOutputList = [];
+        for (var gsi = 0; gsi < data.result.settings.length; gsi++) {
+            if (data.result.settings[gsi].id !== "audiooutput.audiodevice") continue;
+            var gsOpts = data.result.settings[gsi].options;
+            if (!gsOpts) break;
+            for (var gsoi = 0; gsoi < gsOpts.length; gsoi++) {
+                var gsLabel = gsOpts[gsoi].label;
+                var gsValue = gsOpts[gsoi].value;
+                var gsShort = gsLabel
+                    .replace(new RegExp("^ALSA: "), "")
+                    .replace(new RegExp(",?[ ]+CARD=[^,|]+"), "")
+                    .replace(new RegExp("[ ]+\\([A-Z]+\\)"), "");
+                audioOutputList.push({ label: gsLabel, value: gsValue, shortLabel: gsShort });
             }
-            return;
+            script.log("Audio outputs loaded: " + audioOutputList.length);
+            break;
         }
-        // 处理获取当前音频设备响应：切到下一个
-        if (data.id === "GetCurrentAudio" && data.result && data.result.value) {
-            var curValue = data.result.value;
-            var curIdx = -1;
-            for (var gci = 0; gci < audioOutputList.length; gci++) {
-                if (audioOutputList[gci].value === curValue) { curIdx = gci; break; }
-            }
-            if (audioOutputList.length === 0) return;
-            var nextIdx = (curIdx + 1) % audioOutputList.length;
-            var next = audioOutputList[nextIdx];
-            local.send(JSON.stringify({
-                jsonrpc: "2.0",
-                method: "Settings.SetSettingValue",
-                params: { setting: "audiooutput.audiodevice", value: next.value },
-                id: "SetAudioOutput"
-            }));
-            script.log("Switch Audio Output: " + next.label + " (" + (curIdx+1) + " -> " + (nextIdx+1) + "/" + audioOutputList.length + ")");
-            return;
+        return;
+    }
+    // 处理获取当前音频设备响应：切到下一个
+    if (data.id === "GetCurrentAudio" && data.result && data.result.value) {
+        var curValue = data.result.value;
+        var curIdx = -1;
+        for (var gci = 0; gci < audioOutputList.length; gci++) {
+            if (audioOutputList[gci].value === curValue) { curIdx = gci; break; }
         }
-        // 处理切换设备响应
-        if (data.id === "SetAudioOutput" && data.result) {
-            return;
-        }
-        if (data.id === "GetCurrentListAllItems" && data.result && data.result.items) {
+        if (audioOutputList.length === 0) return;
+        var nextIdx = (curIdx + 1) % audioOutputList.length;
+        var next = audioOutputList[nextIdx];
+        local.send(JSON.stringify({
+            jsonrpc: "2.0",
+            method: "Settings.SetSettingValue",
+            params: { setting: "audiooutput.audiodevice", value: next.value },
+            id: "SetAudioOutput"
+        }));
+        script.log("Switch Audio Output: " + next.label + " (" + (curIdx+1) + " -> " + (nextIdx+1) + "/" + audioOutputList.length + ")");
+        return;
+    }
+    // 处理切换设备响应
+    if (data.id === "SetAudioOutput" && data.result) {
+        return;
+    }
+    if (data.id === "GetCurrentListAllItems" && data.result && data.result.items) {
         var items = data.result.items;
         var output = "";
         if (items.length === 0) {
@@ -1401,6 +1443,16 @@ function wsMessageReceived(message) {
         }
         return;
     }
+
+    // 听取白名单
+    if (data.id === "videoscreen.whitelist") { 
+        var whitelist = data.result ? data.result.value : [];
+        // script.logWarning("Whitelist: " + whitelist);
+        if (whitelist) {
+            local.values.getChild("Commands").getChild("Adjust Refresh Rate").getChild("White List").set(whitelist.join("\n"));
+        }
+    }
+
 
     // 处理其他事件（仅更新 UI，无任何自动重载逻辑）
     if (data.method === "Player.OnPlay") {
@@ -1479,7 +1531,7 @@ function wsMessageReceived(message) {
         script.log("Volume: " + newVol);
     }
 
-    // 同步状态机已移除，不再需要推进
+    
 }
 // ========== Zeroconf 扫描与设备选择（跨平台，macOS 用 Python 调 dns-sd / Linux avahi-browse）==========
 function scanNetwork() {
@@ -1589,7 +1641,7 @@ function selectKODIDevice(index) {
     if (kodis) kodis.setCollapsed(true);
 }
 
-// ========== 监听 Parameters 面板值变化 ==========
+// ========== 监听 脚本 面板值变化 ==========
 function scriptParameterChanged(param) {
     script.log('scriptParam: ' + param.name);
     var lc = param.name.toLowerCase();
@@ -1607,6 +1659,7 @@ function scriptParameterChanged(param) {
     }
 }
 
+// ========== 监听 Parameters 面板值变化 ==========
 function moduleParameterChanged(param) {
     var paramName = param.name;
     script.log('moduleParam: ' + paramName);
@@ -1641,8 +1694,6 @@ function moduleParameterChanged(param) {
         return;
     }
 }
-
-
 
 // ========== 监听 Values 面板值变化 ==========
 function moduleValueChanged(value) {
@@ -1734,9 +1785,9 @@ function moduleValueChanged(value) {
                 chooseAudioOutput(value.get());
             } else if (cname == "adjust") {
                 adjustRefreshRate(value.get());
-            } else if(cname === "minumiseblackbars") {
+            } else if (cname === "minumiseblackbars") {
                 minumiseBlackBars(value.get());
-            } else if(cname === "display43as") {
+            } else if (cname === "display43as") {
                 display43as(value.get());
             } else if (cname === "highqualityscaler"){
                 highQualityScaler(value.get() * 10);
@@ -1750,6 +1801,9 @@ function moduleValueChanged(value) {
                 setPullDown(value.get());
             } else if (cname === "allowdoublerefreshrate") {
                 setDoubleRefreshRate(value.get());
+            } else if (cname === "writewhitelist") {
+                writeWhitelist(value.get());
+                readWhitelist();
             }
         }
     // 模块中的按钮点击
@@ -1792,7 +1846,13 @@ function moduleValueChanged(value) {
             local.values.getChild("Info").setCollapsed(false);  // 展开 Info
             local.values.getChild("Commands").setCollapsed(false);  // 展开 Commands
             local.values.getChild("Calibration").setCollapsed(true);  // 折叠 Calibration
-        } 
+        } else if (tname === "readwhitelist") {     // 读取白名单
+            readWhitelist();
+        } else if (tname === "clearwhitelist") {    // 清空白名单
+            clearWhitelist();
+            // 清除白名单显示
+            local.values.getChild("Commands").getChild("Adjust Refresh Rate").getChild("White List").set("");
+        }
     }
 }
 

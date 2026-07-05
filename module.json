@@ -229,12 +229,49 @@
                 "Allow 32 Refresh Rate": { 
                     "description":"允许 3:2 折 刷新率.\n比如 24fps 视频在 60Hz 显示器上通过 '3帧、2帧、3帧、2帧…' 重复模式实现流畅播放, 不需要切刷新率. \n适合显示器不支持 24Hz 的情况.\nAllow 3:2 pulldown refresh rate",
                     "type":"Boolean",
-                    "default": true
+                    "default": false
                 },
                 "Allow Double Refresh Rate": {
                     "description":"允许 2 倍速刷新.\n24fps 用 48Hz 播, 30fps 用 60Hz 播, 每帧显示整数次. 理论上比 3:2 折 刷新率更流畅.\nAllow double refresh rate",
                     "type":"Boolean",
-                    "default": true
+                    "default": false
+                },
+                "White List":{
+                    "description":"白名单.\nWhitelist",
+                    "type":"String",
+                    "readOnly": true
+                },
+                "Read Whitelist":{
+                    "description":"读取白名单.\nWhitelist",
+                    "type":"Trigger"
+                },
+                "Write Whitelist":{
+                    "description":"写入白名单.\nWhitelist",
+                    "type":"Enum",
+                    "options":{
+                        "Clear Whitelist": "",
+                        "1920x1080@24.00": "0192001080024.00000pstd",
+                        "1920x1080@25.00": "0192001080025.00000pstd",
+                        "1920x1080@29.97": "0192001080029.97000pstd",
+                        "1920x1080@30.00": "0192001080030.00000pstd",
+                        "1920x1080@50.00": "0192001080050.00000pstd",
+                        "1920x1080@59.94": "0192001080059.94000pstd",
+                        "1920x1080@60.00": "0192001080060.00000pstd",
+                        "1920x1200@50.00": "0192001200050.00000pstd",
+                        "1920x1200@59.94": "0192001200059.94000pstd",
+                        "1920x1200@60.00": "0192001200060.00000pstd",
+                        "3840x2160@24.00": "0384002160024.00000pstd",
+                        "3840x2160@25.00": "0384002160025.00000pstd",
+                        "3840x2160@29.97": "0384002160029.97000pstd",
+                        "3840x2160@30.00": "0384002160030.00000pstd",
+                        "3840x2160@50.00": "0384002160050.00000pstd",
+                        "3840x2160@59.94": "0384002160059.94000pstd",
+                        "3840x2160@60.00": "0384002160060.00000pstd"
+                    }
+                },
+                "Clear Whitelist":{
+                    "description":"清空白名单.\nClear Whitelist",
+                    "type":"Trigger"
                 }
             },
             "3D":{
@@ -827,6 +864,48 @@
                     "default": true
                 }
             }
+        },
+        "Read Whitelist":{
+            "menu": "Calibration",
+            "callback": "readWhitelist",
+            "description":"读取白名单.\nRead Whitelist",
+            "type":"Trigger"
+        },
+        "Write Whitelist":{
+            "menu": "Calibration",
+            "callback": "writeWhitelist",
+            "parameters":{
+                "Whitelist":{
+                    "description": "白名单.\nWhitelist",
+                    "type":"Enum",
+                    "options":{
+                        "Clear Whitelist": "",
+                        "1920x1080@24.00": "0192001080024.00000pstd",
+                        "1920x1080@25.00": "0192001080025.00000pstd",
+                        "1920x1080@29.97": "0192001080029.97000pstd",
+                        "1920x1080@30.00": "0192001080030.00000pstd",
+                        "1920x1080@50.00": "0192001080050.00000pstd",
+                        "1920x1080@59.94": "0192001080059.94000pstd",
+                        "1920x1080@60.00": "0192001080060.00000pstd",
+                        "1920x1200@50.00": "0192001200050.00000pstd",
+                        "1920x1200@59.94": "0192001200059.94000pstd",
+                        "1920x1200@60.00": "0192001200060.00000pstd",
+                        "3840x2160@24.00": "0384002160024.00000pstd",
+                        "3840x2160@25.00": "0384002160025.00000pstd",
+                        "3840x2160@29.97": "0384002160029.97000pstd",
+                        "3840x2160@30.00": "0384002160030.00000pstd",
+                        "3840x2160@50.00": "0384002160050.00000pstd",
+                        "3840x2160@59.94": "0384002160059.94000pstd",
+                        "3840x2160@60.00": "0384002160060.00000pstd"
+                    }
+                }
+            }
+        },
+        "Clear Whitelist":{
+            "menu": "Calibration",
+            "callback": "clearWhitelist",
+            "description":"清空白名单.\nClear Whitelist",
+            "type":"Trigger"
         }
     }
 }
