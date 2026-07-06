@@ -1017,8 +1017,6 @@ function promptManualSSHSetup(ip) {
 
 
 
-
-
 function openTerminalWithCommand(cmd) {
     var om = root.modules.getItemWithName('OS for KODI');
     if (om == null) return;

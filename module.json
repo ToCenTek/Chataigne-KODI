@@ -19,7 +19,7 @@
     "parameters": {
         "Scan":{
             "type": "Trigger",
-            "description": "扫描网络中的 KODI 实例.\nScan for KODI instances on the network."
+            "description": "扫描网络中的 KODI 实例,\n这需要一些时间, 且是阻塞的, 请稍等...\nScan for KODI instances on the network."
         },
         "Init": {
             "type": "Trigger",
