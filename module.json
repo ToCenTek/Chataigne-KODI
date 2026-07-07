@@ -14,7 +14,7 @@
         "Protocol": "Lines",
         "autoAdd": false,
         "useSecureConnection": false,
-        "serverPath": "10.0.0.53:9090"
+        "serverPath": "10.0.0.54:9090"
     },
     "parameters": {
         "Scan":{
@@ -98,11 +98,15 @@
                 "description": "当前实际输出的分辨率和刷新率\nCurrent actual output resolution and refresh rate",
                 "type": "String",
                 "readOnly": true
+            },
+            "Stop":{
+                "type":"Trigger",
+                "description": "停止播放, 回到系统界面.\ninit 初始化后才可以重新播放\nStop Playback"
             }
         },
         "Commands":{
             "type": "Container",
-            "collapsed": false,
+            "collapsed": true,
             "Next":{
                 "type":"Trigger",
                 "description": "下一曲.\nNext track."
@@ -172,126 +176,6 @@
                 "description":"使视频播放界面前置",
                 "type":"Trigger"
             },
-            "Player Process Info":{
-                "type": "Container",
-                "collapsed": false,
-                "Show Info":{
-                    "description":"显示播放器进程信息.\nShow Player Process Info",
-                    "type":"Trigger"
-                },
-                "Toggle Info":{
-                    "description":"切换播放器进程信息显示.\nToggle Player Process Info",
-                    "type":"Trigger"
-                }
-            },
-            "Adjust Refresh Rate":{
-                "type": "Container",
-                "description": "调整显示刷新率.\nAdjust Refresh Rate",
-                "collapsed": true,
-                "Adjust":{
-                    "description":"Off, 显示输出固定为桌面分辨率.\nOn start/stop, 视频开始时切换到视频分辨率, 结束时切到桌面分辨率.\nOn start, 仅在视频开始时切换.\nShow Player Process Info",
-                    "type":"Enum",
-                    "options":{
-                        "On start/stop": 2,
-                        "On start": 3,
-                        "Off": 0
-                    }
-                },
-                "Minumise Black Bars":{
-                    "description":"最小化黑边.\nMinimise Black Bars",
-                    "type":"Integer",
-                    "default": 0,
-                    "min": 0,
-                    "max": 20
-                },
-                "Display 43 as":{
-                    "description":"将 4:3 视频显示为:\nNormal: 正常\nWide Zoom: 宽屏\nStretch 16:9: 拉伸为 16:9\nStretch 16:9 - Nonlinear: 拉伸为 16:9 - 非线性\nZoom: 满屏\nDisplay 4:3 videos as",
-                    "type": "Enum",
-                    "options":{
-                        "Normal": 0,
-                        "Wide Zoom": 3,
-                        "Stretch 16:9": 4,
-                        "Stretch 16:9 - Nonlinear": 7,
-                        "Zoom": 1
-                    }
-                },
-                "High Quality Scaler": {
-                    "description":"当视频放大达到此比例(x 10)% 时启用高品质缩放器.\n",
-                    "type":"Integer",
-                    "default": 2,
-                    "min": 2,
-                    "max": 10
-                },
-                "Hardware Decoder": {
-                    "description":"使用硬件解码器.\nUse Hardware Decoder",
-                    "type":"Boolean",
-                    "default": true
-                },
-                "Other Blank Displays": { 
-                    "description":"使其它显示器为空白.\nMake other displays blank",
-                    "type":"Boolean",
-                    "default": false
-                },
-                "Allow 32 Refresh Rate": { 
-                    "description":"允许 3:2 折 刷新率.\n比如 24fps 视频在 60Hz 显示器上通过 '3帧、2帧、3帧、2帧…' 重复模式实现流畅播放, 不需要切刷新率. \n适合显示器不支持 24Hz 的情况.\nAllow 3:2 pulldown refresh rate",
-                    "type":"Boolean",
-                    "default": false
-                },
-                "Allow Double Refresh Rate": {
-                    "description":"允许 2 倍速刷新.\n24fps 用 48Hz 播, 30fps 用 60Hz 播, 每帧显示整数次. 理论上比 3:2 折 刷新率更流畅.\nAllow double refresh rate",
-                    "type":"Boolean",
-                    "default": false
-                },
-                "White List":{
-                    "description":"白名单.\nWhitelist",
-                    "type":"String",
-                    "readOnly": true
-                },
-                "Read Whitelist":{
-                    "description":"读取白名单.\nWhitelist",
-                    "type":"Trigger"
-                },
-                "Write Whitelist":{
-                    "description":"写入白名单, 不是所有参数都能写入, 需要显示设备时序支持.\nWhitelist",
-                    "type":"Enum",
-                    "options":{
-                        "Clear Whitelist": null,
-                        "1024x768@50.00": "0102407680050.00000pstd",
-                        "1024x768@60.00": "0102407680060.00000pstd",
-                        "1024x768@75.00": "0102407680075.00000pstd",
-                        "1280x720@50.00": "0128807200050.00000pstd",
-                        "1280x720@60.00": "0128807200060.00000pstd",
-                        "1280x720@75.00": "0128807200075.00000pstd",
-                        "1280x800@50.00": "0128808000050.00000pstd",
-                        "1280x800@60.00": "0128808000060.00000pstd",
-                        "1920x1080@24.00": "0192001080024.00000pstd",
-                        "1920x1080@25.00": "0192001080025.00000pstd",
-                        "1920x1080@29.97": "0192001080029.97000pstd",
-                        "1920x1080@30.00": "0192001080030.00000pstd",
-                        "1920x1080@50.00": "0192001080050.00000pstd",
-                        "1920x1080@59.94": "0192001080059.94000pstd",
-                        "1920x1080@60.00": "0192001080060.00000pstd",
-                        "1920x1200@50.00": "0192001200050.00000pstd",
-                        "1920x1200@59.94": "0192001200059.94000pstd",
-                        "1920x1200@60.00": "0192001200060.00000pstd",
-                        "3840x2160@24.00": "0384002160024.00000pstd",
-                        "3840x2160@25.00": "0384002160025.00000pstd",
-                        "3840x2160@29.97": "0384002160029.97000pstd",
-                        "3840x2160@30.00": "0384002160030.00000pstd",
-                        "3840x2160@50.00": "0384002160050.00000pstd",
-                        "3840x2160@59.94": "0384002160059.94000pstd",
-                        "3840x2160@60.00": "0384002160060.00000pstd"
-                    }
-                },
-                "Clear Whitelist":{
-                    "description":"清空白名单.\nClear Whitelist",
-                    "type":"Trigger"
-                },
-                "black Screen Workaround":{
-                    "description":"黑屏救场, 如果写入了不匹配的白名单导致黑屏, 点击切换到 1920x1080@50\nblack screen workaround",
-                    "type":"Trigger"
-                }
-            },
             "3D":{
                 "description":"切换3D模式.\nswitch 3D mode.",
                 "type":"Enum",
@@ -304,6 +188,126 @@
                     "Yellow/Blue": "anaglyph_yellow_blue",
                     "Monoscopic": "monoscopic"
                 }
+            }
+        },
+        "Player Process Info":{
+                "type": "Container",
+                "collapsed": true,
+                "Show Info":{
+                    "description":"显示播放器进程信息.\nShow Player Process Info",
+                    "type":"Trigger"
+                },
+                "Toggle Info":{
+                    "description":"切换播放器进程信息显示.\nToggle Player Process Info",
+                    "type":"Trigger"
+                }
+        },
+        "Adjust Refresh Rate":{
+            "type": "Container",
+            "description": "调整显示刷新率.\nAdjust Refresh Rate",
+            "collapsed": true,
+            "Adjust":{
+                "description":"Off, 显示输出固定为桌面分辨率.\nOn start/stop, 视频开始时切换到视频分辨率, 结束时切到桌面分辨率.\nOn start, 仅在视频开始时切换.\nShow Player Process Info",
+                "type":"Enum",
+                "options":{
+                    "On start/stop": 2,
+                    "On start": 3,
+                    "Off": 0
+                }
+            },
+            "Minumise Black Bars":{
+                "description":"最小化黑边.\nMinimise Black Bars",
+                "type":"Integer",
+                "default": 0,
+                "min": 0,
+                "max": 20
+            },
+            "Display 43 as":{
+                "description":"将 4:3 视频显示为:\nNormal: 正常\nWide Zoom: 宽屏\nStretch 16:9: 拉伸为 16:9\nStretch 16:9 - Nonlinear: 拉伸为 16:9 - 非线性\nZoom: 满屏\nDisplay 4:3 videos as",
+                "type": "Enum",
+                "options":{
+                    "Normal": 0,
+                    "Wide Zoom": 3,
+                    "Stretch 16:9": 4,
+                    "Stretch 16:9 - Nonlinear": 7,
+                    "Zoom": 1
+                }
+            },
+            "High Quality Scaler": {
+                "description":"当视频放大达到此比例(x 10)% 时启用高品质缩放器.\n",
+                "type":"Integer",
+                "default": 2,
+                "min": 2,
+                "max": 10
+            },
+            "Hardware Decoder": {
+                "description":"使用硬件解码器.\nUse Hardware Decoder",
+                "type":"Boolean",
+                "default": true
+            },
+            "Other Blank Displays": { 
+                "description":"使其它显示器为空白.\nMake other displays blank",
+                "type":"Boolean",
+                "default": false
+            },
+            "Allow 32 Refresh Rate": { 
+                "description":"允许 3:2 折 刷新率.\n比如 24fps 视频在 60Hz 显示器上通过 '3帧、2帧、3帧、2帧…' 重复模式实现流畅播放, 不需要切刷新率. \n适合显示器不支持 24Hz 的情况.\nAllow 3:2 pulldown refresh rate",
+                "type":"Boolean",
+                "default": false
+            },
+            "Allow Double Refresh Rate": {
+                "description":"允许 2 倍速刷新.\n24fps 用 48Hz 播, 30fps 用 60Hz 播, 每帧显示整数次. 理论上比 3:2 折 刷新率更流畅.\nAllow double refresh rate",
+                "type":"Boolean",
+                "default": false
+            },
+            "White List":{
+                "description":"白名单.\nWhitelist",
+                "type":"String",
+                "readOnly": true
+            },
+            "Read Whitelist":{
+                "description":"读取白名单.\nWhitelist",
+                "type":"Trigger"
+            },
+            "Write Whitelist":{
+                "description":"写入白名单, 不是所有参数都能写入, 需要显示设备时序支持.\nWhitelist",
+                "type":"Enum",
+                "options":{
+                    "Clear Whitelist": null,
+                    "1024x768@50.00": "0102407680050.00000pstd",
+                    "1024x768@60.00": "0102407680060.00000pstd",
+                    "1024x768@75.00": "0102407680075.00000pstd",
+                    "1280x720@50.00": "0128807200050.00000pstd",
+                    "1280x720@60.00": "0128807200060.00000pstd",
+                    "1280x720@75.00": "0128807200075.00000pstd",
+                    "1280x800@50.00": "0128808000050.00000pstd",
+                    "1280x800@60.00": "0128808000060.00000pstd",
+                    "1920x1080@24.00": "0192001080024.00000pstd",
+                    "1920x1080@25.00": "0192001080025.00000pstd",
+                    "1920x1080@29.97": "0192001080029.97000pstd",
+                    "1920x1080@30.00": "0192001080030.00000pstd",
+                    "1920x1080@50.00": "0192001080050.00000pstd",
+                    "1920x1080@59.94": "0192001080059.94000pstd",
+                    "1920x1080@60.00": "0192001080060.00000pstd",
+                    "1920x1200@50.00": "0192001200050.00000pstd",
+                    "1920x1200@59.94": "0192001200059.94000pstd",
+                    "1920x1200@60.00": "0192001200060.00000pstd",
+                    "3840x2160@24.00": "0384002160024.00000pstd",
+                    "3840x2160@25.00": "0384002160025.00000pstd",
+                    "3840x2160@29.97": "0384002160029.97000pstd",
+                    "3840x2160@30.00": "0384002160030.00000pstd",
+                    "3840x2160@50.00": "0384002160050.00000pstd",
+                    "3840x2160@59.94": "0384002160059.94000pstd",
+                    "3840x2160@60.00": "0384002160060.00000pstd"
+                }
+            },
+            "Clear Whitelist":{
+                "description":"清空白名单.\nClear Whitelist",
+                "type":"Trigger"
+            },
+            "black Screen Workaround":{
+                "description":"黑屏救场, 如果写入了不匹配的白名单导致黑屏, 点击切换到 1920x1080@50\nblack screen workaround",
+                "type":"Trigger"
             }
         },
         "Calibration":{
@@ -336,6 +340,71 @@
             "Back": {
                 "description": "返回\nBack",
                 "type": "Trigger"
+            }
+        },
+        "Addons":{
+            "type": "Container",
+            "collapsed": true,
+            "Autoplay Movies":{
+                "type":"Container",
+                "collapsed": false,
+                "AutoPlay Movies":{
+                    "description":"启用/禁用 Autoplay Movies 插件\nEnablee/Disable Autoplay Movies addon",
+                    "type":"Boolean",
+                    "default": true
+                },
+                "Video Folder":{
+                    "description":"设置自动播放目录. 注意:\n目录中需要有视频;\n目录需要远程存在\n远程已有以下目录:\nvideos\ntvshows\nmusic\npictures\nscreenshorts\n====================\nVideos Folder",
+                    "type":"String",
+                    "default": "/storage/videos/"
+                },
+                "Text Overlaid":{
+                    "description":"启动时是否显示叠加文字.\nShow Text?",
+                    "type":"Boolean",
+                    "default": false
+                },
+                "Text":{
+                    "description":"启动时显示的文字.\nStartup Text",
+                    "type":"String",
+                    "default": "ToCenTek CoreELEC Media Center"
+                },
+                "Duration":{
+                    "description":"文字显示时长.\nText Duration",
+                    "type":"Integer",
+                    "default": 2,
+                    "min": 1,
+                    "max": 10
+                }
+            }
+        },
+        "Power Control":{
+            "type": "Container",
+            "collapsed": true,
+            "MAC Address":{
+                "description":"MAC Address",
+                "type":"String",
+                "default": "XX:XX:XX:XX:XX:XX"
+            },
+            "Wakeup On LAN":{
+                "description":"向驱动层写入WOL支持\n注意: 这是驱动层的支持, 能不能被唤醒,\n由固件底层 PHY 状态决定\n",
+                "type":"Boolean",
+                "default": false
+            },
+            "Restart KODI":{
+                "description":"重启 KODI",
+                "type":"Trigger"
+            },
+            "Standby":{
+                "description":"休眠",
+                "type":"Trigger"
+            },
+            "Reboot":{
+                "description":"重启本机",
+                "type":"Trigger"
+            },
+            "Shutdown":{
+                "description":"关机",
+                "type":"Trigger"
             }
         }
     },
@@ -397,7 +466,7 @@
         },
         "Stop": {
             "menu": "Player",
-            "description": "停止播放, 回到系统界面.\n初始化可重新播放\nStop Playback",
+            "description": "停止播放, 回到系统界面.\ninit 初始化后才可以重新播放\nStop Playback",
             "callback": "stopPlay"
         },
         "File": {
@@ -943,6 +1012,18 @@
             "menu": "System",
             "callback": "checkHealth",
             "description":"健康检查: 查询 CPU 频率、SoC/DDR 温度、降频等级(共11级).\nCheck Health",
+            "type":"Trigger"
+        },
+        "Get MAC Address":{
+            "menu": "System",
+            "callback": "getMAC",
+            "description":"获取 MAC 地址.\nGet MAC Address",
+            "type":"Trigger"
+        },
+        "testSSH":{
+            "menu": "System",
+            "callback": "testSSH",
+            "description":"测试 SSH.\nTest SSH",
             "type":"Trigger"
         }
     }

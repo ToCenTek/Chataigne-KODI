@@ -25,6 +25,9 @@ var _seekPending = -1;  // 防抖：待发送的进度值，-1=无
 var _seekTimer = 0;     // 防抖：剩余等待秒数
 var _isPaused = false;  // 播放暂停状态，用于暂停时停止进度条模拟
 
+var KODI_IP = null;   // 全局 KODI IP
+var KODI_MAC = null;  // 全局 KODI MAC
+
 // 将毫秒转为 MM:SS 或 HH:MM:SS
 function pad2(i) {
     if (i < 0) i = 0;
@@ -149,7 +152,6 @@ function playListGetItems() {
     };
     local.send(JSON.stringify(msg));
 }
-
 
 // {"jsonrpc":"2.0","method":"Settings.GetSettings","id":1}
 // 查询 KODI 当前可用的音频输出设备列表，存入全局 audioOutputList 供其它函数使用
@@ -489,6 +491,7 @@ function restartKODI() {
         id: "RestartKODI"
     };
     local.send(JSON.stringify(msg));
+    local.values.getChild("health").set("Restarting KODI...");
     script.log("Restarting KODI...");
 }
 
@@ -500,7 +503,8 @@ function standby() {
         id: "System.Suspend"
     };
     local.send(JSON.stringify(msg));
-    script.log("System Suspend");
+    local.values.getChild("health").set("System Suspending...");
+    script.log("System Suspend...");
 }
 
 // 重启设备
@@ -511,7 +515,8 @@ function reboot() {
         id: "System.Reboot"
     };
     local.send(JSON.stringify(msg));
-    script.log("System Reboot");
+    local.values.getChild("health").set("System Rebooting...");
+    script.log("System Reboot...");
 }
 
 // 关机
@@ -522,7 +527,8 @@ function shutdown() {
         id: "System.Shutdown"
     };
     local.send(JSON.stringify(msg));
-    script.log("System Shutdown");
+    local.values.getChild("health").set("System Shutting Down...");
+    script.log("System Shutting Down...");
 }
 
 // ShowPlayerProcessInfo 播放进程信息
@@ -903,39 +909,6 @@ function update(deltaTime) {
     }
 }
 
-// ========== 模块初始化：加载设置、同步状态、获取文件列表 ==========
-function init() {
-    initStep = 0;
-    sortedFileList = [];
-    kodiPlaylistMap = [];
-    var osMod = root.modules.getItemWithName("OS for KODI");
-    if (osMod == null) {
-        osMod = root.modules.addItem("OS");
-        if (osMod && osMod.name !== "OS for KODI") osMod.setName("OS for KODI");
-    }
-
-    initStep = 1;
-    script.setUpdateRate(30);
-    getDirectoryFiles();
-
-    local.scripts.kodi.setCollapsed(true);          // 折叠脚本
-    local.values.commands.setCollapsed(true);      // 折叠参数 
-    local.values.calibration.setCollapsed(true);
-    // var para = local.container.getChild("parameters");
-    // var para = local.parameters.getContainers();
-    // script.logWarning(para);
-    local.parameters.getChild("Pass-through").setCollapsed(true);
-    // local.parameters.setCollapsed(true); 
-    
-   
-    // script.logWarning(local.parameters.getControllables(true, true));
-    // script.logWarning(local.parameters.getChild('Connected').get());
-
-
-    
-
-}
-
 // From serverPath extract KODI IP address
 function getKodiIP() {
     var serverPath = local.parameters.getChild('serverPath');
@@ -1000,7 +973,6 @@ function clearVIC() {
     if (resCtrl) resCtrl.set('');
 }
 
-
 function promptManualSSHSetup(ip) {
     // showOkCancelBox is ASYNC - returns 0 immediately
     // When user clicks a button, messageBoxCallback(id, result) is called
@@ -1016,8 +988,6 @@ function promptManualSSHSetup(ip) {
     );
     script.log('VIC: dialog shown, waiting for user response...');
 }
-
-
 
 function openTerminalWithCommand(cmd) {
     var om = root.modules.getItemWithName('OS for KODI');
@@ -1080,7 +1050,6 @@ function minumiseBlackBars(num) {
     }));
     script.log("Remote: " + num);
 }
-
 
 // 将 4:3 视频显示为
 // {"jsonrpc":"2.0","method":"Settings.SetSettingValue","params":{"setting":"videoplayer.stretch43","value":0},"id":1}
@@ -1284,6 +1253,134 @@ function checkHealth() {
         script.log("[Health] SoC:" + socStr + "°C | DDR:" + ddrStr + "°C | FREQ:" + freqMHz + "MHz | Level:" + level);
     }
     local.values.getChild("health").set(socStr + "°C | " + ddrStr + "°C | " + freqMHz + "MHz | Level:" + level);
+}
+
+// 获取 MAC 地址
+function getMAC() {
+    var osMod = root.modules.getItemWithName('OS for KODI');
+    if (osMod == null) return null;
+    var ip = local.parameters.getChild('serverPath').get().split(":")[0];
+    var result = osMod.launchProcess("ssh -o StrictHostKeyChecking=no root@" + ip
+        + " cat /sys/class/net/eth0/address", true);
+    macAddress = result.replace("\n", "");
+    if (macAddress != null) KODI_MAC = macAddress;
+    // script.logWarning(KODI_MAC) ? KODI_MAC : null;
+    local.values.getChild("powerControl").getChild("MACAddress").set(macAddress);
+    return result ? KODI_MAC : null;
+
+}
+
+// 向驱动层写入 WOL 支持并自启, 能不能实现 WOL, 还得看固件层能不能支持关机时 PHY 带电
+function wakeupOnLan(value) {
+    var osMod = root.modules.getItemWithName('OS for KODI');
+    if (osMod == null) return;
+    var ip = local.parameters.getChild('serverPath').get().split(":")[0];
+    var ssh = "/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=3 root@" + ip;
+
+    if (value) {
+        osMod.launchProcess(ssh + " ethtool -s eth0 wol g", true);
+        osMod.launchProcess(ssh + " echo on > /sys/class/net/eth0/device/power/control", true);
+        osMod.launchProcess(ssh + " echo enabled > /sys/class/net/eth0/device/power/wakeup", true);
+        // 写入自启
+        osMod.launchProcess(ssh + " echo '#!/bin/sh' > /storage/.config/autostart.sh", true);
+        osMod.launchProcess(ssh + " echo 'ethtool -s eth0 wol g' >> /storage/.config/autostart.sh", true);
+        osMod.launchProcess(ssh + " echo 'echo on > /sys/class/net/eth0/device/power/control' >> /storage/.config/autostart.sh", true);
+        osMod.launchProcess(ssh + " echo 'echo enabled > /sys/class/net/eth0/device/power/wakeup' >> /storage/.config/autostart.sh", true);
+        osMod.launchProcess(ssh + " chmod +x /storage/.config/autostart.sh", true);
+        script.log("Wakeup On LAN enabled on " + ip);
+    } else {
+        osMod.launchProcess(ssh + " ethtool -s eth0 wol d", true);
+        osMod.launchProcess(ssh + " echo auto > /sys/class/net/eth0/device/power/control", true);
+        osMod.launchProcess(ssh + " echo disabled > /sys/class/net/eth0/device/power/wakeup", true);
+        // 清除自启
+        osMod.launchProcess(ssh + " rm -f /storage/.config/autostart.sh", true);
+        script.log("Wakeup On LAN disabled on " + ip);
+    }
+}
+
+// 测试 SSH
+function testSSH() {
+    var osMod = root.modules.getItemWithName('OS for KODI');
+    if (osMod == null) return;
+    var ip = local.parameters.getChild('serverPath').get().split(":")[0];
+    
+    // 测试1: 本地 ssh 是否存在
+    var r1 = osMod.launchProcess("which /usr/bin/ssh", true);
+    script.log("ssh path: " + r1);
+    
+    // 测试2: ssh 版本
+    var r2 = osMod.launchProcess("/usr/bin/ssh -V 2>&1", true);
+    script.log("ssh version: " + r2);
+    
+    // 测试3: 远程命令（带 stderr）
+    var r3 = osMod.launchProcess("/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=3 root@"
+        + ip + " echo hello 2>&1", true);
+    script.log("ssh remote: " + r3);
+    
+    // 测试4: 用完整路径重新测一次 wol
+    var r4 = osMod.launchProcess("/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=3 root@"
+        + ip + " echo test 2>&1", true);
+    script.log("ssh remote echo: " + r4);
+}
+
+// =============== 插件设置 Autoplay Movies =====================
+// 启用/禁用 Autoplay Movie
+function autoplayMovies(value) {
+    local.send(JSON.stringify({
+        jsonrpc: "2.0",
+        method: "Addons.SetAddonEnabled",
+        params: {
+            addonid: "service.autoplaymovies",
+            enabled: value
+        },
+        id: "autoplaymovies"
+    }));
+    script.log("Autoplay Movies: " + (value ? "enabled" : "disabled"));
+}
+
+// 设置 Autoplay Movie 视频目录
+function setAutoplayVideoDir(val) {
+    var osMod = root.modules.getItemWithName('OS for KODI');
+    if (osMod == null) return;
+    var ip = local.parameters.getChild('serverPath').get().split(":")[0];
+    var ssh = "/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=3 root@" + ip;
+    var f = "/storage/.kodi/userdata/addon_data/service.autoplaymovies/settings.xml";
+    osMod.launchProcess(ssh + " python3 -c \"import xml.etree.ElementTree as ET; t=ET.parse('" + f + "'); r=t.getroot(); [setattr(s,'text','" + val + "') for s in r.findall(\\\"setting[@id='video_dir']\\\")]; t.write('" + f + "')\"", true);
+    script.log("Autoplay video_dir: " + val);
+}
+
+// 设置 Autoplay Movie 启动时是否显示文字
+function setAutoplayStartupTextEnable(val) {
+    var osMod = root.modules.getItemWithName('OS for KODI');
+    if (osMod == null) return;
+    var ip = local.parameters.getChild('serverPath').get().split(":")[0];
+    var ssh = "/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=3 root@" + ip;
+    var f = "/storage/.kodi/userdata/addon_data/service.autoplaymovies/settings.xml";
+    var v = val ? "true" : "false";
+    osMod.launchProcess(ssh + " python3 -c \"import xml.etree.ElementTree as ET; t=ET.parse('" + f + "'); r=t.getroot(); [setattr(s,'text','" + v + "') for s in r.findall(\\\"setting[@id='show_startup_text']\\\")]; t.write('" + f + "')\"", true);
+    script.log("Autoplay show_startup_text: " + v);
+}
+
+// 设置 Autoplay Movie 启动时显示的文字内容
+function setAutoplayStartupText(val) {
+    var osMod = root.modules.getItemWithName('OS for KODI');
+    if (osMod == null) return;
+    var ip = local.parameters.getChild('serverPath').get().split(":")[0];
+    var ssh = "/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=3 root@" + ip;
+    var f = "/storage/.kodi/userdata/addon_data/service.autoplaymovies/settings.xml";
+    osMod.launchProcess(ssh + " python3 -c \"import xml.etree.ElementTree as ET; t=ET.parse('" + f + "'); r=t.getroot(); [setattr(s,'text','" + val + "') for s in r.findall(\\\"setting[@id='startup_text']\\\")]; t.write('" + f + "')\"", true);
+    script.log("Autoplay startup_text: " + val);
+}
+
+// 启动时显示文字的持续时间
+function setAutoplayStartupTextSeconds(val) {
+    var osMod = root.modules.getItemWithName('OS for KODI');
+    if (osMod == null) return;
+    var ip = local.parameters.getChild('serverPath').get().split(":")[0];
+    var ssh = "/usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=3 root@" + ip;
+    var f = "/storage/.kodi/userdata/addon_data/service.autoplaymovies/settings.xml";
+    osMod.launchProcess(ssh + " python3 -c \"import xml.etree.ElementTree as ET; t=ET.parse('" + f + "'); r=t.getroot(); [setattr(s,'text','" + val + "') for s in r.findall(\\\"setting[@id='startup_text_seconds']\\\")]; t.write('" + f + "')\"", true);
+    script.log("Autoplay startup_text_seconds: " + val);
 }
 
 // ============================================================================
@@ -1723,8 +1820,12 @@ function scriptParameterChanged(param) {
 
 // ========== 监听 Parameters 面板值变化 ==========
 function moduleParameterChanged(param) {
+    if (param.isParameter()){
+        script.log("Parameters ->: " + param.name + " " + param.get());
+    } else {
+        script.log("Parameters Trigger->: " + param.name);
+    }
     var paramName = param.name;
-    script.log('moduleParam: ' + paramName);
     if (paramName == null) return;
     var lc = paramName.toLowerCase();
     if (lc === 'scan') { scanNetwork(); return; }
@@ -1760,7 +1861,9 @@ function moduleParameterChanged(param) {
 // ========== 监听 Values 面板值变化 ==========
 function moduleValueChanged(value) {
     // 模块中的参数变化
+    if (param.name === null) return;
     if (value.isParameter()) {
+        // script.log("Values Parameter ->: " + value.name + " " + value.get());
         var paramName = value.name;
         // 音量逻辑
         if (paramName.toLowerCase() === "volume") {
@@ -1866,15 +1969,41 @@ function moduleValueChanged(value) {
             } else if (cname === "writewhitelist") {
                 writeWhitelist(value.get());
                 readWhitelist();
+            } else if (cname === "wakeuponlan") {
+                wakeupOnLan(value.get());
+            } else if (cname === "autoplaymovies") {    // 启用/禁用 自动播放插件
+                autoplayMovies(value.get());
+            } else if (cname === "videofolder") {       // 设置插件自动播放的视频目录
+                setAutoplayVideoDir(value.get());
+            } else if (cname === "textoverlaid") {      // 启动时是否显示叠加文字
+                var v = value.get();
+                // script.logWarning(v);
+                if (v == 0) {
+                    // script.logWarning(v);
+                    local.values.getChild("addons").getChild("autoplaymovies").getChild("text").setAttribute("readOnly", true);
+                    local.values.getChild("addons").getChild("autoplaymovies").getChild("duration").setAttribute("readOnly", true);
+                } else {
+                    local.values.getChild("addons").getChild("autoplaymovies").getChild("text").setAttribute("readOnly", false);
+                    local.values.getChild("addons").getChild("autoplaymovies").getChild("duration").setAttribute("readOnly", false);
+                }
+                setAutoplayStartupTextEnable(value.get());
+            } else if (cname === "text") {              // 叠加文字内容
+                setAutoplayStartupText(value.get());
+            } else if (cname === "duration") {          // 叠加文字显示时长: 1-10s
+                setAutoplayStartupTextSeconds(value.get());
             }
         }
     // 模块中的按钮点击
     } else {
+        script.log("Values Trigger ->: " + value.name);
         var tname = value.name.toLowerCase();
         if (tname === "play/pause" || tname === "play_pause") {
             var pausedVal = local.values.getChild("info").getChild("isPaused");
             var isPaused = pausedVal ? pausedVal.get() : false;
             playPause(!isPaused);
+        } else if (tname === "stop") {
+            stopPlay();
+            local.values.getChild("info").getChild("outputresolution").set("is Stopped");
         } else if (tname === "next") {
             nextTrack();
         } else if (tname === "previous") {
@@ -1917,7 +2046,15 @@ function moduleValueChanged(value) {
         } else if (tname === "blackscreenworkaround") {
             blackScreenWorkaround();
             // script.logWarning("Black Screen Workaround: " + (result ? "Enabled" : "Disabled"));
-        }
+        } else if (tname === "restartkodi") {       // 重启 Kodi
+            restartKODI();
+        } else if (tname === "standby") {           // 休眠
+            standby();
+        } else if (tname === "reboot") {            // 重启
+            reboot();
+        } else if (tname === "shutdown"){           // 关机
+            shutdown();
+        } 
     }
 }
 
@@ -1936,4 +2073,39 @@ function messageBoxCallback(id, result) {
             script.log('VIC: user cancelled SSH setup');
         }
     }
+}
+
+// ========== 模块初始化：加载设置、同步状态、获取文件列表 ==========
+function init() {
+    initStep = 0;
+    sortedFileList = [];
+    kodiPlaylistMap = [];
+    var osMod = root.modules.getItemWithName("OS for KODI");
+    if (osMod == null) {
+        osMod = root.modules.addItem("OS");
+        if (osMod && osMod.name !== "OS for KODI") osMod.setName("OS for KODI");
+    }
+
+    initStep = 1;
+    script.setUpdateRate(30);
+    getDirectoryFiles();
+
+    local.scripts.kodi.setCollapsed(true);          // 折叠 Scripts.kodi
+    local.values.commands.setCollapsed(true);       // 折叠 Commands 
+    local.values.calibration.setCollapsed(true);    // 折叠 Calibration
+    // local.values.getChild("Info").setCollapsed(true);   // 折叠 Info
+    // var para = local.container.getChild("parameters");
+    // var para = local.parameters.getContainers();
+    // script.logWarning(para);
+    // local.parameters.getChild("Pass-through").setCollapsed(true);   // 折叠 Pass-Through
+    local.parameters.removeContainer("Pass-through"); // 删除 Pass-Through
+    // local.parameters.setCollapsed(false); 
+    
+   
+    // script.logWarning(local.parameters.getControllables(true, true));
+    // script.logWarning(local.parameters.getChild('Connected').get());
+
+    getMAC();
+    
+
 }
