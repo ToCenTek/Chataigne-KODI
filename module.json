@@ -31,6 +31,12 @@
         }
     },
     "values":{
+        "Health":{
+            "type": "String",
+            "default": "--- | ---- | --- | ----",
+            "readOnly": true,
+            "description": "显示健康状态: \nSoc温度 | DDR 温度 | CPU 频率 | 降频等级\n温度过高会导致降频, 温度降度自动恢复\nHealth Status."
+        },
         "Info":{
             "type": "Container",
             "collapsed": true,
@@ -931,6 +937,12 @@
             "menu": "Calibration",
             "callback": "blackScreenWorkaround",
             "description":"黑屏救场.\nBlack Screen Workaround",
+            "type":"Trigger"
+        },
+        "Check Health":{ 
+            "menu": "System",
+            "callback": "checkHealth",
+            "description":"健康检查: 查询 CPU 频率、SoC/DDR 温度、降频等级(共11级).\nCheck Health",
             "type":"Trigger"
         }
     }

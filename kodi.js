@@ -913,6 +913,7 @@ function init() {
         osMod = root.modules.addItem("OS");
         if (osMod && osMod.name !== "OS for KODI") osMod.setName("OS for KODI");
     }
+
     initStep = 1;
     script.setUpdateRate(30);
     getDirectoryFiles();
@@ -946,6 +947,7 @@ function getKodiIP() {
     return sp;
 }
 
+// 查询输出分辨率
 function queryOutputResolution() {
     var osMod = root.modules.getItemWithName('OS for KODI');
     if (osMod == null) {
@@ -1248,6 +1250,42 @@ function blackScreenWorkaround() {
 
 }
 
+// 健康检查
+function checkHealth() {
+    var osMod = root.modules.getItemWithName('OS for KODI');
+    if (osMod == null) return;
+    var ip = local.parameters.getChild('serverPath').get().split(":")[0];
+
+    var result = osMod.launchProcess("ssh -o StrictHostKeyChecking=no root@"
+        + ip + " cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq"
+        + " /sys/class/thermal/thermal_zone0/temp"
+        + " /sys/class/thermal/thermal_zone1/temp"
+        + " /sys/class/thermal/cooling_device0/cur_state", true);
+
+    if (result == null || result === "") return;
+
+    var lines = result.split("\n");
+    if (lines.length < 4) return;
+
+    var freq = parseInt(lines[0], 10);
+    var soc = parseInt(lines[1], 10);
+    var ddr = parseInt(lines[2], 10);
+    var level = parseInt(lines[3], 10);
+
+    var socStr = Math.round(soc / 1000);
+    var ddrStr = Math.round(ddr / 1000);
+    var freqMHz = Math.round(freq / 1000);
+
+    if (soc >= 75000 || freq <= 1000000) {
+        script.logError("[Health] SoC:" + socStr + "°C | DDR:" + ddrStr + "°C | FREQ:" + freqMHz + "MHz | Level:" + level);
+    } else if (soc >= 60000 || freq <= 1404000) {
+        script.logWarning("[Health] SoC:" + socStr + "°C | DDR:" + ddrStr + "°C | FREQ:" + freqMHz + "MHz | Level:" + level);
+    } else {
+        script.log("[Health] SoC:" + socStr + "°C | DDR:" + ddrStr + "°C | FREQ:" + freqMHz + "MHz | Level:" + level);
+    }
+    local.values.getChild("health").set(socStr + "°C | " + ddrStr + "°C | " + freqMHz + "MHz | Level:" + level);
+}
+
 // ============================================================================
 // ========== WebSocket 消息接收：处理 KODI 返回的 JSON-RPC 响应和事件通知 ==========
 function wsMessageReceived(message) {
@@ -1499,15 +1537,17 @@ function wsMessageReceived(message) {
         playListGetItems();
         progTotalMs = 0; progFps = 0; progAccumMs = 0;
         updatePosition(0, 0);
-        queryOutputResolution();
-        script.log("Kodi state: Playing");
+        queryOutputResolution();    // 播放时查询输出分辨率
+        checkHealth();              // 查询健康状态
+
+        script.log("State: Playing");
     }
     //
     if (data.method === "Player.OnPause") {
         var pausedValue = local.values.getChild("Info").getChild("isPaused");
         if (pausedValue) pausedValue.set(true);
         _isPaused = true;
-        script.log("Kodi state: Paused");
+        script.log("State: Paused");
     }
     //
     //
@@ -1534,7 +1574,7 @@ function wsMessageReceived(message) {
             kodiPlaylistMap = [];
             buildPlaylistFromM3U();
         } else {
-            script.log("Kodi state: Stopped (by user)");
+            script.log("State: Stopped (by user)");
         }
     }
     //
@@ -1700,13 +1740,13 @@ function moduleParameterChanged(param) {
     if (lc.substring(0, 6) === 'select') {
         var lastC = paramName.charAt(paramName.length - 1);
         var idx = parseInt(lastC, 10);
-        script.log('select: dev=' + idx);
+        script.log('Select: Device=' + idx);
         if (idx >= 0 && idx < _discoveredDevices.length) {
             var dev = _discoveredDevices[idx];
             var sp = local.parameters.getChild('serverPath');
             if (sp) {
                 sp.set(dev.ip + ':9090');
-                script.log('Set serverpath: ' + dev.ip + ':9090');
+                script.log('Set serverPath: ' + dev.ip + ':9090');
             }
             var ko = local.parameters.getChild('kodis');
             if (ko) ko.setCollapsed(true);
