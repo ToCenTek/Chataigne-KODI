@@ -1214,7 +1214,7 @@ function blackScreenWorkaround() {
     // 绕过 KODI, 在 Linux 内核驱动层把 HDMI 输出分辨率切到 1080p50hz
     var cmd = "ssh -o StrictHostKeyChecking=no root@" + ip + " echo 1920x1080p50hz > /sys/class/display/mode";
     var result = om.launchProcess(cmd);
-    script.logWarning("Black screen rescue");
+    script.logWarning("Black screen rescue 1920x1080p50hz");
 
 
 }
@@ -1606,7 +1606,7 @@ function wsMessageReceived(message) {
         var whitelist = data.result ? data.result.value : [];
         // script.logWarning("Whitelist: " + whitelist);
         if (whitelist) {
-            local.values.getChild("Commands").getChild("Adjust Refresh Rate").getChild("White List").set(whitelist.join("\n"));
+            local.values.getChild("Adjust Refresh Rate").getChild("White List").set(whitelist.join("\n"));
         }
     }
 
@@ -2042,7 +2042,7 @@ function moduleValueChanged(value) {
         } else if (tname === "clearwhitelist") {    // 清空白名单
             clearWhitelist();
             // 清除白名单显示
-            local.values.getChild("Commands").getChild("Adjust Refresh Rate").getChild("White List").set("");
+            local.values.getChild("Adjust Refresh Rate").getChild("White List").set("");
         } else if (tname === "blackscreenworkaround") {
             blackScreenWorkaround();
             // script.logWarning("Black Screen Workaround: " + (result ? "Enabled" : "Disabled"));

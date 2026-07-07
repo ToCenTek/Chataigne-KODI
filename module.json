@@ -35,7 +35,7 @@
             "type": "String",
             "default": "--- | ---- | --- | ----",
             "readOnly": true,
-            "description": "显示健康状态: \nSoc温度 | DDR 温度 | CPU 频率 | 降频等级\n温度过高会导致降频, 温度降度自动恢复\nHealth Status."
+            "description": "显示健康状态: \nSoc温度 | DDR 温度 | CPU 频率 | 降频等级\n温度过高会导致降频, 温度降低自动恢复\nHealth Status."
         },
         "Info":{
             "type": "Container",
@@ -137,7 +137,7 @@
             },
             "Audio Device":{
                 "type":"Enum",
-                "description":"切换音频输出.\nSwitch Audio output",
+                "description":"切换音频输出.\nCoreELEC 20.5 版与 21.3 版 API 不同, 所以分列\nSwitch Audio output",
                 "options": {
                     "20.5 PCM: Default": "ALSA:@",
                     "20.5 PCM: Headphone": "ALSA:sysdefault:CARD=AMLAUGESOUND",
@@ -216,7 +216,7 @@
                 }
             },
             "Minumise Black Bars":{
-                "description":"最小化黑边.\nMinimise Black Bars",
+                "description":"最小化黑边, 百分比.\nMinimise Black Bars",
                 "type":"Integer",
                 "default": 0,
                 "min": 0,
